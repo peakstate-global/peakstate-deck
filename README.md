@@ -129,6 +129,18 @@ Get them from Google Fonts and put the `.ttf` files where the two readers look:
 
 Both run on every push. See `.github/workflows/check.yml`.
 
+## Licence
+
+The code is licensed under the Apache License, Version 2.0. See `LICENSE` and `NOTICE`.
+You may use it, change it, and build commercial work on it, including work you sell.
+
+**The brand is not part of that grant.** The Peak State name, the diamond, the logo marks
+and the palette in `themes/peak-state/` are brand assets, and section 6 of the licence
+grants no trademark rights. The theme is there so you can read a working deck and see how a
+theme is built. Write your own theme for a deck you publish.
+
+Nothing in this file is legal advice.
+
 ## Where this came from
 
 The engine lived in a Google Drive folder, unversioned, until 29 August 2026. Every fix up to
