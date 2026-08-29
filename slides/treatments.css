@@ -1,0 +1,217 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PEAK STATE — SLIDE TREATMENTS, 1920x1080
+   Five recurring slide types, each a different SHAPE rather than a different
+   colour, so a room can name the slide type from the back before reading a word.
+
+     .pull-slide    a quote as an object: the mark is a lifted background tone,
+                    the text sits in a narrow measure to its right
+     .specimen-q    a definition: the word as a headword at 232px, the damning
+                    clause struck in sienna, the source hung in a mono column
+     .statwall      one number owns the left half, the rest hang in a margin
+     .board         seven equal columns, tops and bottoms aligned
+     section.exercise + .xdial   the timebox as the object, so an exercise page
+                    is unmistakably not a content page
+
+   EXPECTS, beyond colors_and_type.css:
+     --font-serif --font-sans --font-mono
+     --fg-2        secondary text on the current surface
+     --hairline    divider on the current surface
+     .meta         the class on a charcoal-surface section
+
+   Markup for each shape is in this folder's README. Pair with deck-comments.js
+   from the deck-review skill to get review comments on the built deck.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── full-bleed pull quote: the mark is a lifted background, not a graphic ─ */
+.pull-slide { flex: 1; display: flex; flex-direction: column; justify-content: center;
+  position: relative; }
+.pull-slide .mark {
+  position: absolute; left: 0; top: 50%; transform: translateY(-52%);
+  font-family: var(--font-serif); font-weight: 400; font-size: 700px; line-height: 1;
+  letter-spacing: -.06em; color: #E4DACA; pointer-events: none;
+}
+.meta .pull-slide .mark { color: #332A25; }
+/* colors_and_type.css gives .mark a 64px gold underline. Not here. */
+.pull-slide .mark::before, .pull-slide .mark::after { content: none; }
+.pull-slide blockquote {
+  /* colors_and_type.css styles every blockquote italic, charcoal, with a sienna
+     rule. On a charcoal slide that is invisible text, so reset all four. */
+  margin: 0 0 0 420px; padding: 0; border: 0; font-style: normal; color: inherit;
+  font-weight: 200; font-size: 68px; line-height: 1.16;
+  letter-spacing: -.02em; max-width: 1120px; position: relative;
+}
+.pull-slide .rule { width: 132px; height: 3px; background: var(--ps-gold);
+  margin: 48px 0 28px 420px; }
+.pull-slide .attrib {
+  margin: 0 0 0 420px; padding: 0; border: 0; max-width: 1120px; text-transform: none;
+  font-family: var(--font-mono); font-size: 19px; line-height: 1.7; letter-spacing: .04em;
+  color: var(--fg-2);
+}
+.meta .pull-slide .attrib { color: #9A8C7C; }
+
+/* ── three models of the same cat, at three fidelities ────────────────────
+   AI-generated line drawings. They sit under the quote as the argument in a
+   picture: none of them is the cat, and the question is only whether the one
+   you shipped is good enough for the decision it supports. */
+/* the quote and the drawings are one object: the pair sits centred, with the
+   cats close enough under the words to read as the same thought. */
+.cats { position: absolute; left: 50%; transform: translateX(-50%); bottom: 168px;
+  height: 300px; width: auto; opacity: .78; pointer-events: none; }
+.cats ~ .pull-slide { justify-content: flex-start; padding-top: 96px; }
+
+/* ── the specimen quote: for a definition, where the word is the point ──── */
+.specimen-q { flex: 1; display: flex; flex-direction: column; justify-content: center;
+  position: relative; }
+.specimen-q .word { font-weight: 200; font-size: 232px; line-height: .9;
+  letter-spacing: -.045em; margin: 0; }
+.specimen-q .pos { font-style: italic; font-size: 40px; color: var(--ps-gold);
+  margin: 22px 0 0; }
+.specimen-q .hair { height: 1px; background: var(--hairline); margin: 44px 0 0; }
+.meta .specimen-q .hair { background: rgba(245,240,232,.18); }
+.specimen-q .row { display: grid; grid-template-columns: 1fr 400px; gap: 80px; margin-top: 52px; }
+.specimen-q .def { font-weight: 300; font-size: 48px; line-height: 1.34; margin: 0; }
+.specimen-q .def em { font-style: normal; color: var(--ps-sienna);
+  box-shadow: 0 2px 0 var(--ps-sienna); }
+.specimen-q .src { font-family: var(--font-mono); font-size: 18px; line-height: 1.85;
+  color: var(--fg-2); border-left: 2px solid var(--ps-sienna); padding-left: 28px; }
+.specimen-q .no { font-family: var(--font-mono); font-size: 17px; letter-spacing: .2em;
+  color: var(--ps-gold); margin: 48px 0 0; }
+
+/* ── the stat wall: one number owns the slide, the others hang in a margin ─ */
+.statwall { display: grid; grid-template-columns: 1.04fr 1fr; gap: 0;
+  align-content: start; height: 100%; }
+.statwall .hero { padding-right: 72px; }
+.statwall .hero .big { font-weight: 200; font-size: 258px; line-height: .86;
+  letter-spacing: -.045em; color: var(--ps-sienna); }
+.statwall .hero .chip { display: inline-block; margin-top: 22px; padding: 9px 18px;
+  font-family: var(--font-mono); font-size: 19px; letter-spacing: .1em;
+  color: var(--ps-charcoal); background: var(--ps-gold); }
+.statwall .hero .cap { font-family: var(--font-sans); font-size: 30px; line-height: 1.35;
+  margin-top: 28px; }
+.statwall .hero .src { font-family: var(--font-mono); font-size: 16px; color: #7A6E60;
+  margin-top: 18px; }
+.statwall .side { border-left: 1px solid var(--hairline); padding-left: 56px; }
+.meta .statwall .side { border-left-color: rgba(245,240,232,.18); }
+.statwall .side > div + div { margin-top: 48px; padding-top: 48px;
+  border-top: 1px solid var(--hairline); }
+.meta .statwall .side > div + div { border-top-color: rgba(245,240,232,.18); }
+.statwall .side .big { font-weight: 200; font-size: 108px; line-height: .94;
+  letter-spacing: -.035em; color: var(--ps-gold); }
+.statwall .side .cap { font-family: var(--font-sans); font-size: 23px; line-height: 1.4;
+  margin-top: 14px; }
+.statwall .side .src { font-family: var(--font-mono); font-size: 15px; color: #7A6E60;
+  margin-top: 12px; }
+.statwall .cap { color: var(--fg-2); }
+.meta .statwall .cap { color: #B5A899; }
+
+/* ── the board: seven equal columns, tops and bottoms aligned ──────────────
+   The signature object. Same height every column, so it reads as one
+   manufactured thing rather than seven boxes of ragged content. */
+.board { display: grid; grid-template-columns: repeat(7, 1fr); gap: 16px;
+  align-content: center; grid-auto-rows: min-content; height: 100%; }
+.board .tile { align-self: stretch; display: flex; flex-direction: column;
+  background: var(--ps-bone); border: 0; border-top: 2px solid var(--ps-sienna);
+  padding: 30px 22px 26px; }
+.meta .board .tile { background: #221D19; border-top-color: var(--ps-gold); }
+.board .tile .l { font-family: var(--font-sans); font-weight: 600; font-size: 60px;
+  line-height: 1; color: var(--ps-sienna); margin-bottom: 24px; }
+.meta .board .tile .l { color: var(--ps-gold); }
+.board .tile .n { font-size: 28px; line-height: 1.08; margin-bottom: 14px; }
+.board .tile .bias { font-family: var(--font-mono); font-size: 13px; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--ps-sienna); line-height: 1.5;
+  margin-bottom: 0; padding-bottom: 16px; border-bottom: 1px solid var(--hairline); }
+.meta .board .tile .bias { border-bottom-color: rgba(245,240,232,.16); }
+.board .tile .p { font-family: var(--font-sans); font-size: 16px; line-height: 1.55;
+  color: var(--fg-2); margin-top: 16px; }
+/* the reveal tile: name above the rule, what it addresses and the problem below */
+.board .tile.answer .rule { height: 1px; background: var(--hairline); margin: 4px 0 16px; }
+.meta .board .tile.answer .rule { background: rgba(245,240,232,.16); }
+.board .tile.answer .bias { border-bottom: 0; padding-bottom: 0; margin-bottom: 14px; }
+.board .tile.answer .p { margin-top: 0; color: var(--ps-cream-ink); }
+/* the problem board: no letters, so the statement carries the tile */
+.board.problems .tile { border-top-color: var(--ps-sienna); }
+.board.problems .tile .n { font-size: 30px; line-height: 1.14; margin-bottom: 20px; }
+.board.problems .tile .bias { border-bottom: 0; padding-bottom: 0; margin-top: auto; }
+.board .tile .bias + .p { padding-top: 0; border-top: 0; }
+.meta .board .tile .p { color: #B5A899; }
+
+/* ── table house style ────────────────────────────────────────────────────
+   The shifts rig has its own .move — a solution-slide callout with a sienna
+   rule and 22px of padding. It collides with the matrix's .move COLUMN and
+   draws a bar hard against the first words of every row. Cells get room to
+   breathe instead, and no cell text sits against a rule. */
+.matrix td.move { border-left: 0; padding-left: 0; }
+.matrix td.scale { padding-left: 36px; }
+.matrix th, .matrix td { padding-right: 36px; }
+/* ── the references page ───────────────────────────────────────────────────
+   APA 7 on the left, numbered, and the provenance block on the right with its
+   References line removed because this page IS that line. Every claim in the
+   deck carries a bracketed number that points here. The template for any deck
+   that makes a claim. */
+.refpage { display: grid; grid-template-columns: 1.55fr 1fr; gap: 52px;
+  align-items: start; height: 100%; align-content: start; }
+.apa { list-style: none; counter-reset: r; margin: 0; padding: 0; }
+/* A hanging indent, the way APA sets a reference list. Deliberately not a grid:
+   the number and the entry are one flowing paragraph. */
+.apa li { counter-increment: r; font-family: var(--font-sans); font-size: 15px;
+  line-height: 1.4; margin-bottom: 10px; color: var(--fg-2);
+  padding-left: 34px; text-indent: -34px; }
+.apa li::before { content: counter(r) ".\00a0\00a0"; font-family: var(--font-mono);
+  font-size: 14px; color: var(--ps-sienna); }
+.meta .apa li { color: #B5A899; }
+sup.cite { font-family: var(--font-mono); font-size: .62em; color: var(--ps-sienna);
+  padding-left: 2px; vertical-align: super; }
+.meta sup.cite { color: #C95A33; }
+
+/* the references page: twelve short rows plus the block, so everything is
+   tightened until the page holds all of it without a second slide */
+.matrix.refs td { padding: 9px 26px 9px 0; font-size: 17px; }
+.matrix.refs td.own, .matrix.refs td.scale { font-family: var(--font-sans); font-size: 15px; }
+.matrix.refs td.move { font-size: 18px; }
+.matrix.refs td.scale { padding-left: 26px; white-space: nowrap; }
+.matrix.refs td.own:nth-child(4) { white-space: nowrap; }
+.refs + .pblock { margin-top: 24px; }
+.matrix.refs th { padding-bottom: 8px; }
+.pblock.small.boxed { padding: 16px 22px; gap: 8px 22px; grid-template-columns: 134px 1fr; }
+.pblock.small.boxed .v { font-size: 14px; line-height: 1.35; }
+.pblock.small.boxed .k { font-size: 13px; }
+.pblock.small.boxed .k, .pblock.small.boxed .v { padding-top: 6px; }
+.matrix th:last-child, .matrix td:last-child { padding-right: 0; }
+
+/* ── exercise slides: the timebox becomes the object ───────────────────────
+   Charcoal surface and a dial you can read from the back of the room, so a
+   participant knows this one is theirs to do before reading a word. */
+section.exercise { background: var(--ps-charcoal); color: var(--ps-cream-ink); }
+section.exercise h2, section.exercise p { color: var(--ps-cream-ink); }
+/* The badge is taller than the header text, so on a badged slide it pushed the
+   title 13px lower than every other slide. Take it out of the flow. */
+.hd { position: relative; }
+.hd .badge { position: absolute; right: 0; top: -8px; }
+
+.xwrap { display: grid; grid-template-columns: 430px 1fr; gap: 90px; align-items: start;
+  height: 100%; align-content: center; }
+/* A clock, not a doughnut: the divisions are the minutes, so the shape carries
+   the timebox rather than decorating it. --divs is set per exercise. */
+.xdial { position: relative; width: 430px; height: 430px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: var(--ps-sienna); }
+.xdial::before { content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: repeating-conic-gradient(from -90deg, var(--ps-charcoal) 0 1.6deg,
+    transparent 1.6deg calc(360deg / var(--divs, 10))); }
+.xdial::after { content: ""; position: absolute; inset: 34px; border-radius: 50%;
+  background: var(--ps-charcoal); }
+.xdial b { position: relative; z-index: 1; font-weight: 200; font-size: 168px;
+  line-height: 1; letter-spacing: -.04em; color: var(--ps-cream-ink); }
+.xunder { width: 430px; text-align: center; margin-top: 28px;
+  font-family: var(--font-mono); font-size: 19px; letter-spacing: .24em; line-height: 1.9;
+  color: var(--ps-gold); }
+.exercise .s { color: #B5A899; }
+.xwrap ol { list-style: none; counter-reset: x; margin: 0; padding: 0; }
+.xwrap ol li { counter-increment: x; display: grid; grid-template-columns: 48px 1fr;
+  gap: 20px; padding: 17px 0; border-top: 1px solid rgba(245,240,232,.14); margin: 0; }
+.xwrap ol li:first-child { border-top: 0; padding-top: 0; }
+.xwrap ol li::before { content: counter(x); font-family: var(--font-mono); font-size: 19px;
+  color: var(--ps-gold); }
+.xwrap ol li b { display: block; font-weight: 300; font-size: 27px; line-height: 1.2; }
+.xwrap ol li small { display: block; grid-column: 2; font-family: var(--font-sans); font-size: 16px;
+  line-height: 1.45; color: #B5A899; margin-top: 7px; }
+

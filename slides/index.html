@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <title>Peak State — deck templates</title>
+  <link rel="stylesheet" href="../colors_and_type.css">
+  <link rel="icon" href="../assets/diamond-gold.svg">
+  <style>
+    /* 1920×1080 slide canvas; deck-stage handles the scale-to-viewport. */
+    deck-stage > section {
+      width: 1920px; height: 1080px;
+      box-sizing: border-box; position: relative; overflow: hidden;
+      background: var(--ps-cream); color: var(--ps-charcoal-ink);
+      padding: 96px 128px;
+      display: flex; flex-direction: column;
+      font-family: var(--font-serif);
+    }
+    deck-stage > section.dark { background: var(--ps-charcoal); color: var(--ps-cream-ink); }
+    deck-stage > section.dark h1,
+    deck-stage > section.dark h2,
+    deck-stage > section.dark h3,
+    deck-stage > section.dark h4,
+    deck-stage > section.dark p { color: var(--ps-cream-ink); }
+    deck-stage > section.sand h1,
+    deck-stage > section.sand h2,
+    deck-stage > section.sand h3 { color: var(--ps-charcoal-ink); }
+    deck-stage > section.sand { background: var(--ps-sand); }
+
+    .slide-header {
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: var(--font-sans); font-size: 18px; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--fg-2);
+    }
+    .dark .slide-header { color: #B5A899; }
+
+    .slide-foot {
+      position: absolute; left: 128px; right: 128px; bottom: 64px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: var(--font-mono); font-size: 18px; color: var(--fg-2);
+      letter-spacing: 0.06em;
+    }
+    .dark .slide-foot { color: #847664; }
+
+    .chapter-mark {
+      display: inline-flex; align-items: center; gap: 18px;
+      font-family: var(--font-sans); font-weight: 500; font-size: 22px;
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--ps-gold);
+    }
+    .chapter-mark::before { content: ""; width: 56px; height: 1px; background: var(--ps-gold); }
+
+    .display { font-weight: 300; font-size: 144px; line-height: 1.0; letter-spacing: -0.02em; }
+    .h1      { font-weight: 300; font-size: 104px; line-height: 1.05; letter-spacing: -0.02em; }
+    .h2      { font-weight: 400; font-size: 72px;  line-height: 1.1;  letter-spacing: -0.01em; }
+    .lead    { font-weight: 300; font-style: italic; font-size: 36px; line-height: 1.4; color: var(--fg-2); }
+    .dark .lead { color: #B5A899; }
+    .body    { font-size: 28px; line-height: 1.55; }
+    .underline-accent {
+      background-image: linear-gradient(var(--ps-sienna), var(--ps-sienna));
+      background-repeat: no-repeat;
+      background-size: 100% 0.16em;
+      background-position: 0 92%;
+      padding: 0 0.04em;
+    }
+    .stat-gold {
+      background-image: linear-gradient(var(--ps-gold), var(--ps-gold));
+      background-repeat: no-repeat;
+      background-size: 100% 0.18em;
+      background-position: 0 90%;
+    }
+    .diamond-watermark {
+      position: absolute; right: -120px; top: -60px; width: 720px; opacity: 0.06;
+      pointer-events: none;
+    }
+    .dark .diamond-watermark { opacity: 0.10; }
+  </style>
+</head>
+<body>
+  <deck-stage>
+    <!-- 01 — Title -->
+    <section data-screen-label="01 Title" class="dark">
+      <img class="diamond-watermark" src="../assets/diamond-gold.svg" alt="">
+      <div class="slide-header" style="color:#B5A899;">
+        <span>Peak State Global</span>
+        <span style="font-family:var(--font-mono); letter-spacing:0.06em;">14 May 2026 · Sydney</span>
+      </div>
+      <div style="margin-top:auto;">
+        <div class="chapter-mark">III · Foresight roundtable</div>
+        <h1 class="display" style="margin-top:48px; max-width:1500px;">
+          AI changes the leader's <span class="underline-accent">job</span>,<br>not just the tools.
+        </h1>
+        <div class="lead" style="margin-top:48px; max-width:1100px;">
+          A half-day session for senior leaders on the assumptions worth re-examining before the next planning cycle.
+        </div>
+      </div>
+      <div class="slide-foot">
+        <span>Andrew Ramsden — peakstate.global</span>
+        <span>01 / 07</span>
+      </div>
+    </section>
+
+    <!-- 02 — Section divider -->
+    <section data-screen-label="02 Section" class="sand">
+      <div class="slide-header"><span>Pillar I — AI for today</span><span style="font-family:var(--font-mono);">Section 02</span></div>
+      <div style="margin:auto 0;">
+        <div class="chapter-mark" style="color:var(--ps-sienna);">
+          <style>section.sand .chapter-mark::before { background: var(--ps-sienna); }</style>
+          I · The fluency layer
+        </div>
+        <h1 class="h1" style="margin-top:36px; max-width:1500px;">Knowing what to do with AI, this quarter.</h1>
+        <p class="lead" style="margin-top:36px; max-width:1100px;">
+          Most rollouts stall at month four because the fluency layer was treated as training, not infrastructure.
+        </p>
+      </div>
+      <div class="slide-foot"><span>Pillar 1 of 4</span><span>02 / 07</span></div>
+    </section>
+
+    <!-- 03 — Content with bullets -->
+    <section data-screen-label="03 Content">
+      <div class="slide-header"><span>What we cover</span><span style="font-family:var(--font-mono);">03</span></div>
+      <h2 class="h2" style="margin-top:48px; max-width:1400px;">Three questions an executive cannot outsource.</h2>
+      <div style="margin-top:64px; display:grid; grid-template-columns:repeat(3, 1fr); gap:64px;">
+        <div>
+          <span style="font-family:var(--font-mono); font-size:22px; color:var(--ps-gold); letter-spacing:0.06em;">01</span>
+          <h3 style="font-family:var(--font-serif); font-weight:400; font-size:38px; line-height:1.2; margin:24px 0 18px;">Which assumptions does our strategy quietly bet on?</h3>
+          <p class="body" style="color:var(--fg-2); font-size:24px;">We name the AI-adjacent assumptions baked into the current plan, and surface the ones now worth re-pricing.</p>
+        </div>
+        <div>
+          <span style="font-family:var(--font-mono); font-size:22px; color:var(--ps-gold); letter-spacing:0.06em;">02</span>
+          <h3 style="font-family:var(--font-serif); font-weight:400; font-size:38px; line-height:1.2; margin:24px 0 18px;">Which moats are time-bound, which are not?</h3>
+          <p class="body" style="color:var(--fg-2); font-size:24px;">Cost-of-being-wrong has dropped. We work through which advantages are real and which are residual.</p>
+        </div>
+        <div>
+          <span style="font-family:var(--font-mono); font-size:22px; color:var(--ps-gold); letter-spacing:0.06em;">03</span>
+          <h3 style="font-family:var(--font-serif); font-weight:400; font-size:38px; line-height:1.2; margin:24px 0 18px;">What does the executive team's own job become?</h3>
+          <p class="body" style="color:var(--fg-2); font-size:24px;">Where leadership-of-leaders is changing — and what to stop doing in the next 90 days.</p>
+        </div>
+      </div>
+      <div class="slide-foot"><span>Foresight roundtable</span><span>03 / 07</span></div>
+    </section>
+
+    <!-- 04 — Big quote -->
+    <section data-screen-label="04 Quote">
+      <div class="slide-header"><span>Field note</span><span style="font-family:var(--font-mono);">04</span></div>
+      <div style="margin:auto 0; max-width:1500px;">
+        <div style="font-family:var(--font-serif); font-style:italic; font-weight:300; font-size:88px; line-height:1.15; letter-spacing:-0.01em;">
+          "Hard things are now easy. The question every executive owes themselves is which of last year's strategic assumptions that quietly invalidates."
+        </div>
+        <div style="margin-top:48px; display:flex; align-items:center; gap:18px;">
+          <img src="../assets/diamond-gold.svg" style="width:24px; height:auto;">
+          <span style="font-family:var(--font-sans); font-size:22px; letter-spacing:0.04em; color:var(--fg-2);">— Andrew Ramsden, May 2026</span>
+        </div>
+      </div>
+      <div class="slide-foot"><span>Peak State Global</span><span>04 / 07</span></div>
+    </section>
+
+    <!-- 05 — Big stat -->
+    <section data-screen-label="05 Stat" class="dark">
+      <img class="diamond-watermark" src="../assets/diamond-gold.svg" alt="">
+      <div class="slide-header" style="color:#B5A899;"><span>Tabcorp · Cohort academy</span><span style="font-family:var(--font-mono);">Pillar I · 2025</span></div>
+      <div style="margin:auto 0;">
+        <div style="font-family:var(--font-serif); font-weight:300; font-size:280px; line-height:0.95; letter-spacing:-0.03em; color:var(--ps-cream-ink);">
+          53<span style="color:var(--ps-gold);">→</span>71<span style="font-size:0.6em; color:#B5A899;">%</span>
+        </div>
+        <p style="margin-top:48px; font-family:var(--font-serif); font-weight:300; font-style:italic; font-size:42px; line-height:1.4; color:#D9CDB6; max-width:1300px;">
+          AI-fluency adoption across senior leadership, in nine weeks.
+        </p>
+      </div>
+      <div class="slide-foot" style="color:#847664;"><span>Tailored corporate workshop · 14 cohorts</span><span>05 / 07</span></div>
+    </section>
+
+    <!-- 06 — Comparison -->
+    <section data-screen-label="06 Comparison">
+      <div class="slide-header"><span>Then vs now</span><span style="font-family:var(--font-mono);">06</span></div>
+      <h2 class="h2" style="margin-top:36px; max-width:1500px;">The MVP was a hedge against the cost of being wrong.<br><span style="color:var(--fg-2);">The hedge is becoming free.</span></h2>
+      <div style="margin-top:80px; display:grid; grid-template-columns:1fr 1fr; gap:96px; flex:1;">
+        <div style="border-top:1px solid var(--hairline); padding-top:32px;">
+          <span style="font-family:var(--font-sans); font-weight:500; font-size:18px; letter-spacing:0.18em; text-transform:uppercase; color:var(--fg-2);">Last decade — agile + MVP</span>
+          <ul style="list-style:none; padding:0; margin:32px 0 0; display:flex; flex-direction:column; gap:24px;">
+            <li style="font-family:var(--font-serif); font-size:30px; line-height:1.4;">Build the smallest legible version, ship, learn.</li>
+            <li style="font-family:var(--font-serif); font-size:30px; line-height:1.4;">Quarterly reviews of what shipped.</li>
+            <li style="font-family:var(--font-serif); font-size:30px; line-height:1.4;">Bottleneck: engineering capacity.</li>
+          </ul>
+        </div>
+        <div style="border-top:1px solid var(--ps-sienna); padding-top:32px;">
+          <span style="font-family:var(--font-sans); font-weight:500; font-size:18px; letter-spacing:0.18em; text-transform:uppercase; color:var(--ps-sienna);">Next decade — parallels + questions</span>
+          <ul style="list-style:none; padding:0; margin:32px 0 0; display:flex; flex-direction:column; gap:24px;">
+            <li style="font-family:var(--font-serif); font-size:30px; line-height:1.4;">Three full versions, tested in parallel, decided monthly.</li>
+            <li style="font-family:var(--font-serif); font-size:30px; line-height:1.4;">Weekly hypothesis reviews.</li>
+            <li style="font-family:var(--font-serif); font-size:30px; line-height:1.4;">Bottleneck: <span class="stat-gold">the question being asked.</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="slide-foot"><span>The agile-and-MVP playbook is quietly invalidating itself.</span><span>06 / 07</span></div>
+    </section>
+
+    <!-- 07 — End / contact -->
+    <section data-screen-label="07 End" class="dark">
+      <img class="diamond-watermark" src="../assets/diamond-gold.svg" alt="" style="right:auto; left:50%; top:50%; transform:translate(-50%,-50%); width:520px; opacity:0.06;">
+      <div class="slide-header" style="color:#B5A899;"><span>Thank you</span><span style="font-family:var(--font-mono);">End</span></div>
+      <div style="margin:auto 0; position:relative;">
+        <div class="chapter-mark">Continue the conversation</div>
+        <h1 class="h1" style="margin-top:36px; color:var(--ps-cream-ink); max-width:1500px;">
+          The next planning cycle is the one that decides who leads well over the next decade.
+        </h1>
+        <div style="margin-top:64px; display:flex; gap:64px; align-items:baseline;">
+          <div>
+            <span style="font-family:var(--font-sans); font-weight:500; font-size:18px; letter-spacing:0.16em; text-transform:uppercase; color:#B5A899;">Andrew Ramsden</span>
+            <div style="font-family:var(--font-serif); font-size:32px; margin-top:14px; color:var(--ps-cream-ink);">andrew@peakstate.global</div>
+          </div>
+          <div>
+            <span style="font-family:var(--font-sans); font-weight:500; font-size:18px; letter-spacing:0.16em; text-transform:uppercase; color:#B5A899;">Read</span>
+            <div style="font-family:var(--font-serif); font-size:32px; margin-top:14px; color:var(--ps-cream-ink);">peakstate.global/essays</div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-foot" style="color:#847664;"><span>Peak State Global · Sydney</span><span>07 / 07</span></div>
+    </section>
+  </deck-stage>
+  <script src="deck-stage.js"></script>
+</body>
+</html>
