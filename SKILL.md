@@ -15,7 +15,7 @@ framework. `index.html?audit` reports per-slide overflow; "all N slides clean" i
 |---|---|
 | Author or edit a deck | `slides/README.md` — the runtime, the surfaces, the five treatments |
 | Scaffold a new deck | `python3 bin/deck init <folder> --theme peak-state` |
-| Export to PowerPoint | `python3 slides/export-pptx.py --deck /abs/path/index.html --theme peak-state` |
+| Export to PowerPoint | `python3 slides/export-pptx.py --deck /abs/path/index.html --theme peak-state`, then `reference/powerpoint-export.md` |
 | Add the review layer | The next section |
 | Work a returned payload | `reference/the-payload.md` |
 
@@ -123,3 +123,4 @@ Open one when its line is true of the work in front of you; never preload them.
 | `reference/identity.md` | Slides moved or were renamed, or the deck has states |
 | `reference/authoring.md` | You are writing or generating the deck itself |
 | `reference/internals.md` | You edited `deck-comments.js` and need to know what must still hold |
+| `reference/powerpoint-export.md` | You are exporting to PowerPoint, changing the exporter, or a deck came back from it wrong |
