@@ -50,8 +50,21 @@ HERE = Path(__file__).parent
 # --deck <file> exports any deck that implements ?export/dumpLayout — the SHIFT deck, the W1-W13
 # ways-of-working deck, and the consolidated great-AI-shifts deck all reuse the same measuring
 # routine. Takes a filename or a relative path, so decks outside this folder work too.
-DECK = HERE / (sys.argv[sys.argv.index("--deck") + 1] if "--deck" in sys.argv
-               else "shift-keynote-deck.html")
+def flag(name: str, default: str | None = None) -> str | None:
+    """The value after --name, or default.
+
+    Bounds-checked on purpose: `--deck` at the end of the line, or `--theme --public`,
+    used to read the next flag as a value and fail much later with a confusing message.
+    """
+    if name not in sys.argv:
+        return default
+    i = sys.argv.index(name) + 1
+    if i >= len(sys.argv) or sys.argv[i].startswith("--"):
+        sys.exit(f"{name} needs a value")
+    return sys.argv[i]
+
+
+DECK = HERE / flag("--deck", "shift-keynote-deck.html")
 if not DECK.exists():
     sys.exit(f"no deck at {DECK}. Pass --deck /abs/path/to/index.html")
 # --public exports the public-sector cut of the SHIFT deck (?public): four inversions re-metered
@@ -158,14 +171,16 @@ GENERIC_FACES = {"serif", "sans-serif", "monospace", "cursive", "fantasy",
 
 
 def load_theme() -> dict:
-    arg = (sys.argv[sys.argv.index("--theme") + 1] if "--theme" in sys.argv
-           else os.environ.get("DECK_THEME", "peak-state"))
+    arg = flag("--theme", os.environ.get("DECK_THEME", "peak-state"))
     if arg in ("", "none"):
         return {}
     given = Path(arg).expanduser()
     for cand in (given, given / "theme.json", HERE.parent / "themes" / arg / "theme.json"):
         if cand.is_file():
-            return json.loads(cand.read_text())
+            try:
+                return json.loads(cand.read_text())
+            except json.JSONDecodeError as e:
+                sys.exit(f"{cand} is not valid JSON: {e}")
     if "--theme" in sys.argv:
         sys.exit(f"no theme.json for --theme {arg}")
     return {}
@@ -208,14 +223,14 @@ def face(css_font_family: str | None) -> str:
 # The fonts are referenced, never shipped in this repository. Three places are
 # tried in order: DECK_FONT_DIR, a fonts/ folder at the repository root, and the
 # older design-system path.
-def font_dir() -> Path:
+def font_dir() -> Path | None:
     candidates = [os.environ.get("DECK_FONT_DIR"),
                   HERE.parent / "fonts",
                   Path.home() / ".claude/skills/peak-state-design/fonts"]
     for c in candidates:
         if c and Path(c).expanduser().is_dir():
             return Path(c).expanduser()
-    return HERE.parent / "fonts"
+    return None
 
 
 FONT_DIR = font_dir()
@@ -239,6 +254,11 @@ def embed_fonts(pptx_path: Path) -> None:
     rels = parts["ppt/_rels/presentation.xml.rels"].decode()
     next_id = max(int(n) for n in re.findall(r'Id="rId(\d+)"', rels)) + 1
     new_rels, font_list, n, missing = [], [], 0, []
+
+    if EMBED_FAMILIES and FONT_DIR is None:
+        print("  no font directory found, so nothing is embedded. Tried DECK_FONT_DIR, "
+              "<repo>/fonts and the design-system fonts folder.")
+        return
 
     for family, pattern in EMBED_FAMILIES.items():
         entry = [f'<p:embeddedFont><p:font typeface="{family}" pitchFamily="18" charset="0"/>']
