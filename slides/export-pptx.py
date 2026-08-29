@@ -346,6 +346,9 @@ def rgb(css, over=None):
     return RGBColor(*(int(round(v)) for v in (r, g, b)))
 
 
+NS_MC = "http://schemas.openxmlformats.org/markup-compatibility/2006"
+NS_P14 = "http://schemas.microsoft.com/office/powerpoint/2010/main"
+NS_P159 = "http://schemas.microsoft.com/office/powerpoint/2015/main"
 MORPH_MS = 700          # PowerPoint's morph is coarser than the deck's; 700 reads even
 
 def morph(slide) -> None:
@@ -372,7 +375,19 @@ def morph(slide) -> None:
         '</mc:Fallback>'
         '</mc:AlternateContent>'
     ).format(ms=MORPH_MS, p=P, **NS)
-    slide._element.append(parse_xml(xml))
+    # PowerPoint writes these namespaces on the SLIDE ROOT and lists them as
+    # ignorable. Without that, the reader is entitled to drop the whole
+    # AlternateContent block, which is exactly what it was doing: the morph was
+    # in the file, schema-valid, and never applied.
+    root = slide._element
+    for prefix, uri in (("p14", NS_P14), ("p159", NS_P159), ("mc", NS_MC)):
+        root.set(f"{{http://www.w3.org/2000/xmlns/}}{prefix}", uri)
+    IGNORABLE = f"{{{NS_MC}}}Ignorable"
+    ignorable = root.get(IGNORABLE) or ""
+    wanted = [t for t in ("p14", "p159") if t not in ignorable.split()]
+    if wanted:
+        root.set(IGNORABLE, " ".join(filter(None, [ignorable] + wanted)))
+    root.append(parse_xml(xml))
 
 
 
@@ -443,10 +458,14 @@ def build_layouts(prs, colours):
     """
     scratch = prs.slides.add_slide(prs.slide_layouts[6])
     out = {}
-    for i, colour in enumerate(colours[:2]):
-        lay = prs.slide_layouts[6 if i == 0 else 5]
+    # One layout per surface the deck actually uses, up to three. A surface with
+    # no layout keeps its own rectangle and is named in the summary.
+    stock = (6, 5, 4)
+    for i, colour in enumerate(colours[:3]):
+        lay = prs.slide_layouts[stock[i]]
         clear_layout(lay)
-        lay.name = LAYOUT_NAMES[i]
+        # A theme need not name every surface a deck turns out to use.
+        lay.name = LAYOUT_NAMES[i] if i < len(LAYOUT_NAMES) else f"Surface {i + 1}"
         bg = scratch.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0,
                                       prs.slide_width, prs.slide_height)
         bg.fill.solid()
@@ -457,6 +476,15 @@ def build_layouts(prs, colours):
         adopt(lay, bg, scratch, first=True)
         out[(colour[0], colour[1], colour[2])] = lay
     return out, scratch
+
+
+def lay_colour(layout):
+    """The layout's own background colour, read back off the rectangle."""
+    m = re.search(r'<a:srgbClr val="([0-9A-Fa-f]{6})"', layout._element.xml)
+    if not m:
+        return (0, 0, 0)
+    v = m.group(1)
+    return (int(v[0:2], 16), int(v[2:4], 16), int(v[4:6], 16))
 
 
 def layout_for(layouts, colour):
@@ -585,7 +613,26 @@ def svg_styles() -> str:
             "</style>")
 
 
-def raster(item: dict, tmp: Path, name: str) -> Path:
+def symbol_defs(markup: str) -> str:
+    """The <symbol> a <use href="#id"> points at, lifted out of the deck.
+
+    An inline SVG that references a symbol defined elsewhere in the page renders
+    as nothing once it is written to a file of its own — which is why the brand
+    diamond was missing from the export while being present on every slide.
+    """
+    ids = re.findall(r'href="#([\w-]+)"', markup) + re.findall(r'xlink:href="#([\w-]+)"', markup)
+    if not ids:
+        return ""
+    page = DECK.read_text(encoding="utf-8")
+    out = []
+    for i in ids:
+        m = re.search(rf'<symbol[^>]*id="{re.escape(i)}".*?</symbol>', page, re.S)
+        if m:
+            out.append(m.group(0))
+    return "<defs>" + "".join(out) + "</defs>" if out else ""
+
+
+def raster(item: dict, tmp: Path, name: str, recolour: RGBColor | None = None) -> Path:
     """SVG diagrams and the illustration ride along as pictures — only the text is editable."""
     if item["type"] == "img":
         src = item["src"]
@@ -602,7 +649,14 @@ def raster(item: dict, tmp: Path, name: str) -> Path:
     markup = item["svg"]
     if "xmlns" not in markup:  # inline SVG inherits the namespace from HTML; a file cannot
         markup = markup.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ', 1)
-    markup = markup.replace(">", ">" + svg_styles(), 1)  # styles go first inside <svg>
+    markup = markup.replace(">", ">" + svg_styles() + symbol_defs(markup), 1)
+    if recolour is not None:
+        # One ground needs one ink. The mark is drawn in the deck's light colour,
+        # which vanishes on a light layout.
+        hexcode = "#%02X%02X%02X" % (recolour[0], recolour[1], recolour[2])
+        markup = markup.replace("</svg>",
+                                f'<style>*{{fill:{hexcode}!important;'
+                                f'stroke:{hexcode}!important}}</style></svg>', 1)
     svg.write_text(
         '<?xml version="1.0"?>' + markup
         .replace("var(--m1)", "#5b8ac9").replace("var(--m2)", "#c9a227")
@@ -633,6 +687,8 @@ def main() -> None:
     found = surfaces(slides)
     layouts, scratch = build_layouts(prs, found)
     show_brand = bool(slides and slides[0].get("branding", True))
+    _grounds = [css_rgb(x.get("bg"), BG) for x in slides]
+    darkest_ink, lightest_ink = min(_grounds, key=sum), max(_grounds, key=sum)
     report = {"layouts": {}, "own_background": [], "brand_on_layout": 0,
               "surfaces": len(found), "numbers": 0}
     brand_done = False
@@ -665,10 +721,20 @@ def main() -> None:
                 brand = item.get("brand")
                 if brand == "mark":
                     # Held back and drawn once onto each layout, below. Identical
-                    # on every slide, so a copy per slide is 38 things to sync.
+                    # on every ordinary slide, so a copy per slide is 38 things
+                    # to sync. The title slide's own mark is marked "title" and
+                    # is NOT this: it sits top right and belongs to that slide.
                     if show_brand and not brand_done:
-                        brand_items.append(item)
+                        # Keep gathering until the mark is COMPLETE. The title
+                        # slide shows the diamond and hides the words, so a
+                        # collector that stops at the first slide carrying any
+                        # mark takes the diamond alone and the wordmark never
+                        # reaches a layout.
+                        if not any(b["type"] == item["type"] for b in brand_items):
+                            brand_items.append(item)
                     continue
+                if brand == "title":
+                    pass          # drawn on its own slide, like any other item
                 if brand == "number" and not show_brand:
                     continue
                 x, y = Emu(int(item["x"] * EMU_PER_PX)), Emu(int(item["y"] * EMU_PER_PX))
@@ -755,8 +821,12 @@ def main() -> None:
                     # box cut exactly to the browser's width clips or wraps a
                     # short string. A split shape is always a fragment — a word, a
                     # percentage — so it gets slack rather than a wrap.
-                    if item.get("morphName") and len(item.get("text", "").split()) <= 2:
-                        w = Emu(int(int(w) * 1.25))
+                    if item.get("morphName"):
+                        # A split shape is a FRAGMENT of a sentence, never a
+                        # paragraph. PowerPoint measures type wider than the
+                        # browser, so a box cut to the browser's width wraps a
+                        # fragment in half. Slack, and never wrap.
+                        w = Emu(int(int(w) * 1.3))
                     box = slide.shapes.add_textbox(x, y, w, h)
                     name_for_morph(box, item)
                     if item.get("brand") == "number":
@@ -766,7 +836,8 @@ def main() -> None:
                     # browser, so a short, deliberately-unbreakable string — a
                     # big stat like "78%" — wraps mid-number and collides with
                     # its own caption. Nothing that short was ever meant to wrap.
-                    tf.word_wrap = len(item.get("text", "").split()) > 2
+                    tf.word_wrap = (not item.get("morphName")
+                                    and len(item.get("text", "").split()) > 2)
                     pad = item.get("pad") or [0, 0, 0, 0]
                     tf.margin_top, tf.margin_right, tf.margin_bottom, tf.margin_left = (
                         Emu(int((v or 0) * EMU_PER_PX)) for v in pad)
@@ -815,7 +886,8 @@ def main() -> None:
                             if colour:
                                 run.font.color.rgb = colour
 
-            if brand_items:
+            # Done once the mark has both halves: the diamond and the words.
+            if len({b["type"] for b in brand_items}) >= 2:
                 brand_done = True
             slide.notes_slide.notes_text_frame.text = s["note"]
             if s.get("state"):
@@ -830,8 +902,14 @@ def main() -> None:
             for lay in layouts.values():
                 x = Emu(int(item["x"] * EMU_PER_PX)); y = Emu(int(item["y"] * EMU_PER_PX))
                 w = Emu(int(item["w"] * EMU_PER_PX)); h = Emu(int(item["h"] * EMU_PER_PX))
+                # The mark is lifted from ONE slide, so whatever ink it wore
+                # there is wrong for at least one layout. Ink is chosen per
+                # ground instead of inherited: the deck's lightest surface on a
+                # dark ground, its darkest on a light one.
+                dark_ground = sum(lay_colour(lay)) < 384
+                ink = lightest_ink if dark_ground else darkest_ink
                 if item["type"] in ("img", "svg"):
-                    png = raster(item, tmp, f"brand-{lay.name}-{item['type']}")
+                    png = raster(item, tmp, f"brand-{lay.name}-{item['type']}", recolour=ink)
                     pic = scratch.shapes.add_picture(str(png), x, y, w, h)
                     adopt(lay, pic, scratch)
                     report["brand_on_layout"] += 1
@@ -846,9 +924,7 @@ def main() -> None:
                     run.text = item.get("text", "")
                     run.font.size = Pt(item["size"] * PT_PER_PX)
                     run.font.name = face(item.get("font"))
-                    col = rgb(item.get("colour"))
-                    if col:
-                        run.font.color.rgb = col
+                    run.font.color.rgb = ink
                     adopt(lay, box, scratch)
                 report["brand_on_layout"] += 1
 
