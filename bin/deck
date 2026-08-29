@@ -131,6 +131,9 @@ and so on. Each file holds one `<section>`.
 
     python3 {export} --deck {deck}/index.html --theme {theme}
 
+Both paths are this machine's. On another machine, point the first at wherever
+`peakstate-deck` is cloned and the second at this folder.
+
 The exporter needs `python-pptx`. Fonts are found through `DECK_FONT_DIR`.
 """
 
