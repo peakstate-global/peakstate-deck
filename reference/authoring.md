@@ -47,6 +47,23 @@ expanded for the moment they blank on it. Reasoning about the slide belongs in a
 can be updated from the same round trip that carries the comments. Unedited notes
 are never copied; they are already in the source.
 
+## Narration scripts
+
+
+A deck destined for slidecast audio can carry a **narration script** per slide,
+separate from its speaker note: `<script type="application/json"
+id="slide-scripts">`, an array of `{index, script}` — the same shape and the
+same keying as `#speaker-notes`, sitting beside it. No sidecar file. A deck's
+default narration voice rides as a `<meta name="deck-voice" content="<ElevenLabs
+voice id>">` tag, next to `deck-build` and the other build meta tags.
+
+Both are optional. A deck with no `#slide-scripts` block and no `deck-voice` tag
+exports exactly as it always has.
+
+`export-pptx.py` concatenates the two into PowerPoint's one presenter-notes
+field: the script, a rule, then the note (`SCRIPT:` / `---` / `NOTES:`). A slide
+with no script keeps the plain note it always had.
+
 ## Hidden slides and performance mode
 
 

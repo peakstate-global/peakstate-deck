@@ -25,6 +25,13 @@
     var tag = document.getElementById('speaker-notes');
     if (tag) NOTES = JSON.parse(tag.textContent) || [];
   } catch (e) { NOTES = []; }
+  // Sibling of speaker-notes: array of {index, script}, same keying. Optional —
+  // a deck with no narration script carries no #slide-scripts tag at all.
+  var SCRIPTS = [];
+  try {
+    var scriptsTag = document.getElementById('slide-scripts');
+    if (scriptsTag) SCRIPTS = JSON.parse(scriptsTag.textContent) || [];
+  } catch (e) { SCRIPTS = []; }
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
 
   /* border-radius is resolved against the box, so "50%" and "999px" both mean
@@ -244,7 +251,8 @@
                bg: getComputedStyle(slide).backgroundColor,
                hidden: slide.hasAttribute('data-hidden-src') || slide.hasAttribute('data-hidden'),
                state: slide.getAttribute('data-state-group') || '',
-               items: items, note: (NOTES[idx] || {}).note || '' };
+               items: items, note: (NOTES[idx] || {}).note || '',
+               script: (SCRIPTS[idx] || {}).script || '' };
     });
     freeze.remove();
     var tag = document.createElement('script');
