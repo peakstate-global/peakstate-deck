@@ -145,3 +145,9 @@ Nothing in this file is legal advice.
 
 The engine lived in a Google Drive folder, unversioned, until 29 August 2026. Every fix up to
 that date arrived here in the first commit.
+
+## Publishing
+
+This tool builds, reviews and exports a deck. It does **not** publish one — there is no
+service here and nothing to sign up for. Putting a deck online is a private companion skill
+of the author's, not part of `peakstate-deck`.
