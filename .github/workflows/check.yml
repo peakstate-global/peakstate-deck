@@ -1,0 +1,39 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: No absolute home paths
+        run: python3 scripts/check-portable.py
+
+      - name: deck init scaffolds a deck that builds
+        run: |
+          python3 bin/deck init /tmp/deck-ci
+          cd /tmp/deck-ci
+          python3 build.py
+          test -s index.html
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install the review-layer test suite
+        working-directory: tests
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Playwright
+        working-directory: tests
+        run: npm test

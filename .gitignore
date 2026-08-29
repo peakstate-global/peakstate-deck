@@ -4,3 +4,5 @@ __pycache__/
 node_modules/
 *-editable.pptx
 tests/out/
+# Fonts are referenced, never shipped. See the README.
+fonts/

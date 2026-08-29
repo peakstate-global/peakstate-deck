@@ -8,14 +8,14 @@ description: Build an HTML slide deck, review it in the browser, and export it t
 One tool, three jobs: **author** a deck as a single standalone HTML file, **review** it in
 the browser and round-trip the comments, **export** it to native PowerPoint.
 
-A deck is one `index.html` with `deck-stage.js` beside it. No build step, no server, no
+A deck is one `index.html` with `deck-stage.js` and `deck-tools.js` beside it. No build step, no server, no
 framework. `index.html?audit` reports per-slide overflow; "all N slides clean" is the pass.
 
 | Job | Start here |
 |---|---|
 | Author or edit a deck | `slides/README.md` — the runtime, the surfaces, the five treatments |
-| Scaffold a new deck | Copy `slides/index.html` and `slides/deck-stage.js` side by side |
-| Export to PowerPoint | `~/.local/pptx-venv/bin/python slides/export-pptx.py --deck /abs/path/index.html` |
+| Scaffold a new deck | `python3 bin/deck init <folder> --theme peak-state` |
+| Export to PowerPoint | `python3 slides/export-pptx.py --deck /abs/path/index.html --theme peak-state` |
 | Add the review layer | The next section |
 | Work a returned payload | `reference/the-payload.md` |
 

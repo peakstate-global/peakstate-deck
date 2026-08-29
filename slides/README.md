@@ -2,11 +2,14 @@
 
 - `deck-stage.js` — the 1920×1080 presentation runtime. Slides are
   `deck-stage > section`; the live one carries `data-deck-active`.
-- `index.html` — the starter deck: title, section divider, content, big quote,
-  data point, comparison, end card.
-- `treatments.css` — five recurring slide types with real shape, below.
-- `deck-comments.js` — the review layer. See `SKILL.md` in this repository for the
-  four `<meta>` tags it needs and how to act on the payload it copies.
+- `deck-tools.js` — `?audit` and `?export`. Nothing in it runs unless asked.
+- `export-pptx.py` — the PowerPoint exporter.
+- `../themes/peak-state/deck.html` — an example deck: title, section divider,
+  content, big quote, data point, comparison, end card.
+- `../themes/peak-state/treatments.css` — five recurring slide types with real
+  shape, below. It needs the theme's `colors_and_type.css` loaded first.
+- `../assets/deck-comments.js` — the review layer. See `SKILL.md` in this
+  repository for the four `<meta>` tags it needs and how to act on its payload.
 
 Surfaces: default is bone, `.paper` is sand, `.meta` is charcoal. Sections are
 `position: relative` with `padding: 76px 120px 104px`, so an absolutely
@@ -200,8 +203,7 @@ distance and jumps the rest of the way as it releases.
 
 ## Exporting to PowerPoint
 
-    ~/.local/pptx-venv/bin/python ~/.claude/skills/peak-state-design/slides/export-pptx.py \
-      --deck /abs/path/to/index.html
+    python3 slides/export-pptx.py --deck /abs/path/to/index.html --theme peak-state
 
 The deck measures its own laid-out geometry under `?export` and emits it as JSON; the script turns
 that into real PowerPoint shapes, so the text is editable rather than a picture of text. It lives

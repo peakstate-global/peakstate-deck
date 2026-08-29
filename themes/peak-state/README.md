@@ -6,7 +6,7 @@ The Peak State Global look for the deck engine. Nothing in `slides/` needs it.
 |---|---|
 | `colors_and_type.css` | Every `--ps-*` colour, the type scale, and the `@font-face` rules. |
 | `treatments.css` | Five recurring slide shapes. Needs `colors_and_type.css` loaded first. |
-| `deck.html` | A seven-slide starter deck in the theme. `deck init --theme peak-state` copies it. |
+| `deck.html` | A seven-slide example deck in the theme. Open it, or copy slides out of it. |
 | `assets/` | The diamond and the logo mark. |
 | `theme.json` | The PowerPoint layout names and the font families the exporter uses. |
 

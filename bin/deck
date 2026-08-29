@@ -1,0 +1,192 @@
+#!/usr/bin/env python3
+"""deck — scaffold a deck that builds and opens straight away.
+
+    bin/deck init <folder> [--theme peak-state]
+
+A scaffolded deck is a folder of its own with no dependency back on this
+repository except the copied runtime. Without --theme it uses neutral colours
+and system fonts, so a clone with no theme still produces a readable deck.
+
+Python standard library only. No install step.
+"""
+import json
+import shutil
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+ENGINE = ("deck-stage.js", "deck-tools.js")   # copied into every scaffolded deck
+THEMES = REPO / "themes"
+
+# The stylesheet reaches for a theme variable first and falls back to a neutral
+# value, so ONE file works with a theme and without one.
+DECK_CSS = """/* The deck's own variables. Each one asks the theme first and falls back to a
+   neutral value, so this stylesheet works with a theme loaded and without. */
+:root {
+  --deck-bg:        var(--ps-cream, #ffffff);
+  --deck-fg:        var(--ps-charcoal-ink, #16130f);
+  --deck-bg-dark:   var(--ps-charcoal, #16130f);
+  --deck-fg-dark:   var(--ps-cream-ink, #f6f2ea);
+  --deck-muted:     var(--fg-2, #6b6660);
+  --deck-accent:    var(--ps-sienna, #8a3d1a);
+  --deck-serif:     var(--font-serif, Georgia, "Times New Roman", serif);
+  --deck-sans:      var(--font-sans, system-ui, -apple-system, sans-serif);
+  --deck-mono:      var(--font-mono, ui-monospace, "SFMono-Regular", monospace);
+}
+
+/* The 1920x1080 canvas. deck-stage.js scales it to the viewport. */
+deck-stage > section {
+  width: 1920px; height: 1080px;
+  box-sizing: border-box; position: relative; overflow: hidden;
+  padding: 96px 128px;
+  display: flex; flex-direction: column;
+  background: var(--deck-bg); color: var(--deck-fg);
+  font-family: var(--deck-serif);
+}
+deck-stage > section.dark { background: var(--deck-bg-dark); color: var(--deck-fg-dark); }
+
+.slide-header {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--deck-sans); font-size: 18px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--deck-muted);
+}
+.slide-foot {
+  position: absolute; left: 128px; right: 128px; bottom: 64px;
+  display: flex; justify-content: space-between;
+  font-family: var(--deck-mono); font-size: 18px; color: var(--deck-muted);
+}
+.h1   { font-weight: 300; font-size: 104px; line-height: 1.05; letter-spacing: -0.02em; margin: 0; }
+.lead { font-weight: 300; font-style: italic; font-size: 36px; line-height: 1.4;
+        color: var(--deck-muted); }
+.rule { width: 132px; height: 3px; background: var(--deck-accent); margin: 48px 0; }
+"""
+
+SLIDE = """<section data-screen-label="01 Title" class="dark">
+  <div class="slide-header"><span>Your organisation</span><span>Today</span></div>
+  <div style="margin-top:auto;">
+    <h1 class="h1" style="max-width:1500px;">The one sentence this deck is for.</h1>
+    <div class="rule"></div>
+    <p class="lead" style="max-width:1100px;">
+      Say who it is for and what they should decide by the end of it.
+    </p>
+  </div>
+  <div class="slide-foot"><span>A new deck</span><span>01</span></div>
+</section>
+"""
+
+BUILD_PY = '''#!/usr/bin/env python3
+"""Build index.html from every fragment in slides/, in filename order.
+
+    python3 build.py
+
+Each file in slides/ is one <section>. Rename them to reorder the deck.
+"""
+from pathlib import Path
+
+HERE = Path(__file__).parent
+TITLE = {title!r}
+HEAD = {head!r}
+
+sections = sorted(HERE.glob("slides/*.html"))
+if not sections:
+    raise SystemExit("no slide fragments in slides/")
+
+body = "\\n".join(p.read_text().rstrip() for p in sections)
+html = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{TITLE}}</title>
+{{HEAD}}
+</head>
+<body>
+<deck-stage>
+{{body}}
+</deck-stage>
+<script src="deck-stage.js"></script>
+<script src="deck-tools.js"></script>
+</body>
+</html>
+"""
+(HERE / "index.html").write_text(html)
+print(f"index.html — {{len(sections)}} slide(s)")
+'''
+
+BUILD_MD = """# {title}
+
+## Build
+
+    python3 build.py
+
+That reads every fragment in `slides/` and writes `index.html`. Open `index.html`
+in a browser to present it. Arrow keys move, `?audit` reports overflow, `?export`
+dumps the layout the PowerPoint exporter reads.
+
+## Add a slide
+
+Add a file to `slides/`. Filename order is slide order, so name them `01-`, `02-`
+and so on. Each file holds one `<section>`.
+
+## Export to PowerPoint
+
+    python3 {export} --deck {deck}/index.html --theme {theme}
+
+The exporter needs `python-pptx`. Fonts are found through `DECK_FONT_DIR`.
+"""
+
+
+def init(target: Path, theme_name: str | None) -> None:
+    if target.exists() and any(target.iterdir()):
+        sys.exit(f"{target} is not empty")
+    (target / "slides").mkdir(parents=True, exist_ok=True)
+
+    for name in ENGINE:
+        src = REPO / "slides" / name
+        if not src.is_file():
+            sys.exit(f"no runtime at {src}")
+        shutil.copy2(src, target / name)
+
+    css = DECK_CSS
+    head = ['<link rel="stylesheet" href="deck.css">']
+    slide = SLIDE
+
+    if theme_name:
+        theme_dir = THEMES / theme_name
+        manifest = theme_dir / "theme.json"
+        if not manifest.is_file():
+            sys.exit(f"no theme named {theme_name} in {THEMES}")
+        theme = json.loads(manifest.read_text())
+        for name in theme.get("copy", []):
+            src = theme_dir / name
+            if src.is_dir():
+                shutil.copytree(src, target / name)
+            elif src.is_file():
+                shutil.copy2(src, target / name)
+        # The theme's stylesheets go first, so deck.css can read their variables.
+        head = [f'<link rel="stylesheet" href="{n}">'
+                for n in theme.get("copy", []) if n.endswith(".css")] + head
+        # The theme also ships a fuller example deck. It is a reference, not a
+        # scaffold, so it stays in the theme folder.
+
+    (target / "deck.css").write_text(css)
+    (target / "slides" / "01-title.html").write_text(slide)
+    (target / "build.py").write_text(
+        BUILD_PY.format(title=target.name, head="\n".join(head)))
+    (target / "build.py").chmod(0o755)
+    (target / "BUILD.md").write_text(BUILD_MD.format(
+        title=target.name,
+        export=REPO / "slides" / "export-pptx.py",
+        deck=target,
+        theme=theme_name or "none"))
+    print(f"{target}\n  python3 build.py")
+
+
+def main(argv: list[str]) -> None:
+    if len(argv) < 2 or argv[0] != "init":
+        sys.exit(__doc__)
+    theme = argv[argv.index("--theme") + 1] if "--theme" in argv else None
+    init(Path(argv[1]).expanduser().resolve(), theme)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
