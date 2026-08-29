@@ -5,7 +5,7 @@
 - `index.html` — the starter deck: title, section divider, content, big quote,
   data point, comparison, end card.
 - `treatments.css` — five recurring slide types with real shape, below.
-- `deck-comments.js` — the review layer. See the `deck-review` skill for the
+- `deck-comments.js` — the review layer. See `SKILL.md` in this repository for the
   four `<meta>` tags it needs and how to act on the payload it copies.
 
 Surfaces: default is bone, `.paper` is sand, `.meta` is charcoal. Sections are
