@@ -369,7 +369,10 @@ def rgb(css, over=None):
 
 NS_MC = "http://schemas.openxmlformats.org/markup-compatibility/2006"
 NS_P14 = "http://schemas.microsoft.com/office/powerpoint/2010/main"
-NS_P159 = "http://schemas.microsoft.com/office/powerpoint/2015/main"
+# The morph namespace ends in /2015/09/main. Without the "09" PowerPoint does
+# not recognise the Choice, drops to the Fallback, and every build fades.
+# Taken from a file PowerPoint itself wrote, not from documentation.
+NS_P159 = "http://schemas.microsoft.com/office/powerpoint/2015/09/main"
 MORPH_MS = 700          # PowerPoint's morph is coarser than the deck's; 700 reads even
 
 def morph(slide) -> None:
@@ -381,13 +384,14 @@ def morph(slide) -> None:
     transition after clrMapOvr, which is where appending lands it.
     """
     P = 'http://schemas.openxmlformats.org/presentationml/2006/main'
-    NS = {'mc': 'http://schemas.openxmlformats.org/markup-compatibility/2006',
-          'p14': 'http://schemas.microsoft.com/office/powerpoint/2010/main',
-          'p159': 'http://schemas.microsoft.com/office/powerpoint/2015/main'}
+    # One source for these, so the URI cannot drift between the constant and the
+    # string that is actually written. It already did: the constant was correct
+    # and this dict was not, and every build fell back to a fade.
+    NS = {'mc': NS_MC, 'p14': NS_P14, 'p159': NS_P159}
     xml = (
         '<mc:AlternateContent xmlns:mc="{mc}" xmlns:p="{p}">'
         '<mc:Choice xmlns:p159="{p159}" Requires="p159">'
-        '<p:transition xmlns:p14="{p14}" spd="slow" p14:dur="{ms}">'
+        '<p:transition spd="slow" xmlns:p14="{p14}" p14:dur="{ms}">'
         '<p159:morph option="byObject"/>'
         '</p:transition>'
         '</mc:Choice>'
@@ -546,6 +550,18 @@ def unmatched_morphs(slides):
     return out
 
 
+def track(run, item) -> None:
+    """Carry the deck's letter-spacing onto a run.
+
+    PowerPoint measures tracking in hundredths of a point on rPr/@spc. Dropping
+    it makes every tracked line — the wordmark, the eyebrows, the numerals —
+    arrive noticeably tighter than the deck draws them.
+    """
+    px = item.get("spacing") or 0
+    if abs(px) > 0.01:
+        run.font._rPr.set("spc", str(int(round(px * PT_PER_PX * 100))))
+
+
 def name_for_morph(shape, item) -> None:
     """Give a shape the name the deck asked for.
 
@@ -558,6 +574,35 @@ def name_for_morph(shape, item) -> None:
     n = item.get("morphName")
     if n:
         shape._element._nvXxPr.cNvPr.set("name", n)
+
+
+def validate_package(pptx_path: Path):
+    """Every XML part must parse, and none may carry a junk namespace.
+
+    This exists because a file was shipped that PowerPoint offered to repair, and
+    repairing meant deleting nine slides. The cause was lxml writing
+    `ns0:p14="..."` — an attribute in the xmlns namespace, which is not valid
+    XML — when asked to add a namespace declaration to an element it had already
+    built. The output looked fine to every check that existed at the time.
+
+    Checking the saved package catches that shape of mistake and any other that
+    produces XML a reader will refuse, whatever wrote it. It costs a second.
+    """
+    from xml.dom.minidom import parseString
+    problems = []
+    with zipfile.ZipFile(pptx_path) as z:
+        for name in z.namelist():
+            if not name.endswith((".xml", ".rels")):
+                continue
+            data = z.read(name)
+            try:
+                parseString(data)
+            except Exception as e:
+                problems.append((name, f"will not parse: {e}"))
+                continue
+            if b"ns0:" in data or b'xmlns="http://www.w3.org/2000/xmlns/"' in data:
+                problems.append((name, "carries a junk namespace declaration"))
+    return problems
 
 
 def declare_morph_namespaces(pptx_path: Path) -> int:
@@ -658,23 +703,29 @@ def svg_styles() -> str:
             "</style>")
 
 
-def symbol_defs(markup: str) -> str:
-    """The <symbol> a <use href="#id"> points at, lifted out of the deck.
+def inline_symbols(markup: str) -> str:
+    """Resolve <use href="#id"> against the deck, into a file that stands alone.
 
-    An inline SVG that references a symbol defined elsewhere in the page renders
-    as nothing once it is written to a file of its own — which is why the brand
-    diamond was missing from the export while being present on every slide.
+    An inline SVG that points at a <symbol> defined elsewhere in the page renders
+    as nothing once it is written to its own file, which is why the brand diamond
+    kept arriving as an empty picture. Copying the symbol in as <defs> is not
+    enough either: the symbol carries the viewBox, and without one the root SVG
+    has no coordinate system and paints nothing. Both travel.
     """
-    ids = re.findall(r'href="#([\w-]+)"', markup) + re.findall(r'xlink:href="#([\w-]+)"', markup)
+    ids = re.findall(r'(?:xlink:)?href="#([\w-]+)"', markup)
     if not ids:
-        return ""
+        return markup
     page = DECK.read_text(encoding="utf-8")
-    out = []
     for i in ids:
-        m = re.search(rf'<symbol[^>]*id="{re.escape(i)}".*?</symbol>', page, re.S)
-        if m:
-            out.append(m.group(0))
-    return "<defs>" + "".join(out) + "</defs>" if out else ""
+        m = re.search(rf'<symbol[^>]*id="{re.escape(i)}"[^>]*>(.*?)</symbol>', page, re.S)
+        if not m:
+            continue
+        box = re.search(r'viewBox="([^"]+)"', m.group(0))
+        if box and "viewBox" not in markup.split(">", 1)[0]:
+            markup = markup.replace("<svg", f'<svg viewBox="{box.group(1)}"', 1)
+        markup = re.sub(rf'<use[^>]*(?:xlink:)?href="#{re.escape(i)}"[^>]*(?:/>|>\s*</use>)',
+                        m.group(1), markup, count=1)
+    return markup
 
 
 def raster(item: dict, tmp: Path, name: str, recolour: RGBColor | None = None) -> Path:
@@ -694,7 +745,11 @@ def raster(item: dict, tmp: Path, name: str, recolour: RGBColor | None = None) -
     markup = item["svg"]
     if "xmlns" not in markup:  # inline SVG inherits the namespace from HTML; a file cannot
         markup = markup.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ', 1)
-    markup = markup.replace(">", ">" + svg_styles() + symbol_defs(markup), 1)
+    markup = inline_symbols(markup)
+    if " width=" not in markup.split(">", 1)[0]:
+        # The deck sized this in CSS the file cannot see.
+        markup = markup.replace("<svg", f'<svg width="{item["w"]:.0f}" height="{item["h"]:.0f}"', 1)
+    markup = markup.replace(">", ">" + svg_styles(), 1)
     if recolour is not None:
         # One ground needs one ink. The mark is drawn in the deck's light colour,
         # which vanishes on a light layout.
@@ -923,6 +978,7 @@ def main() -> None:
                             run.font.bold = (spec.get("weight") or 400) >= 600
                             run.font.italic = bool(spec.get("italic"))
                             run.font.name = face(spec.get("font") or item.get("font"))
+                            track(run, item)
                             if spec.get("underline"):
                                 accent_underline(run, spec["underline"])
                             if spec.get("strike"):  # python-pptx has no strike property
@@ -970,6 +1026,7 @@ def main() -> None:
                     run.font.size = Pt(item["size"] * PT_PER_PX)
                     run.font.name = face(item.get("font"))
                     run.font.color.rgb = ink
+                    track(run, item)
                     adopt(lay, box, scratch)
                 report["brand_on_layout"] += 1
 
@@ -1016,7 +1073,13 @@ def main() -> None:
         print(f"  WARNING: a named morph shape appears on one slide of a pair and not the "
               f"other, so that morph will not happen: {lonely}")
     embed_fonts(OUT)
-    print(f"  morph namespaces    declared on {declare_morph_namespaces(OUT)} slide(s)")
+    bad = validate_package(OUT)
+    if bad:
+        print("\n  THE FILE IS BROKEN. PowerPoint will offer to repair it and will delete parts:")
+        for part, why in bad:
+            print(f"    {part}: {why}")
+        sys.exit(2)
+    print("  package             every part parses, no junk namespaces")
     print(f"\n{OUT}")
 
 
