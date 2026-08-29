@@ -34,6 +34,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 
 from pptx import Presentation
@@ -375,19 +376,12 @@ def morph(slide) -> None:
         '</mc:Fallback>'
         '</mc:AlternateContent>'
     ).format(ms=MORPH_MS, p=P, **NS)
-    # PowerPoint writes these namespaces on the SLIDE ROOT and lists them as
-    # ignorable. Without that, the reader is entitled to drop the whole
-    # AlternateContent block, which is exactly what it was doing: the morph was
-    # in the file, schema-valid, and never applied.
-    root = slide._element
-    for prefix, uri in (("p14", NS_P14), ("p159", NS_P159), ("mc", NS_MC)):
-        root.set(f"{{http://www.w3.org/2000/xmlns/}}{prefix}", uri)
-    IGNORABLE = f"{{{NS_MC}}}Ignorable"
-    ignorable = root.get(IGNORABLE) or ""
-    wanted = [t for t in ("p14", "p159") if t not in ignorable.split()]
-    if wanted:
-        root.set(IGNORABLE, " ".join(filter(None, [ignorable] + wanted)))
-    root.append(parse_xml(xml))
+    # The namespaces this needs on the slide root are added AFTER the file is
+    # saved, by declare_morph_namespaces. lxml cannot add a namespace
+    # DECLARATION to an element it has already built: it writes it as an
+    # ordinary attribute in the xmlns namespace, which is not valid XML, and
+    # PowerPoint repairs such a file by deleting every slide that carries one.
+    slide._element.append(parse_xml(xml))
 
 
 
@@ -544,6 +538,37 @@ def name_for_morph(shape, item) -> None:
     n = item.get("morphName")
     if n:
         shape._element._nvXxPr.cNvPr.set("name", n)
+
+
+def declare_morph_namespaces(pptx_path: Path) -> int:
+    """Declare p14 and p159 on every slide that carries a morph, in the SAVED file.
+
+    PowerPoint writes these on the slide root and lists them as ignorable.
+    Without that a reader may drop the whole AlternateContent block, and it does:
+    the morph sits in the file, schema-valid, and never applies.
+
+    It happens on the packaged XML because the alternative is asking lxml to add
+    a namespace declaration to an element it has already built, which it cannot
+    do — it emits `ns0:p14="..."` instead, and a file with that in it is one
+    PowerPoint offers to repair by deleting the slides that carry it.
+    """
+    tmpf = pptx_path.with_suffix(".tmp.pptx")
+    touched = 0
+    with zipfile.ZipFile(pptx_path) as zin, zipfile.ZipFile(tmpf, "w", zipfile.ZIP_DEFLATED) as zout:
+        for info in zin.infolist():
+            data = zin.read(info.filename)
+            if info.filename.startswith("ppt/slides/slide") and b"p159:morph" in data:
+                text = data.decode("utf-8")
+                tag = re.search(r"<p:sld\b[^>]*>", text)
+                if tag and "xmlns:p159" not in tag.group(0):
+                    fixed = tag.group(0)[:-1] + (
+                        f' xmlns:mc="{NS_MC}" xmlns:p14="{NS_P14}" xmlns:p159="{NS_P159}"'
+                        ' mc:Ignorable="p14 p159">')
+                    data = text.replace(tag.group(0), fixed, 1).encode("utf-8")
+                    touched += 1
+            zout.writestr(info, data)
+    tmpf.replace(pptx_path)
+    return touched
 
 
 def hide(slide) -> None:
@@ -971,6 +996,7 @@ def main() -> None:
         print(f"  WARNING: a named morph shape appears on one slide of a pair and not the "
               f"other, so that morph will not happen: {lonely}")
     embed_fonts(OUT)
+    print(f"  morph namespaces    declared on {declare_morph_namespaces(OUT)} slide(s)")
     print(f"\n{OUT}")
 
 
