@@ -1,0 +1,16 @@
+{
+  "name": "peak-state",
+  "description": "Peak State Global. Cream and charcoal surfaces, sienna and gold accents, Spectral / Inter / JetBrains Mono.",
+  "template": "deck.html",
+  "copy": ["colors_and_type.css", "treatments.css", "assets"],
+  "layoutNames": ["PS Dark", "PS Light"],
+  "fonts": {
+    "faces": ["Spectral", "Inter", "JetBrains Mono"],
+    "fallbackFace": "Helvetica Neue",
+    "embed": {
+      "Spectral": "Spectral-{}.ttf",
+      "JetBrains Mono": "JetBrainsMono-{}.ttf",
+      "Inter": "Inter-{}.ttf"
+    }
+  }
+}

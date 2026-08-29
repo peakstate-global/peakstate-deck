@@ -147,11 +147,37 @@ def rotate_text(shape) -> None:
     el.spPr.xfrm.ext.cx, el.spPr.xfrm.ext.cy = cy, cx
 
 
-# The deck names three families; everything else in its font stacks is a
+# ── The theme: layout names and font families ─────────────────────────────────
+# A theme is optional. --theme <name|path|none>, or DECK_THEME in the
+# environment. A bare name is looked up under <repo>/themes/<name>/theme.json.
+# With no theme the exporter still runs: the layouts are called Dark and Light
+# and no fonts are embedded.
+GENERIC_FACES = {"serif", "sans-serif", "monospace", "cursive", "fantasy",
+                 "system-ui", "ui-serif", "ui-sans-serif", "ui-monospace"}
+
+
+def load_theme() -> dict:
+    arg = (sys.argv[sys.argv.index("--theme") + 1] if "--theme" in sys.argv
+           else os.environ.get("DECK_THEME", "peak-state"))
+    if arg in ("", "none"):
+        return {}
+    given = Path(arg).expanduser()
+    for cand in (given, given / "theme.json", HERE.parent / "themes" / arg / "theme.json"):
+        if cand.is_file():
+            return json.loads(cand.read_text())
+    if "--theme" in sys.argv:
+        sys.exit(f"no theme.json for --theme {arg}")
+    return {}
+
+
+THEME = load_theme()
+_THEME_FONTS = THEME.get("fonts", {})
+
+# The theme names its families; everything else in a CSS font stack is a
 # fallback the browser only reaches when the real one is missing. Take the first
 # name and keep it, so PowerPoint asks for the same face the deck drew with.
-KNOWN_FACES = ("Spectral", "Inter", "JetBrains Mono")
-FALLBACK_FACE = "Helvetica Neue"
+KNOWN_FACES = tuple(_THEME_FONTS.get("faces", ()))
+FALLBACK_FACE = _THEME_FONTS.get("fallbackFace", "Helvetica Neue")
 
 
 def face(css_font_family: str | None) -> str:
@@ -163,6 +189,13 @@ def face(css_font_family: str | None) -> str:
         for known in KNOWN_FACES:
             if name.lower() == known.lower():
                 return known
+    if not KNOWN_FACES:
+        # No theme to match against, so trust the deck: the first real name in
+        # the stack is the face it drew with.
+        for part in css_font_family.split(","):
+            name = part.strip().strip("\"'")
+            if name and name.lower() not in GENERIC_FACES:
+                return name
     return FALLBACK_FACE
 
 
@@ -171,12 +204,21 @@ def face(css_font_family: str | None) -> str:
 # italic, boldItalic — so the deck's finer weights (Spectral 200/300, Inter
 # 500/600) are synthesised by the renderer from the nearest slot. Keep the fonts
 # installed locally as well; embedding is for the people you send the file to.
-FONT_DIR = Path.home() / ".claude/skills/peak-state-design/fonts"
-EMBED_FAMILIES = {
-    "Spectral": "Spectral-{}.ttf",
-    "JetBrains Mono": "JetBrainsMono-{}.ttf",
-    "Inter": "Inter-{}.ttf",
-}
+# The fonts are referenced, never shipped in this repository. Three places are
+# tried in order: DECK_FONT_DIR, a fonts/ folder at the repository root, and the
+# older design-system path.
+def font_dir() -> Path:
+    candidates = [os.environ.get("DECK_FONT_DIR"),
+                  HERE.parent / "fonts",
+                  Path.home() / ".claude/skills/peak-state-design/fonts"]
+    for c in candidates:
+        if c and Path(c).expanduser().is_dir():
+            return Path(c).expanduser()
+    return HERE.parent / "fonts"
+
+
+FONT_DIR = font_dir()
+EMBED_FAMILIES = _THEME_FONTS.get("embed", {})
 FONT_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/font"
 SLOTS = (("regular", "Regular"), ("bold", "Bold"),
          ("italic", "Italic"), ("boldItalic", "BoldItalic"))
@@ -339,7 +381,7 @@ def morph(slide) -> None:
 # and light. Copying a full-bleed rectangle and a brand mark onto all 38 slides
 # makes 38 things to keep in sync; putting them on a LAYOUT makes one. Change the
 # dark colour in the master and every dark slide follows.
-LAYOUT_NAMES = ("PS Dark", "PS Light")
+LAYOUT_NAMES = tuple(THEME.get("layoutNames", ("Dark", "Light")))
 COLOUR_TOLERANCE = 8          # two surfaces this close are the same surface
 
 
@@ -848,7 +890,7 @@ def main() -> None:
     print(f"  hidden slides       {sum(1 for s in slides if s.get('hidden'))}")
     print(f"  morph transitions   {sum(1 for s in slides if s.get('state'))}")
     print(f"  notes carried       {sum(1 for s in slides if (s.get('note') or '').strip())}")
-    lonely = unmatched_morphs(slides)
+    lonely = sorted(unmatched_morphs(slides))  # sorted: the finder returns a set
     if lonely:
         print(f"  WARNING: a named morph shape appears on one slide of a pair and not the "
               f"other, so that morph will not happen: {lonely}")
