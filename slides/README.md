@@ -205,15 +205,8 @@ distance and jumps the rest of the way as it releases.
 
     python3 slides/export-pptx.py --deck /abs/path/to/index.html --theme peak-state
 
-The deck measures its own laid-out geometry under `?export` and emits it as JSON; the script turns
-that into real PowerPoint shapes, so the text is editable rather than a picture of text. It lives
-here, with the rig, because every deck built on `deck-stage.js` exports the same way and a copy per
-project goes stale.
+The contract it obeys, and every trap that has cost a rebuild, are in
+`reference/powerpoint-export.md`. Read that file before changing the exporter or diagnosing a deck
+that came back wrong — the failures in it are all silent ones: a picture with no ink, a transition
+that falls through to a fade, a file PowerPoint offers to repair by deleting slides.
 
-The contract it obeys:
-
-- **A state exports as its own slide.** Entry and exit animations are dropped.
-- **Every state slide gets the Morph transition**, which is the nearest PowerPoint has to what the
-  flash animations do.
-- **A hidden slide exports as a hidden PowerPoint slide**, not as a missing one.
-- **Speaker notes go into the presenter notes field**, one slide for one note.
