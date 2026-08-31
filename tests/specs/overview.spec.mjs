@@ -10,7 +10,9 @@ test('the Overview button opens the grid, one tile per slide, thumbnails drawn',
   await page.locator('.dcx-bar [data-a="overview"]').click();
   await expect(page.locator('.dcx-ov')).toBeVisible();
   await expect(tiles(page)).toHaveCount(8);
-  await expect(page.locator('.dcx-ovhdr .count')).toHaveText('All 8 slides');
+  // The header says what the deck is made of, not only how many survived a
+  // filter. Slide 7 is data-hidden-src in the fixture.
+  await expect(page.locator('.dcx-ovhdr .count')).toHaveText('8 slides \u00b7 1 hidden');
   // The tile is the real slide, deep-cloned. A blank frame is the fault to
   // catch: the clone is there but nothing in it is visible.
   const thumb = page.locator('.dcx-ovthumb').first();

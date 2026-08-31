@@ -87,16 +87,16 @@ test('starring from a slide, by the bar button and by the S key', async ({ page 
   await goToSlide(page, 3);
   const star = page.locator('.dcx-bar [data-a="star"]');
   await expect(star).toHaveAttribute('aria-pressed', 'false');
-  await expect(star).toHaveText('☆');
+  await expect(star.locator('svg[data-icon="starOff"]')).toHaveCount(1);
 
   await star.click();
   await expect(star).toHaveAttribute('aria-pressed', 'true');
-  await expect(star).toHaveText('★');
+  await expect(star.locator('svg[data-icon="starOn"]')).toHaveCount(1);
   await expect(star).toHaveAttribute('aria-label', /Slide 3 is starred\. Click, or press S, to remove the star\./);
 
   await page.locator('body').press('s');
   await expect(star).toHaveAttribute('aria-pressed', 'false');
-  await expect(star).toHaveText('☆');
+  await expect(star.locator('svg[data-icon="starOff"]')).toHaveCount(1);
 
   // The state follows the slide, not the button.
   await page.locator('body').press('s');
@@ -126,14 +126,17 @@ test('Starred only names its state and reports the filtered count', async ({ pag
   await goToSlide(page, 1);
   await openOverview(page);
   const fs = page.locator('.dcx-ovhdr [data-a="filterstar"]');
-  await expect(fs).toHaveText('☆ Starred only: off');
+  // One grammar across the three toggles: the label says what turning it on
+  // does and never changes, aria-pressed says whether it is on.
+  await expect(fs).toHaveText('Show starred only');
   await expect(fs).toHaveAttribute('aria-pressed', 'false');
 
   await fs.click();
-  await expect(fs).toHaveText('★ Starred only: on');
+  await expect(fs).toHaveText('Show starred only');
   await expect(fs).toHaveAttribute('aria-pressed', 'true');
   // Slide 1 is the origin slide, so the filter keeps it and flags it.
-  await expect(page.locator('.dcx-ovhdr .count')).toHaveText('Showing 4 of 8');
+  await expect(page.locator('.dcx-ovhdr .count'))
+    .toHaveText('4 of 8 slides \u00b7 1 hidden \u00b7 3 starred');
   await expect(tiles(page).nth(0).locator('.dcx-f-fo')).toHaveText('FILTERED OUT');
   await expect(tiles(page).nth(0)).toHaveClass(/filtered/);
   await shot(page, 'overview-filter-starred');
@@ -146,11 +149,13 @@ test('Hidden slides toggle leaves the hidden ones out', async ({ page }) => {
   const fh = page.locator('.dcx-ovhdr [data-a="filterhidden"]');
   // Slide 7 is data-hidden-src in the fixture.
   await expect(tiles(page)).toHaveCount(8);
-  await expect(fh).toHaveText('◉ Hidden slides: shown');
-  await fh.click();
-  await expect(fh).toHaveText('⊘ Hidden slides: left out');
+  await expect(fh).toHaveText('Show hidden slides');
   await expect(fh).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('.dcx-ovhdr .count')).toHaveText('Showing 7 of 8');
+  await fh.click();
+  await expect(fh).toHaveText('Show hidden slides');
+  await expect(fh).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('.dcx-ovhdr .count'))
+    .toHaveText('7 of 8 slides \u00b7 1 hidden');
 });
 
 test('reorder refuses while a filter is on, and says why', async ({ page }) => {
@@ -187,12 +192,13 @@ test('the lit Slide comment state goes on and off with no reload, and the tile a
   await openDeck(page);
   await goToSlide(page, 5);
   const btn = page.locator('.dcx-bar [data-a="slide"]');
-  await expect(btn).toHaveText('💬 Slide comment');
+  await expect(btn).toHaveText('Slide comment');
+  await expect(btn.locator('svg[data-icon="comment"]')).toHaveCount(1);
   await expect(btn).toHaveAttribute('aria-label', /No slide comment on slide 5/);
 
   await btn.click();
   await writeComment(page, 'Say what the stamp lets a reader check.');
-  await expect(btn).toHaveText('● 💬 Slide comment');
+  await expect(btn).toHaveText('● Slide comment');
   await expect(btn).toHaveClass(/on/);
   await expect(btn).toHaveAttribute('aria-label', /Slide 5 has a slide comment/);
 
@@ -206,7 +212,7 @@ test('the lit Slide comment state goes on and off with no reload, and the tile a
   const item = page.locator('.dcx-panel .item').filter({ hasText: 'Slide 5' });
   await item.locator('[data-a="del"]').click();
   await item.locator('[data-a="del"]').click();
-  await expect(btn).toHaveText('💬 Slide comment');
+  await expect(btn).toHaveText('Slide comment');
   await expect(btn).not.toHaveClass(/on/);
 
   await openOverview(page);

@@ -100,8 +100,8 @@ on it — the user has read that round already.
 
 ## Branding on and off
 
-The reader can hide the branding on every slide: the diamond control in the bar, or **Branding:
-on/off** in the overview. It is a view setting, saved with the deck's other review state.
+The reader can hide the branding on every slide: the diamond control in the bar, or **Show
+branding** in the overview. It is a view setting, saved with the deck's other review state.
 
 The toggle only puts `deck-nobrand` on `<html>`. **What counts as branding is the deck's own
 call**, so a deck opts in by styling it:
@@ -111,6 +111,23 @@ call**, so a deck opts in by styling it:
 
 A deck that never wrote that rule ignores the toggle, which is the right failure: this layer does
 not get to guess which marks are yours.
+
+## The control surfaces
+
+Two rules hold across the bar and the overview, and a change that breaks either is a defect.
+
+- **Icons are inline SVG, never emoji.** Emoji render differently on every platform, carry a
+  colour nobody chose, and sit at whatever weight the font decides. Every icon comes from the
+  `ICON` map in `deck-comments.js` and carries `data-icon="<name>"`, which is also how a test
+  asserts which state is drawn.
+- **A toggle's label says what turning it on does, and never changes.** `Show starred only`,
+  `Show hidden slides`, `Show branding`. Whether it is on lives in `aria-pressed`, not in the
+  words. A label that flips between "on" and "off" makes the reader work out which state the
+  words are describing.
+
+The bar rests at 62 per cent opacity and wakes on hover or keyboard focus. Per-tile controls in
+the overview appear on hover or focus only, so the grid reads as slides rather than as a wall of
+buttons. The status strip under a tile is drawn only when it has something true to say.
 
 ## Companion files
 

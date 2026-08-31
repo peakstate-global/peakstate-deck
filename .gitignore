@@ -6,3 +6,4 @@ node_modules/
 tests/out/
 # Fonts are referenced, never shipped. See the README.
 fonts/
+test-results/

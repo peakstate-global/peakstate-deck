@@ -157,12 +157,24 @@
   css.textContent = [
     '.dcx,.dcx *{box-sizing:border-box}',
     '.dcx{position:fixed;z-index:2147483000;font-family:"Inter",system-ui,sans-serif}',
-    '.dcx-bar{top:16px;right:16px;display:flex;align-items:center;gap:4px;',
-    '  background:rgba(14,10,8,.92);border:1px solid rgba(245,240,232,.16);border-radius:999px;',
-    '  padding:6px 8px;box-shadow:0 6px 24px rgba(0,0,0,.4)}',
+    // The bar floats over the deck's own content, so it rests until it is
+    // wanted. It never goes below legible, and it wakes on hover and on
+    // keyboard focus, so it is not a mouse-only affordance.
+    '.dcx-bar{top:16px;right:16px;display:flex;align-items:center;gap:2px;',
+    '  background:rgba(14,10,8,.92);border:1px solid rgba(245,240,232,.16);border-radius:12px;',
+    '  padding:5px 6px;box-shadow:0 6px 24px rgba(0,0,0,.4);opacity:.62;',
+    '  transition:opacity .18s ease-out}',
+    '.dcx-bar:hover,.dcx-bar:focus-within,.dcx-bar.awake{opacity:1}',
+    '.dcx-bar .pos{font:500 11px/1 "JetBrains Mono",monospace;letter-spacing:.1em;',
+    '  color:#8B8079;padding:0 9px 0 5px;white-space:nowrap}',
     '.dcx-bar button{appearance:none;border:0;background:transparent;color:#F5F0E8;cursor:pointer;',
-    '  font:500 13px/1 "Inter",system-ui,sans-serif;padding:8px 12px;border-radius:999px;',
+    '  font:500 13px/1 "Inter",system-ui,sans-serif;padding:8px 9px;border-radius:8px;',
     '  display:flex;align-items:center;gap:7px}',
+    '.dcx-bar button.word{padding:8px 12px}',
+    '.dcx-bar svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.5;fill:none;',
+    '  stroke-linecap:round;stroke-linejoin:round;flex:none}',
+    '.dcx-bar button.on{background:rgba(169,61,26,.92)}',
+    '.dcx-bar .lead{font-size:9px;line-height:1;color:#F5F0E8}',
     // display:flex above beats the UA rule for [hidden], so a control that hides
     // itself off a build needs this or it never goes away.
     '.dcx-bar button[hidden]{display:none}',
@@ -251,9 +263,18 @@
     '  flex-wrap:wrap;background:rgba(10,8,6,.99);padding:18px 2px 14px;margin-bottom:6px}',
     '.dcx-ovhdr b{font:500 11px/1 "JetBrains Mono",monospace;letter-spacing:.18em;',
     '  text-transform:uppercase;color:#D0B561}',
-    '.dcx-ovhdr .hint{font:400 12px/1.4 "Inter",sans-serif;color:#8B8079;max-width:640px;',
-    '  flex:1 1 240px;min-width:0}',
-    '.dcx-ovhdr .sp{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-self:center}',
+    '.dcx-ovhdr .hint{font:400 12px/1.5 "Inter",sans-serif;color:#8B8079;max-width:640px;',
+    '  flex:0 0 auto;min-width:0}',
+    '.dcx-ovhdr .hint summary{cursor:pointer;color:#B5A899;list-style:none;',
+    '  font:500 11px/1 "Inter",sans-serif;padding:6px 9px;border-radius:5px;',
+    '  border:1px solid rgba(245,240,232,.14)}',
+    '.dcx-ovhdr .hint summary::-webkit-details-marker{display:none}',
+    '.dcx-ovhdr .hint summary:hover{color:#F5F0E8;background:rgba(245,240,232,.08)}',
+    '.dcx-ovhdr .hint[open]{flex:1 1 100%;order:9;padding-top:4px}',
+    '.dcx-ovhdr .sp{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-self:center;',
+    '  align-items:center}',
+    '.dcx-ovhdr .sp .rule{width:1px;align-self:stretch;margin:2px 2px;',
+    '  background:rgba(245,240,232,.16)}',
     '.dcx-ovhdr .sp span{font:500 11px/1 "Inter",sans-serif;color:#B5A899;cursor:pointer;',
     '  border:1px solid rgba(245,240,232,.18);border-radius:5px;padding:7px 10px}',
     '.dcx-ovhdr .sp span:hover{color:#F5F0E8;background:rgba(245,240,232,.08)}',
@@ -266,20 +287,25 @@
     '  color:#B5A899;white-space:nowrap}',
     '.dcx-ovgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));',
     '  gap:18px;max-width:1520px;margin:0 auto}',
-    '.dcx-ovtile{position:relative;border:2px solid rgba(245,240,232,.14);border-radius:9px;',
-    '  background:#0E0A08;padding:8px;cursor:pointer}',
-    '.dcx-ovtile:hover{border-color:rgba(245,240,232,.34)}',
-    '.dcx-ovtile:focus-visible{outline:3px solid #D0B561;outline-offset:3px}',
-    '.dcx-ovtile.starred{border-color:#D0B561;box-shadow:0 0 0 1px rgba(208,181,97,.4)}',
+    '.dcx-ovtile{position:relative;border:0;background:transparent;padding:0;cursor:pointer}',
+    '.dcx-ovtile .dcx-ovthumb{border:2px solid rgba(245,240,232,.14);transition:border-color .15s}',
+    '.dcx-ovtile:hover .dcx-ovthumb{border-color:rgba(245,240,232,.34)}',
+    '.dcx-ovtile:focus-visible{outline:3px solid #D0B561;outline-offset:3px;border-radius:6px}',
+    '.dcx-ovtile.starred .dcx-ovthumb{border-color:#D0B561}',
     '.dcx-ovtile.dragging{opacity:.35}',
     '.dcx-ovtile.over{border-color:#A93D1A}',
-    '.dcx-ovtop{display:flex;align-items:center;gap:6px;margin-bottom:7px}',
+    '.dcx-ovtop{display:flex;align-items:center;gap:6px;margin-bottom:6px;min-height:26px}',
+    '.dcx-ovtop .btns{opacity:0;transition:opacity .12s ease-out}',
+    '.dcx-ovtile:hover .dcx-ovtop .btns,.dcx-ovtile:focus-within .dcx-ovtop .btns,',
+    '.dcx-ovtop .btns:focus-within{opacity:1}',
+    '.dcx-ovtop button svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.5;',
+    '  fill:none;stroke-linecap:round;stroke-linejoin:round;display:block}',
     '.dcx-ovtop .pos{font:600 12px/1 "JetBrains Mono",monospace;color:#F5F0E8}',
     '.dcx-ovtop .pos em{font-style:normal;color:#D0B561;font-size:10px;letter-spacing:.1em}',
-    '.dcx-ovtop .btns{margin-left:auto;display:flex;gap:4px}',
+    '.dcx-ovtop .btns{margin-left:auto;display:flex;gap:3px}',
     '.dcx-ovtop button{appearance:none;border:1px solid rgba(245,240,232,.18);background:transparent;',
-    '  color:#F5F0E8;border-radius:5px;padding:4px 7px;cursor:pointer;font:400 13px/1 "Inter",sans-serif;',
-    '  position:relative}',
+    '  color:#F5F0E8;border-radius:5px;padding:4px 6px;cursor:pointer;font:400 13px/1 "Inter",sans-serif;',
+    '  position:relative;display:inline-flex;align-items:center;gap:2px}',
     '.dcx-ovtop button:hover{background:rgba(245,240,232,.12)}',
     '.dcx-ovtop button:focus-visible{outline:2px solid #D0B561;outline-offset:2px}',
     '.dcx-ovtop button[aria-pressed="true"]{background:#D0B561;border-color:#D0B561;color:#0E0A08}',
@@ -339,25 +365,71 @@
     document.head.appendChild(hlCss);
   }
 
+  /* ── icons ────────────────────────────────────────────────────────────────
+     Inline SVG at one stroke weight, in currentColor, so hover, focus, the
+     dimmed state and the pressed state all reach the glyph as well as the
+     button. Emoji cannot do any of that: they render differently on every
+     platform, carry a colour nobody chose, and sit at whatever weight the
+     font decides. */
+  var ICON = {
+    comment: '<path d="M20.5 11.5a7.5 7.5 0 0 1-7.5 7.5H8.6L4.5 21.8a.4.4 0 0 1-.6-.35V17.6'
+           + 'A7.5 7.5 0 0 1 8.4 4h4.6a7.5 7.5 0 0 1 7.5 7.5Z"/>',
+    eye:     '<path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/>'
+           + '<circle cx="12" cy="12" r="2.6"/>',
+    brandOn: '<path d="m12 2.6 9.4 9.4-9.4 9.4L2.6 12Z" fill="currentColor"/>',
+    brandOff:'<path d="m12 2.6 9.4 9.4-9.4 9.4L2.6 12Z"/>',
+    starOn:  '<path d="m12 2.8 2.85 6.05 6.55.85-4.8 4.6 1.2 6.6L12 17.75 6.2 20.9l1.2-6.6'
+           + '-4.8-4.6 6.55-.85Z" fill="currentColor"/>',
+    starOff: '<path d="m12 2.8 2.85 6.05 6.55.85-4.8 4.6 1.2 6.6L12 17.75 6.2 20.9l1.2-6.6'
+           + '-4.8-4.6 6.55-.85Z"/>',
+    /* a page with a slash through it, per the brief */
+    hidden:  '<path d="M6 3.2h7.2L18 8v12.8H6Z"/><path d="M13 3.2V8h5"/><path d="m4.6 21 15-18"/>',
+    /* a page with lines on it */
+    note:    '<path d="M6 3.2h7.2L18 8v12.8H6Z"/><path d="M13 3.2V8h5"/>'
+           + '<path d="M9 12.4h6M9 16h4"/>',
+    grid:    '<rect x="3.2" y="4.2" width="7.2" height="6.2" rx="1.1"/>'
+           + '<rect x="13.6" y="4.2" width="7.2" height="6.2" rx="1.1"/>'
+           + '<rect x="3.2" y="13.6" width="7.2" height="6.2" rx="1.1"/>'
+           + '<rect x="13.6" y="13.6" width="7.2" height="6.2" rx="1.1"/>',
+    play:    '<path d="M6.4 3.6 19.6 12 6.4 20.4Z" fill="currentColor" stroke-linejoin="round"/>',
+    copy:    '<rect x="9" y="9" width="11.4" height="11.4" rx="2.2"/>'
+           + '<path d="M15 5.2V4.6a2 2 0 0 0-2-2H5.6a2 2 0 0 0-2 2V13a2 2 0 0 0 2 2h.6"/>',
+    pinOn:   '<path d="M7 3.4h10v13l-5-3.2-5 3.2Z" fill="currentColor"/>',
+    pinOff:  '<path d="M7 3.4h10v13l-5-3.2-5 3.2Z"/>'
+  };
+
+  function svg(name) {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true" data-icon="' + name + '">'
+      + ICON[name] + '</svg>';
+  }
+  // Swap a button's glyph without disturbing any word beside it.
+  function setIcon(btn, name) {
+    var i = btn.querySelector('svg');
+    if (i) i.outerHTML = svg(name);
+    else btn.insertAdjacentHTML('afterbegin', svg(name));
+  }
+
   /* ── chrome ─────────────────────────────────────────────────────────── */
   var bar = el('div', 'dcx dcx-bar');
   bar.innerHTML =
-    /* Grouped by what the control acts on: this slide's content, then this
-       slide's state, then the deck, then the round trip. */
-    '<button data-a="slide" title="Write the slide comment for this slide">&#128172; Slide comment</button>' +
-    (HL_OK ? '<button data-a="marks" title="Show or hide comment highlights">&#128065;</button>' : '') +
-    '<button data-a="brand" title="Show or hide the branding on every slide">&#9670;</button>' +
-    '<button data-a="notes" title="Speaker notes for this slide">&#128221; Notes</button>' +
+    /* Four groups, in the order the deck's owner set: what this slide says,
+       then what this slide is, then the deck, then the round trip. Words only
+       on the three controls that leave the slide you are looking at. */
+    '<span class="pos" aria-hidden="true">&ndash;</span>' +
+    '<button data-a="slide" title="Write the slide comment for this slide">' + svg('comment') + ' Slide comment</button>' +
+    (HL_OK ? '<button data-a="marks" title="Show or hide comment highlights">' + svg('eye') + '</button>' : '') +
+    '<button data-a="brand" title="Show or hide the branding on every slide">' + svg('brandOn') + '</button>' +
     '<span class="sep"></span>' +
-    '<button data-a="star" aria-pressed="false" title="Star this slide (S)">&#9734;</button>' +
-    '<button data-a="hide" title="Hide this slide from performance mode">&#128683;</button>' +
-    '<button data-a="primary" title="Make this state the page that prints">&#9671;</button>' +
+    '<button data-a="star" aria-pressed="false" title="Star this slide (S)">' + svg('starOff') + '</button>' +
+    '<button data-a="hide" title="Hide this slide from performance mode">' + svg('hidden') + '</button>' +
+    '<button data-a="notes" title="Speaker notes for this slide">' + svg('note') + '</button>' +
+    '<button data-a="primary" title="Make this state the page that prints">' + svg('pinOff') + '</button>' +
     '<span class="sep"></span>' +
-    '<button data-a="overview" title="Overview: every slide, with star, hide and reorder">&#9638; Overview</button>' +
-    '<button data-a="perform" title="Performance mode: full screen, no editing, Esc to exit">&#9654; Present</button>' +
+    '<button data-a="overview" class="word" title="Overview: every slide, with star, hide and reorder">' + svg('grid') + ' Overview</button>' +
+    '<button data-a="perform" class="word" title="Performance mode: full screen, no editing, Esc to exit">' + svg('play') + ' Present</button>' +
     '<span class="sep"></span>' +
     '<button data-a="list" title="Show all comments"><span class="dcx-count zero">0</span></button>' +
-    '<button data-a="copy" title="Copy the comments JSON for Claude">&#128203; Copy</button>';
+    '<button data-a="copy" class="word" title="Copy the payload for Claude">' + svg('copy') + ' Copy</button>';
   document.body.appendChild(bar);
 
   var panel = el('div', 'dcx dcx-panel');
@@ -417,7 +489,18 @@
     });
     var cur = currentSlide();
     var hb = bar.querySelector('[data-a="hide"]');
-    if (hb) hb.classList.toggle('on', !!cur.node && cur.node.hasAttribute('data-hidden'));
+    if (hb) {
+      var hOn = !!cur.node && cur.node.hasAttribute('data-hidden');
+      hb.classList.toggle('on', hOn);
+      hb.setAttribute('aria-pressed', hOn ? 'true' : 'false');
+      hb.title = hOn
+        ? 'Slide ' + cur.index + ' is hidden. Click to show it again.'
+        : 'Hide slide ' + cur.index + ' from performance mode';
+      hb.setAttribute('aria-label', hb.title);
+    }
+    // Which slide the state controls above are acting on, said beside them.
+    var posEl = bar.querySelector('.pos');
+    if (posEl) posEl.textContent = cur.index + ' / ' + slides().length;
     badge.style.display = (cur.node && cur.node.hasAttribute('data-hidden') && !performing)
       ? 'block' : 'none';
   }
@@ -978,16 +1061,20 @@
   ov.setAttribute('aria-label', 'Slide overview');
   ov.style.display = 'none';
   ov.innerHTML =
+    // The keyboard is a reference, not an instruction: it is read once and never
+    // again, so it collapses instead of holding the top of every visit.
     '<div class="dcx-ovhdr"><b>Overview</b><span class="count"></span>' +
     '<span class="build"></span>' +
-    '<span class="hint">Click a slide to jump to it. Drag a slide, or hold Alt and press the ' +
+    '<details class="hint"><summary>? Keys</summary>' +
+    'Click a slide to jump to it. Drag a slide, or hold Alt and press the ' +
     'left or right arrow, to reorder. With a slide focused: S stars, H hides or shows, ' +
     'C writes the slide comment here, without leaving this page. Tab stays inside this ' +
-    'page. Esc goes back to the slide you came from.</span>' +
+    'page. Esc goes back to the slide you came from.</details>' +
     '<span class="sp">' +
     '<span data-a="filterstar" role="button" tabindex="0" aria-pressed="false"></span>' +
     '<span data-a="filterhidden" role="button" tabindex="0" aria-pressed="false"></span>' +
     '<span data-a="brand" role="button" tabindex="0" aria-pressed="true"></span>' +
+    '<i class="rule"></i>' +
     '<span data-a="resetorder" role="button" tabindex="0">Reset order</span>' +
     '<span data-a="close" role="button" tabindex="0">Close</span></span></div>' +
     '<div class="dcx-ovgrid" role="list"></div>';
@@ -1088,22 +1175,23 @@
     var ob = ov.querySelector('[data-a="brand"]');
     if (ob) {
       var brandOn = state.showBrand !== false;
-      ob.textContent = brandOn ? '\u25C6 Branding: on' : '\u25C7 Branding: off';
+      ob.textContent = 'Show branding';
       ob.setAttribute('aria-pressed', brandOn ? 'true' : 'false');
       ob.setAttribute('aria-label', ob.textContent);
       ob.title = brandOn ? 'Branding shows on every slide. Click to hide it.'
                          : 'Branding is hidden. Click to show it.';
     }
     var fs = ov.querySelector('[data-a="filterstar"]');
-    fs.textContent = state.ovStarredOnly ? '\u2605 Starred only: on' : '\u2606 Starred only: off';
+    fs.textContent = 'Show starred only';
     fs.setAttribute('aria-pressed', state.ovStarredOnly ? 'true' : 'false');
     fs.setAttribute('aria-label', fs.textContent);
     fs.title = state.ovStarredOnly ? 'Showing starred slides only. Click to show them all.'
                                    : 'Show only the slides you starred';
     var fh = ov.querySelector('[data-a="filterhidden"]');
-    fh.textContent = state.ovShowHidden ? '\u25C9 Hidden slides: shown'
-                                        : '\u2298 Hidden slides: left out';
-    fh.setAttribute('aria-pressed', state.ovShowHidden ? 'false' : 'true');
+    // Every toggle here reads as the thing it does when it is on, and its
+    // pressed state says whether it is. Three controls, one grammar.
+    fh.textContent = 'Show hidden slides';
+    fh.setAttribute('aria-pressed', state.ovShowHidden ? 'true' : 'false');
     fh.setAttribute('aria-label', fh.textContent);
     fh.title = state.ovShowHidden ? 'Leave the hidden slides out of this page'
                                   : 'Hidden slides are left out. Click to show them.';
@@ -1152,27 +1240,28 @@
           (moved ? ' <em>was ' + (BUILD_IDS.indexOf(idOf(sec)) + 1) + '</em>' : '') + '</span><span class="btns">' +
         '<button type="button" data-a="star" aria-pressed="' + st + '" ' +
           'aria-label="Star slide ' + n + '" title="Star this slide (S)">' +
-          (st ? '★' : '☆') + '</button>' +
+          svg(st ? 'starOn' : 'starOff') + '</button>' +
         '<button type="button" data-a="hide" aria-pressed="' + hd + '" ' +
           'aria-label="Hide or show slide ' + n + '" title="Hide or show this slide (H)">' +
-          (hd ? '\u2298' : '\u25C9') + '</button>' +
+          svg('hidden') + '</button>' +
         '<button type="button" data-a="cmt" aria-label="' +
           (sc ? 'Slide ' + n + ' has a slide comment. Read or edit it'
               : 'Write the slide comment for slide ' + n) + '" ' +
           'title="' + (sc ? 'Slide ' + n + ' has a slide comment (C)'
-                          : 'Slide comment (C)') + '">💬' +
+                          : 'Slide comment (C)') + '">' + svg('comment') +
           (sc || cm ? '<i>' + (sc ? '\u25CF' : '') + (only ? '' : cm) + '</i>' : '') + '</button>' +
         (groupOf(sec) ? '<button type="button" data-a="primary" aria-pressed="' +
           (effPrimary(sec) ? 'true' : 'false') + '" aria-label="Make slide ' + n +
           ' the page that prints" title="Make primary: the one state of this build that ' +
-          'reaches print (P)">' + (effPrimary(sec) ? '\u25C6' : '\u25C7') + '</button>' : '') +
+          'reaches print (P)">' + svg(effPrimary(sec) ? 'pinOn' : 'pinOff') + '</button>' : '') +
         '<button type="button" data-a="note" aria-label="Edit the speaker note for slide ' + n +
-          '" title="Edit this slide\'s speaker note (N)">📝' +
+          '" title="Edit this slide\'s speaker note (N)">' + svg('note') +
           (state.noteEdits[n] !== undefined ? '<i>\u2713</i>' : '') + '</button>' +
         '</span></div>' +
         '<div class="dcx-ovthumb" data-slide="' + n + '"></div>' +
         '<div class="dcx-ovlabel"></div>' +
-        '<div class="dcx-ovflags">' +
+        ((st || hd || moved || (groupOf(sec) && effPrimary(sec)) || sc || cm || !pass)
+          ? '<div class="dcx-ovflags">' +
           (st ? '<span class="dcx-f-st">★ STARRED</span>' : '') +
           (hd ? '<span class="dcx-f-hd">HIDDEN</span>' : '') +
           (moved ? '<span class="dcx-f-mv">MOVED</span>' : '') +
@@ -1181,7 +1270,7 @@
           (cm && !only ? '<span class="dcx-f-cm">' + cm + ' COMMENT' +
             (cm === 1 ? '' : 'S') + '</span>' : '') +
           (pass ? '' : '<span class="dcx-f-fo">FILTERED OUT</span>') +
-        '</div>';
+        '</div>' : '');
       t.querySelector('.dcx-ovlabel').textContent = 'Slide ' + n + ' · ' + (labelOf(sec) || '—');
       var frame = t.querySelector('.dcx-ovthumb');
       frame.style.aspectRatio = String(ar);
@@ -1203,9 +1292,18 @@
         (edited ? ' \u00b7 your edits ' + edited : ' \u00b7 no local edits');
       bEl.title = 'The build this grid is showing, and when you last changed something in it.';
     }
+    // What the deck is made of, in the order a presenter asks it: how many
+    // slides, how many will not be shown, how many were marked to come back to.
+    var nHidden = 0, nStar = 0;
+    full.forEach(function (n) {
+      if (effHidden(n, slideNode(n))) nHidden++;
+      if (state.starred[n]) nStar++;
+    });
     ov.querySelector('.dcx-ovhdr .count').textContent =
-      shown === full.length ? 'All ' + full.length + ' slides'
-                            : 'Showing ' + shown + ' of ' + full.length;
+      (shown === full.length ? full.length + ' slides'
+                             : shown + ' of ' + full.length + ' slides') +
+      (nHidden ? ' \u00b7 ' + nHidden + ' hidden' : '') +
+      (nStar ? ' \u00b7 ' + nStar + ' starred' : '');
     if (!shown) {
       ovGrid.innerHTML = '<p class="dcx-ovempty">No slide matches the filters above. ' +
         'Turn one off to see the rest of the deck.</p>';
@@ -1664,7 +1762,7 @@
     if (bb2) {
       var on = state.showBrand !== false;
       bb2.classList.toggle('off', !on);
-      bb2.textContent = on ? '\u25C6' : '\u25C7';
+      setIcon(bb2, on ? 'brandOn' : 'brandOff');
       bb2.setAttribute('aria-pressed', on ? 'true' : 'false');
       bb2.title = on ? 'Branding is showing. Hide it on every slide'
                      : 'Branding is hidden. Show it on every slide';
@@ -1677,7 +1775,7 @@
       pb.hidden = !pg;
       if (pg) {
         var on = effPrimary(pcur.node);
-        pb.textContent = on ? '\u25C6' : '\u25C7';
+        setIcon(pb, on ? 'pinOn' : 'pinOff');
         pb.classList.toggle('on', on);
         pb.setAttribute('aria-pressed', on ? 'true' : 'false');
         pb.title = on ? 'This state is the page that prints'
@@ -1690,7 +1788,7 @@
     var sb = bar.querySelector('[data-a="star"]');
     if (sb) {
       var cn = currentSlide().index, on = !!state.starred[cn];
-      sb.textContent = (on ? '\u2605' : '\u2606');
+      setIcon(sb, on ? 'starOn' : 'starOff');
       sb.setAttribute('aria-label', on ? 'Starred. Remove the star from this slide'
                                        : 'Star this slide');
       sb.classList.toggle('on', on);
@@ -1705,7 +1803,8 @@
     var cb = bar.querySelector('[data-a="slide"]');
     if (cb) {
       var ci = currentSlide().index, hasC = hasSlideComment(ci);
-      cb.textContent = (hasC ? '\u25CF ' : '') + '\uD83D\uDCAC Slide comment';
+      cb.innerHTML = (hasC ? '<span class="lead">\u25CF</span>' : '')
+        + svg('comment') + ' Slide comment';
       cb.classList.toggle('on', hasC);
       cb.title = hasC
         ? 'Slide ' + ci + ' has a slide comment. Click to read or edit it.'
