@@ -282,6 +282,12 @@
       [].forEach.call(c.querySelectorAll('*'), function (el) {
         var r = el.getBoundingClientRect();
         if (!r.height && !r.width) return;
+        // Decoration that is placed absolutely and takes no pointer events is
+        // meant to bleed off the edge, and the slide clips it. Measuring its
+        // unclipped box reports an overflow that nobody can see. The same
+        // exemption the footer check already makes, made here.
+        var cs = getComputedStyle(el);
+        if (cs.position === 'absolute' && cs.pointerEvents === 'none') return;
         var b = r.bottom - box.top, rr = r.right - box.left;
         if (b > maxB) { maxB = b; culprit = el.tagName.toLowerCase() + '.' + (el.className || '?'); }
         if (rr > maxR) maxR = rr;
@@ -305,7 +311,11 @@
           if (el.children.length) return;                 // only leaf boxes
           var r = el.getBoundingClientRect();
           if (!r.height || !r.width) return;
-          if (r.bottom > ftTop + 1) {
+          // Crossing IN is the defect: the box starts above the band and ends
+          // inside it. A box that begins inside the band is footer furniture,
+          // put there on purpose. A deck whose footer is a row of cells has only
+          // one of them marked .ft, and the siblings beside it are not faults.
+          if (r.bottom > ftTop + 1 && r.top < ftTop - 1) {
             bad++;
             out.push('   ! FOOTER clash ' + el.tagName.toLowerCase() + '.' +
                      (el.className || '?') + ' bottom=' + Math.round(r.bottom) +
