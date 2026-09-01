@@ -154,7 +154,7 @@
 /* A hanging indent, the way APA sets a reference list. Deliberately not a grid:
    the number and the entry are one flowing paragraph. */
 .apa li { counter-increment: r; font-family: var(--font-sans); font-size: 15px;
-  line-height: 1.4; margin-bottom: 10px; color: var(--fg-2);
+  line-height: 1.35; margin-bottom: 7px; color: var(--fg-2);
   padding-left: 34px; text-indent: -34px; }
 .apa li::before { content: counter(r) ".\00a0\00a0"; font-family: var(--font-mono);
   font-size: 14px; color: var(--ps-sienna); }
