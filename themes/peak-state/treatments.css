@@ -215,3 +215,47 @@ section.exercise h2, section.exercise p { color: var(--ps-cream-ink); }
 .xwrap ol li small { display: block; grid-column: 2; font-family: var(--font-sans); font-size: 16px;
   line-height: 1.45; color: #B5A899; margin-top: 7px; }
 
+/* ── the agenda page ───────────────────────────────────────────────────────
+   A contents slide, second in the deck, so a reader knows the shape before the
+   argument starts. Included by default: it is cheaper to hide one slide than to
+   discover halfway through a delivery that nobody knows how long this is.
+   Mark the current part with .here and it takes the sienna. */
+.agenda { display: grid; grid-template-columns: 1fr 1fr; gap: 0 96px; margin-top: 56px; }
+.agenda ol { list-style: none; margin: 0; padding: 0; counter-reset: ag; }
+/* The second column continues the first, so it sets its own counter origin
+   rather than using <ol start>, which CSS counters ignore. */
+.agenda ol + ol { counter-reset: ag var(--ag-from, 2); }
+.agenda li { counter-increment: ag; display: grid; grid-template-columns: 64px 1fr;
+  gap: 0 20px; padding: 20px 0; border-top: 1px solid var(--hairline); }
+.meta .agenda li, .dark .agenda li { border-top-color: rgba(245,240,232,.18); }
+.agenda li::before { content: counter(ag, decimal-leading-zero);
+  font-family: var(--font-mono); font-size: 20px; color: var(--ps-gold); padding-top: 6px; }
+.agenda .ag-part { font-family: var(--font-sans); font-weight: 500; font-size: 30px;
+  line-height: 1.25; }
+.agenda .ag-note { display: block; font-family: var(--font-sans); font-weight: 400;
+  font-size: 22px; line-height: 1.4; color: var(--fg-2); margin-top: 6px; }
+.meta .agenda .ag-note, .dark .agenda .ag-note { color: #B5A899; }
+.agenda li.here::before, .agenda li.here .ag-part { color: var(--ps-sienna); }
+
+/* ── the provenance block ──────────────────────────────────────────────────
+   Four labels: Attribution, Accountable, Limitations, References. On the
+   references page the References line is omitted, because that page is it.
+   As its own slide, all four appear. The .small.boxed modifiers below tighten
+   it for the right-hand column of .refpage. */
+.pblock { display: grid; grid-template-columns: 1fr 1fr; gap: 34px 72px; }
+.pblock > div { min-width: 0; }
+.pblock .k { font-family: var(--font-sans); font-size: 18px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--ps-gold); margin-bottom: 10px; }
+.pblock .v { font-family: var(--font-sans); font-size: 22px; line-height: 1.5;
+  color: var(--fg-2); }
+.meta .pblock .v, .dark .pblock .v { color: #B5A899; }
+.pblock a { color: inherit; }
+.pblock code, .pblock .mono { font-family: var(--font-mono); font-size: .92em; }
+/* One column when it is the narrow half of a references page. Specificity has
+   to beat .pblock.small.boxed below, which is the older flat label/value shape
+   and sets its own two-column grid. Both markup shapes are supported: wrapped
+   pairs (<div><div class="k">..</div><div class="v">..</div></div>) and flat
+   alternating .k/.v children. The wrapped form is the one to write. */
+.refpage .pblock.pblock { grid-template-columns: 1fr; gap: 18px; }
+.refpage .pblock .v { font-size: 16px; line-height: 1.4; }
+.refpage .pblock .k { font-size: 13px; margin-bottom: 6px; }
