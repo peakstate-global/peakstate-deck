@@ -95,6 +95,28 @@ Absolutely positioned, so it does not sit in the section's flex column.
 `li small` must carry `grid-column: 2` — the list item is a two-column grid, so
 without it the sub-line lands in the number column and wraps to nothing.
 
+**Agenda page.** Slide two, and **included by default**. A reader who does not
+know the shape of a deck spends the first third working it out instead of
+listening. Two columns of numbered parts, each with a one-line note saying what
+is in it — a bare list of part names tells nobody anything they could not get
+from the dividers. Mark the part being presented with `.here`.
+
+```html
+<div class="agenda">
+  <ol><li class="here"><span class="ag-part">Part name
+    <span class="ag-note">One line on what is in it</span></span></li></ol>
+  <ol style="--ag-from:2;"><li><span class="ag-part">The next part</span></li></ol>
+</div>
+```
+
+The second `<ol>` continues the first's numbering through `--ag-from`, set to
+the count of the left column. `<ol start>` does nothing here — CSS counters
+ignore it, and the second column silently restarts at 01.
+
+**Hide it rather than delete it** when a delivery does not want one, the same
+way as any other unused slide (see below). It is a slide the audience often
+wants and the author rarely thinks to add.
+
 **References page.** Any deck that makes a claim ends with one, and it is the
 last slide. APA 7 entries numbered down the left, the provenance block on the
 right with its `References` line removed — because this page *is* that line.
@@ -105,13 +127,53 @@ Every claim in the deck carries `<sup class="cite">n</sup>` pointing at its entr
   <ol class="apa">
     <li>Author, A. (2026). <i>Title</i>. Publisher. host.example</li>
   </ol>
-  <div><!-- pblock, References line omitted --></div>
+  <div class="pblock small boxed"><!-- References line omitted --></div>
 </div>
 ```
 
 `.apa li` is a hanging indent, not a grid: the number and the entry are one
 flowing paragraph, which is what APA sets and what stops the list doubling in
 height.
+
+**The entry only. No quoted passages on a slide.** A written brief puts the
+verbatim passage under every entry, because a reader can check it there. A deck
+cannot: one quote per source turns a single references page into three or four,
+and a references section long enough to need paging is one nobody reads. **The
+quotes live in the `.sourced` sidecar**, which the provenance block links, and
+the slide carries the entry and its number.
+
+This is a real difference between the two skills, not an oversight — say so if
+someone asks why the deck is thinner than the brief.
+
+**Provenance block.** Four labels — Attribution, Accountable, Limitations,
+References — on any deck that makes a claim.
+
+```html
+<div class="pblock">
+  <div><div class="k">Attribution</div><div class="v">Who and what made this.</div></div>
+  <div><div class="k">Accountable</div><div class="v">Who is answerable for acting on it.</div></div>
+  <div><div class="k">Limitations</div><div class="v">What would change a reader's decision.</div></div>
+  <div><div class="k">References</div><div class="v">Sources, and a relative link to the sidecar.</div></div>
+</div>
+```
+
+Two placements, and **combined is the default**: the block sits in the right
+column of `.refpage`, sharing the last slide with the entries, with its
+`References` line omitted. A plain `class="pblock"` is right there — `.refpage` narrows it to one column.
+(`.pblock.small.boxed` is the older flat label/value shape, kept for decks that
+already use it; new work writes the wrapped pairs shown above.)
+
+Its **own slide** when the block has more to say than a column holds, or when
+asked. Then all four labels appear, and the references page footer reads
+**"References included on previous slides"** — never a line explaining which
+slide replaces which, which is deck-internal bookkeeping the audience did not
+ask for.
+
+**Attribution links what it names.** The skills used, where they have a public
+URL; the sidecar, **relatively** (`deck-name.html.sourced`), so the pair
+survives being moved or sent on. Never an absolute local path — it breaks for
+every reader but you and leaks a directory structure into a document that
+travels.
 
 ## Slides a delivery does not use
 
