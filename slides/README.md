@@ -135,6 +135,13 @@ Every claim in the deck carries `<sup class="cite">n</sup>` pointing at its entr
 flowing paragraph, which is what APA sets and what stops the list doubling in
 height.
 
+**The page holds fourteen entries.** Measured, not guessed, and enforced by
+`tests/specs/layouts.spec.mjs`. Past fourteen it clips silently, because the
+canvas is `overflow: hidden` — nothing on screen tells you the last source is
+gone. Split across two references pages rather than shrinking the type; 15px
+sans is already the floor for something read in a room. The agenda page holds
+ten parts on the same terms.
+
 **The entry only. No quoted passages on a slide.** A written brief puts the
 verbatim passage under every entry, because a reader can check it there. A deck
 cannot: one quote per source turns a single references page into three or four,
