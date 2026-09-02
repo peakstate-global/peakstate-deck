@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The control bar and the overview — a redesign</title>
+<!-- The brief runtime, from its own published tag rather than vendored here.
+     A copy in this repo is 1,880 lines that nothing in the package uses, that
+     drifts from the skill that owns it, and that carries that skill's licence
+     into this one. Pinned to a tag and checked by SRI, so this file still
+     renders the way it did the day it was written. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/peakstate-global/peakstate-skills@peakstate-brief-v2/skills/peakstate-brief/assets/brief.css"
+      integrity="sha384-nDTisT+ddnocN7NbtsFK7rdG2S8qOjr2lZiYX49QdXjrPRoRZhyjQyIdkGJUQTC8"
+      crossorigin="anonymous">
+<style>
+  .stage { background:#14100E; border-radius:10px; padding:26px 22px; margin:14px 0 6px;
+           position:relative; overflow:hidden; }
+  .stage .cap { position:absolute; left:14px; bottom:8px; font:500 10px/1 ui-monospace,Menlo,monospace;
+                letter-spacing:.18em; text-transform:uppercase; color:#6B6055; }
+  .stage.tall { padding-bottom:40px; }
+
+  /* shared chrome vocabulary for both mockups */
+  .bar { display:inline-flex; align-items:center; background:rgba(20,16,14,.94);
+         border:1px solid rgba(245,240,232,.16); box-shadow:0 6px 24px rgba(0,0,0,.45);
+         font-family:Inter,system-ui,sans-serif; }
+  .bar button { appearance:none; border:0; background:transparent; color:#F5F0E8; cursor:pointer;
+                display:inline-flex; align-items:center; gap:7px; font:500 13px/1 inherit; }
+  .bar svg { width:16px; height:16px; stroke:currentColor; stroke-width:1.5; fill:none;
+             stroke-linecap:round; stroke-linejoin:round; }
+
+  /* the bar as it ships */
+  .bar.now { border-radius:999px; padding:6px 8px; gap:4px; }
+  .bar.now button { padding:8px 12px; border-radius:999px; }
+  .bar.now .sep { width:1px; height:20px; background:rgba(245,240,232,.16); margin:0 4px; }
+  .bar.now .emoji { font-size:15px; line-height:1; }
+  .bar.now .lit { background:#A93D1A; border-radius:999px; }
+  .bar.now .star-lit { background:#A93D1A; border-radius:999px; }
+  .bar.now .count { font:500 12px/1 ui-monospace,Menlo,monospace; color:#14100E; background:#D0B561;
+                    border-radius:999px; padding:4px 9px; }
+
+  /* the bar proposed */
+  .bar.next { border-radius:12px; padding:5px 6px; gap:0; opacity:.62; transition:opacity .18s; }
+  .bar.next:hover, .bar.next.awake { opacity:1; }
+  .bar.next .zone { display:inline-flex; align-items:center; gap:2px; }
+  .bar.next .gap { width:22px; }
+  .bar.next button { padding:8px 9px; border-radius:8px; }
+  .bar.next button.word { padding:8px 12px; }
+  .bar.next button:hover { background:rgba(245,240,232,.10); }
+  .bar.next button[aria-pressed="true"] { background:rgba(169,61,26,.9); }
+  .bar.next .dot { width:5px; height:5px; border-radius:50%; background:#A93D1A; margin-left:1px; }
+  .bar.next .count { font:600 11px/1 ui-monospace,Menlo,monospace; color:#14100E; background:#D0B561;
+                     border-radius:5px; padding:4px 7px; }
+  .bar.next .pos { font:500 11px/1 ui-monospace,Menlo,monospace; letter-spacing:.1em; color:#8B8079;
+                   padding:0 10px 0 6px; }
+
+  /* overview mockups */
+  .ov { font-family:Inter,system-ui,sans-serif; color:#F5F0E8; }
+  .ov .head-now { font:400 12px/1.5 Inter,sans-serif; color:#B5A899; max-width:640px; }
+  .ov .eyebrow { font:600 10px/1 ui-monospace,Menlo,monospace; letter-spacing:.22em;
+                 text-transform:uppercase; color:#D0B561; }
+  .ov .meta { font:400 10px/1 ui-monospace,Menlo,monospace; color:#6B6055; }
+  .ov .toggles { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .ov .toggles button { appearance:none; font:500 12px/1 Inter,sans-serif; color:#F5F0E8;
+        background:transparent; border:1px solid rgba(245,240,232,.18); border-radius:7px;
+        padding:7px 11px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; }
+  .ov .toggles button[aria-pressed="true"] { background:rgba(169,61,26,.9);
+        border-color:rgba(169,61,26,.9); }
+  .ov .toggles .help { margin-left:auto; }
+
+  .tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:16px; }
+  .tile-now { border:1px solid rgba(245,240,232,.14); border-radius:8px; padding:10px;
+              background:rgba(245,240,232,.02); }
+  .tile-now .row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .tile-now .n { font:600 12px/1 ui-monospace,Menlo,monospace; color:#8B8079; }
+  .tile-now .btns { display:flex; gap:4px; }
+  .tile-now .btns span { width:22px; height:20px; border:1px solid rgba(245,240,232,.18);
+        border-radius:5px; display:grid; place-items:center; font-size:10px; color:#B5A899; }
+  .tile-now .thumb { aspect-ratio:16/9; border-radius:4px; background:#1F1A17;
+        border:1px solid rgba(245,240,232,.08); }
+  .tile-now .lab { font:400 11px/1.4 Inter,sans-serif; color:#B5A899; margin-top:8px; }
+
+  .tile-next { position:relative; }
+  .tile-next .thumb { aspect-ratio:16/9; border-radius:6px; background:#1F1A17;
+        border:1px solid rgba(245,240,232,.10); transition:border-color .18s; }
+  .tile-next:hover .thumb, .tile-next.focus .thumb { border-color:rgba(208,181,97,.7); }
+  .tile-next .lab { display:flex; align-items:baseline; gap:8px; margin-top:8px;
+        font:400 12px/1.35 Inter,sans-serif; color:#B5A899; }
+  .tile-next .lab b { font:600 11px/1 ui-monospace,Menlo,monospace; color:#6B6055; }
+  .tile-next .status { display:inline-flex; gap:7px; margin-left:auto; align-items:center; }
+  .tile-next .status svg { width:13px; height:13px; stroke:#D0B561; stroke-width:1.6; fill:none; }
+  .tile-next .status .filled { fill:#D0B561; stroke:#D0B561; }
+  .tile-next .status .sien { stroke:#C95A33; }
+  .tile-next .acts { position:absolute; top:8px; right:8px; display:flex; gap:3px; opacity:0;
+        transition:opacity .16s; background:rgba(20,16,14,.9); border-radius:8px; padding:3px;
+        border:1px solid rgba(245,240,232,.14); }
+  .tile-next:hover .acts, .tile-next.focus .acts { opacity:1; }
+  .tile-next .acts button { appearance:none; background:transparent; border:0; cursor:pointer;
+        padding:5px 6px; border-radius:6px; color:#F5F0E8; display:grid; place-items:center; }
+  .tile-next .acts button:hover { background:rgba(245,240,232,.12); }
+  .tile-next .acts svg { width:14px; height:14px; stroke:currentColor; stroke-width:1.5; fill:none; }
+  .tile-next.hidden .thumb { opacity:.35;
+        background-image:repeating-linear-gradient(-45deg, rgba(245,240,232,.05) 0 6px, transparent 6px 12px); }
+  .tile-next .hid { font:600 9px/1 ui-monospace,Menlo,monospace; letter-spacing:.16em;
+        color:#14100E; background:#D0B561; border-radius:3px; padding:3px 5px; }
+  .legendrow { display:flex; gap:18px; flex-wrap:wrap; margin-top:12px;
+        font:400 11px/1 Inter,sans-serif; color:#8B8079; align-items:center; }
+  .legendrow svg { width:13px; height:13px; stroke:#D0B561; stroke-width:1.6; fill:none;
+        vertical-align:-2px; margin-right:5px; }
+</style>
+</head>
+<body data-brief-id="peakstate-deck-control-surfaces">
+<main>
+
+<section class="brief-section" data-sec="verdict">
+  <div class="sec-head">
+    <label class="tick"><input type="checkbox" aria-label="Mark section read"></label>
+    <h2>What I would change, and why</h2>
+  </div>
+  <div class="sec-body">
+    <p><b>Claude Design could not run.</b> Its MCP server is configured but rejected the login:
+      <code>FIRST_PARTY_AUTH_REJECTED</code>, HTTP 403, with the hint to run <code>/design-login</code>.
+      The <code>/design</code> slash command is still the consent-only form. So this is
+      <code>/impeccable</code> alone, in the product register.</p>
+    <p>Two diagnoses, and the second is the bigger one.</p>
+    <p><b>The bar is built from emoji.</b> Ten controls, every glyph an emoji or dingbat:
+      💬 👁 ◆ 📝 ☆ 🚫 ◇ ◼ ▶ 📋. Emoji render differently on every platform, carry colour nobody
+      chose, and sit at whatever weight the font decides. The repository's own PRODUCT.md lists
+      "emoji as iconography" as an anti-reference. This is the single change that does the most.</p>
+    <p><b>The overview teaches with a paragraph.</b> Three lines of prose in the header explain
+      clicking, dragging, S, H, C, Tab and Esc. Nobody reads instructions above a grid of pictures.
+      And every tile carries four buttons at all times, so an eight-slide deck shows thirty-two
+      identical buttons and none of them is the one you want.</p>
+  </div>
+</section>
+
+<section class="brief-section" data-sec="bar">
+  <div class="sec-head">
+    <label class="tick"><input type="checkbox" aria-label="Mark section read"></label>
+    <h2>The control bar</h2>
+  </div>
+  <div class="sec-body">
+
+    <p class="ex-label">As it ships</p>
+    <div class="stage">
+      <div class="bar now">
+        <button class="lit"><span class="emoji">💬</span> Slide comment</button>
+        <button><span class="emoji">👁</span></button>
+        <button><span class="emoji">◆</span></button>
+        <button><span class="emoji">📝</span> Notes</button>
+        <span class="sep"></span>
+        <button class="star-lit"><span class="emoji">★</span></button>
+        <button><span class="emoji">🚫</span></button>
+        <button><span class="emoji">◇</span></button>
+        <span class="sep"></span>
+        <button><span class="emoji">◼</span> Overview</button>
+        <button><span class="emoji">▶</span> Present</button>
+        <span class="sep"></span>
+        <button><span class="count">1</span></button>
+        <button><span class="emoji">📋</span> Copy</button>
+      </div>
+      <span class="cap">now · 10 controls · about 800px wide at 1440</span>
+    </div>
+
+    <p class="ex-label">Proposed</p>
+    <div class="stage">
+      <div class="bar next awake">
+        <span class="pos">4 / 22</span>
+        <span class="zone">
+          <button aria-pressed="true" title="Slide 4 has a slide comment. Click to read or edit it.">
+            <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-4.5A8 8 0 0 1 11 4h2a8 8 0 0 1 8 8z"/></svg>
+          </button>
+          <button title="Speaker notes for this slide">
+            <svg viewBox="0 0 24 24"><path d="M4 5h16M4 10h16M4 15h10"/></svg>
+          </button>
+          <button aria-pressed="true" title="Slide 4 is starred. Click, or press S, to remove the star.">
+            <svg viewBox="0 0 24 24" style="fill:#D0B561;stroke:#D0B561"><path d="m12 3 2.7 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17.3 6.4 20.3l1.2-6.3L3 9.6l6.3-.8z"/></svg>
+          </button>
+          <button title="Hide this slide from performance mode">
+            <svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A9 9 0 0 1 21 12a9.6 9.6 0 0 1-2.4 3.4M6.2 6.7A9.7 9.7 0 0 0 3 12a9 9 0 0 0 12.1 5"/></svg>
+          </button>
+        </span>
+        <span class="gap"></span>
+        <span class="zone">
+          <button title="Show or hide comment highlights">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button title="Show or hide the branding on every slide">
+            <svg viewBox="0 0 24 24"><path d="m12 3 9 9-9 9-9-9z"/></svg>
+          </button>
+          <button class="word" title="Overview: every slide, with star, hide and reorder">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="6" rx="1"/><rect x="14" y="4" width="7" height="6" rx="1"/><rect x="3" y="14" width="7" height="6" rx="1"/><rect x="14" y="14" width="7" height="6" rx="1"/></svg>
+            Overview</button>
+          <button class="word" title="Performance mode: full screen, no editing, Esc exits">
+            <svg viewBox="0 0 24 24"><path d="m6 4 13 8-13 8z"/></svg>
+            Present</button>
+        </span>
+        <span class="gap"></span>
+        <span class="zone">
+          <button title="Show all comments"><span class="count">1</span><span class="dot" title="unsent changes"></span></button>
+          <button class="word" title="Copy the payload">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+            Copy</button>
+        </span>
+      </div>
+      <span class="cap">proposed · same 10 controls · about 470px · rests at 62% until hovered</span>
+    </div>
+
+    <p>Five changes, each with a reason.</p>
+    <ul>
+      <li><b>Inline SVG at one stroke weight, no emoji.</b> Every glyph the same 1.5px stroke in
+        <code>currentColor</code>, so hover, focus and disabled work on the icon as well as the button.</li>
+      <li><b>Three zones separated by 22px of nothing</b>, not a hairline. The eye groups by
+        proximity long before it notices a 1px rule. Zones are: this slide, the deck, the round trip.</li>
+      <li><b>Words only where the action leaves the slide</b>: Overview, Present, Copy. Everything
+        else is icon plus tooltip plus <code>aria-label</code>. That is a rule the eye can learn, where
+        the current mix is not.</li>
+      <li><b>The slide position moves into the bar</b>, replacing the runtime's separate footer counter
+        and telling you at a glance which slide the state controls are acting on.</li>
+      <li><b>It rests at 62% opacity and wakes on hover or keyboard focus.</b> Chrome that floats
+        over content should not compete with it while you read.</li>
+    </ul>
+
+    <p class="ex-label">Examples</p>
+    <details class="example">
+      <summary><span class="dp">E1</span> Colour, and what carries state without it</summary>
+      <div class="tblwrap"><table>
+        <tr><th>State</th><th>Colour</th><th>The non-colour carrier</th></tr>
+        <tr><td>Slide has a comment</td><td>sienna fill</td><td class="wrap">The button is pressed (<code>aria-pressed</code>), and the tooltip reads "Slide 4 has a slide comment"</td></tr>
+        <tr><td>Slide is starred</td><td>gold fill</td><td class="wrap">The star glyph is filled rather than hollow</td></tr>
+        <tr><td>Slide is hidden</td><td>sienna fill</td><td class="wrap">The eye glyph is struck through</td></tr>
+        <tr><td>Unsent changes</td><td>sienna dot</td><td class="wrap">The dot is present or absent, and the tooltip says so</td></tr>
+        <tr><td>Comment count</td><td>gold pill</td><td class="wrap">The number itself</td></tr>
+      </table></div>
+      <p style="font-size:.86rem">Gold appears twice: the star and the count. That is the brand rule
+        exactly, and it is currently broken by the gold count sitting next to a gold-filled star and a
+        sienna-filled comment button all at once.</p>
+    </details>
+  </div>
+</section>
+
+<section class="brief-section" data-sec="overview">
+  <div class="sec-head">
+    <label class="tick"><input type="checkbox" aria-label="Mark section read"></label>
+    <h2>The overview</h2>
+  </div>
+  <div class="sec-body">
+
+    <p class="ex-label">As it ships</p>
+    <div class="stage tall">
+      <div class="ov">
+        <div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">
+          <span class="eyebrow">Overview</span><span style="font-size:13px">All 8 slides</span>
+          <span class="meta">build 84c3ea6a5e8 · generated 2026-01-01 00:00:00 UTC · no local edits</span>
+        </div>
+        <p class="head-now">Click a slide to jump to it. Drag a slide, or hold Alt and press the left or
+          right arrow, to reorder. With a slide focused: S stars, H hides or shows, C writes the slide
+          comment here, without leaving this page. Tab stays inside this page. Esc goes back to the
+          slide you came from.</p>
+        <div class="toggles">
+          <button>☆ Starred only: off</button>
+          <button>◉ Hidden slides: shown</button>
+          <button aria-pressed="true">◆ Branding: on</button>
+          <button>Reset order</button><button>Close</button>
+        </div>
+        <div class="tiles">
+          <div class="tile-now"><div class="row"><span class="n">1</span>
+            <span class="btns"><span>☆</span><span>◉</span><span>💬</span><span>📝</span></span></div>
+            <div class="thumb"></div><div class="lab">Slide 1 · Opening</div></div>
+          <div class="tile-now"><div class="row"><span class="n">2</span>
+            <span class="btns"><span>☆</span><span>◉</span><span>💬</span><span>📝</span></span></div>
+            <div class="thumb"></div><div class="lab">Slide 2 · The board</div></div>
+          <div class="tile-now"><div class="row"><span class="n">3</span>
+            <span class="btns"><span>☆</span><span>◉</span><span>💬</span><span>📝</span></span></div>
+            <div class="thumb"></div><div class="lab">Slide 3 · The pivot</div></div>
+        </div>
+      </div>
+      <span class="cap">now · 4 buttons on every tile, always · 32 on an 8-slide deck</span>
+    </div>
+
+    <p class="ex-label">Proposed</p>
+    <div class="stage tall">
+      <div class="ov">
+        <div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">
+          <span class="eyebrow">Overview</span>
+          <span style="font-size:13px">8 slides · 1 hidden · 2 starred</span>
+          <span class="meta">build 84c3ea6a5e8 · no local edits</span>
+        </div>
+        <div class="toggles">
+          <button aria-pressed="false">Show starred only</button>
+          <button aria-pressed="true">Show hidden slides</button>
+          <button aria-pressed="true">Show branding</button>
+          <button>Reset order</button>
+          <button class="help" title="Keys and drag behaviour">? Keys</button>
+          <button>Close</button>
+        </div>
+        <div class="tiles">
+          <div class="tile-next focus">
+            <div class="thumb"></div>
+            <div class="acts">
+              <button title="Star (S)"><svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17.3 6.4 20.3l1.2-6.3L3 9.6l6.3-.8z"/></svg></button>
+              <button title="Hide (H)"><svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A9 9 0 0 1 21 12a9.6 9.6 0 0 1-2.4 3.4M6.2 6.7A9.7 9.7 0 0 0 3 12a9 9 0 0 0 12.1 5"/></svg></button>
+              <button title="Slide comment (C)"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-4.5A8 8 0 0 1 11 4h2a8 8 0 0 1 8 8z"/></svg></button>
+              <button title="Speaker note"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 10h16M4 15h10"/></svg></button>
+            </div>
+            <div class="lab"><b>01</b> Opening
+              <span class="status">
+                <svg class="filled" viewBox="0 0 24 24" title="starred"><path d="m12 3 2.7 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17.3 6.4 20.3l1.2-6.3L3 9.6l6.3-.8z"/></svg>
+                <svg class="sien" viewBox="0 0 24 24" title="has a comment"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-4.5A8 8 0 0 1 11 4h2a8 8 0 0 1 8 8z"/></svg>
+              </span></div>
+          </div>
+          <div class="tile-next">
+            <div class="thumb"></div>
+            <div class="lab"><b>02</b> The board</div>
+          </div>
+          <div class="tile-next hidden">
+            <div class="thumb"></div>
+            <div class="lab"><b>03</b> The pivot <span class="status"><span class="hid">HIDDEN</span></span></div>
+          </div>
+        </div>
+        <div class="legendrow">
+          <span><svg class="filled" viewBox="0 0 24 24" style="fill:#D0B561"><path d="m12 3 2.7 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17.3 6.4 20.3l1.2-6.3L3 9.6l6.3-.8z"/></svg>starred</span>
+          <span><svg viewBox="0 0 24 24" style="stroke:#C95A33"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-4.5A8 8 0 0 1 11 4h2a8 8 0 0 1 8 8z"/></svg>has a comment</span>
+          <span><svg viewBox="0 0 24 24"><path d="M4 5h16M4 10h16M4 15h10"/></svg>has a note</span>
+          <span>hatched and dimmed = hidden</span>
+        </div>
+      </div>
+      <span class="cap">proposed · controls on hover or focus · status shown only when true</span>
+    </div>
+
+    <ul>
+      <li><b>Buttons appear on hover or keyboard focus, on that tile only.</b> Three visible buttons
+        instead of thirty-two, and the one you want is under the pointer already.</li>
+      <li><b>A status strip replaces four permanent buttons.</b> Glyphs appear only when the state is
+        true, so a plain slide is a plain tile and the eye finds the marked ones instantly.</li>
+      <li><b>The tile stops being a card.</b> Today a bordered card contains a bordered thumbnail:
+        a box inside a box. The thumbnail is the tile; the caption sits on the page.</li>
+      <li><b>The instructions collapse into a ? Keys button.</b> The affordances teach themselves on
+        hover; the key map is there for the person who wants it.</li>
+      <li><b>The toggles get one grammar.</b> "Show starred only", "Show hidden slides",
+        "Show branding", each with <code>aria-pressed</code>, instead of three different
+        "label: value" constructions.</li>
+      <li><b>The header counts what matters</b>: 8 slides, 1 hidden, 2 starred. The build hash stays,
+        the generation timestamp goes.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="q" data-q="Q1">
+  <div class="q-head">
+    <label class="tick"><input type="checkbox" aria-label="Mark Q1 resolved"></label>
+    <h2><span class="qid">Q1</span> Approve the direction, or push back on a specific part?</h2>
+  </div>
+  <div class="q-body">
+    <p class="assume"><strong>My assumption:</strong> both surfaces as drawn above.
+      <strong>If wrong:</strong> tell me which of the eleven changes to drop and I will build the rest.</p>
+    <p>The pieces are independent. Dropping the resting opacity, or keeping the instruction paragraph,
+      does not break anything else.</p>
+  </div>
+</section>
+
+<section class="q" data-q="Q2">
+  <div class="q-head">
+    <label class="tick"><input type="checkbox" aria-label="Mark Q2 resolved"></label>
+    <h2><span class="qid">Q2</span> Should the bar rest at 62% and wake on hover, or stay at full strength?</h2>
+  </div>
+  <div class="q-body">
+    <p class="assume"><strong>My assumption:</strong> it rests. <strong>If wrong:</strong> it stays
+      solid and the slide keeps competing with it.</p>
+    <p>The case for resting: it floats over your own content and you are usually reading, not clicking.
+      The case against: a control you cannot see at a glance is a control you forget exists, and a
+      reviewer who has never met this deck may not discover it. A middle setting is to rest only after
+      ten seconds without pointer movement.</p>
+    <ul class="options">
+      <li><b>a)</b> Rests at 62%, wakes on hover or focus. (my recommendation)</li>
+      <li><b>b)</b> Always full strength.</li>
+      <li><b>c)</b> Full strength, then rests after ten idle seconds.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="q" data-q="Q3">
+  <div class="q-head">
+    <label class="tick"><input type="checkbox" aria-label="Mark Q3 resolved"></label>
+    <h2><span class="qid">Q3</span> The bar becomes a 12px rounded rectangle rather than a full pill. Keep the pill?</h2>
+  </div>
+  <div class="q-body">
+    <p class="assume"><strong>My assumption:</strong> 12px radius. <strong>If wrong:</strong> it stays
+      999px and reads as a lozenge.</p>
+    <p>A pill with two or three items reads as a pill. A pill with ten reads as a lozenge, and the
+      round ends waste horizontal space at exactly the corner of the slide where a heading usually
+      sits. This is taste, and the brand does not rule on it.</p>
+  </div>
+</section>
+
+<section class="q" data-q="Q4">
+  <div class="q-head">
+    <label class="tick"><input type="checkbox" aria-label="Mark Q4 resolved"></label>
+    <h2><span class="qid">Q4</span> Should the slide position live in the bar?</h2>
+  </div>
+  <div class="q-body">
+    <p class="assume"><strong>My assumption:</strong> yes, <code>4 / 22</code> at the left of the bar.
+      <strong>If wrong:</strong> the bar says nothing about which slide its state controls are acting on.</p>
+    <p>The runtime already draws a slide counter at the bottom centre. Putting it in the bar means the
+      answer to "star which slide?" is beside the star. The cost is one more thing in the bar, and a
+      counter appearing twice unless the bottom one is removed. <b>I would remove the bottom one</b>,
+      but that is a change to the deck runtime rather than the review layer, so it is your call.</p>
+  </div>
+</section>
+
+<section class="brief-section" data-sec="not-done">
+  <div class="sec-head">
+    <label class="tick"><input type="checkbox" aria-label="Mark section read"></label>
+    <h2>What this does not cover</h2>
+  </div>
+  <div class="sec-body">
+    <ul>
+      <li><b>Claude Design has not seen it.</b> Its server rejected the login with a 403. If
+        <code>/design-login</code> fixes that, the same two surfaces are worth putting through it for a
+        second opinion, and the mockups above give it something concrete to argue with.</li>
+      <li><b>No code has changed.</b> These are static mockups in this file. Nothing in
+        <code>assets/deck-comments.js</code> has been touched.</li>
+      <li><b>The popover, the comment list, the notes tray and the toast are untouched.</b> They share
+        the bar's vocabulary, so they will need the same icon and radius treatment once this lands.</li>
+      <li><b>PRODUCT.md and DESIGN.md were written for this repository</b> from its own README, SKILL.md
+        and reference docs, because <code>/impeccable</code> refuses to design without them. Replace
+        them with <code>impeccable teach</code> if you would rather answer its questions yourself.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+<script src="https://cdn.jsdelivr.net/gh/peakstate-global/peakstate-skills@peakstate-brief-v2/skills/peakstate-brief/assets/brief.js"
+        integrity="sha384-PRXjNpjEioyV+agwy20V3gLZNiXbvAjnLXZhcUTfGeys9VWJhhWATo6odpYsiOMR"
+        crossorigin="anonymous"></script>
+</body>
+</html>

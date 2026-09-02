@@ -25,6 +25,13 @@
     var tag = document.getElementById('speaker-notes');
     if (tag) NOTES = JSON.parse(tag.textContent) || [];
   } catch (e) { NOTES = []; }
+  // Sibling of speaker-notes: array of {index, script}, same keying. Optional —
+  // a deck with no narration script carries no #slide-scripts tag at all.
+  var SCRIPTS = [];
+  try {
+    var scriptsTag = document.getElementById('slide-scripts');
+    if (scriptsTag) SCRIPTS = JSON.parse(scriptsTag.textContent) || [];
+  } catch (e) { SCRIPTS = []; }
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
 
   /* border-radius is resolved against the box, so "50%" and "999px" both mean
@@ -165,10 +172,44 @@
         if (!t) return;
         add('text', el, { text: t, runs: runsOf(el), rotate: 0, brand: 'mark' });
       });
+      /* A CSS counter is not in the DOM, so innerText misses it and the number
+         never reaches PowerPoint. An agenda page loses 01..0n; worse, a
+         references list loses the numbers every <sup class="cite"> on every
+         other slide points at, so the citations aim at nothing. The value
+         cannot be read back either — getComputedStyle returns the unresolved
+         counter() expression, not the digit — so it is recomputed here from the
+         item's position and its list's origin. Same bargain as
+         data-pptx-underline above: CSS drew something it left nowhere readable,
+         and the deck hands it over rather than letting the exporter guess. */
+      var counterText = function (el) {
+        var spec = getComputedStyle(el, '::before').content;
+        if (!spec || spec.indexOf('counter(') === -1) return '';
+        var m = spec.match(/counter\(\s*([\w-]+)\s*(?:,\s*([\w-]+))?\s*\)/);
+        var parent = el.parentElement;
+        if (!m || !parent) return '';
+        var name = m[1], style = m[2] || 'decimal';
+        var origin = 0;
+        var rm = (getComputedStyle(parent).counterReset || '')
+                   .match(new RegExp('\\b' + name + '\\s+(-?\\d+)'));
+        if (rm) origin = parseInt(rm[1], 10);
+        var n = origin, kids = parent.children;
+        for (var i = 0; i < kids.length; i++) {
+          if (new RegExp('\\b' + name + '\\b')
+                .test(getComputedStyle(kids[i]).counterIncrement || '')) n += 1;
+          if (kids[i] === el) break;
+        }
+        var num = (style === 'decimal-leading-zero' && n < 10) ? '0' + n : String(n);
+        /* Whatever literal the rule sets beside the counter — counter(r) ".  "
+           gives the full stop the reference list is read by. */
+        var lit = (spec.match(/"([^"]*)"/g) || [])
+                    .map(function (q) { return q.slice(1, -1); }).join('');
+        return (num + lit).replace(/\s+$/, '') + ' ';
+      };
+
       slide.querySelectorAll('*').forEach(function (el) {
         if (el.closest('svg') || el.closest('.notesrc') || inline(el) || el.querySelector('svg, img')) return;
         if (el.dataset.pptxSplit || el.dataset.pptxBrand === 'mark') return;
-        var text = (el.innerText || '').trim();
+        var text = (counterText(el) + (el.innerText || '')).trim();
         if (!text) return;
         if (el.querySelector('[data-pptx-split]')) {
           // Its words now belong to the split shapes. What is left is whatever
@@ -244,7 +285,8 @@
                bg: getComputedStyle(slide).backgroundColor,
                hidden: slide.hasAttribute('data-hidden-src') || slide.hasAttribute('data-hidden'),
                state: slide.getAttribute('data-state-group') || '',
-               items: items, note: (NOTES[idx] || {}).note || '' };
+               items: items, note: (NOTES[idx] || {}).note || '',
+               script: (SCRIPTS[idx] || {}).script || '' };
     });
     freeze.remove();
     var tag = document.createElement('script');
@@ -274,6 +316,12 @@
       [].forEach.call(c.querySelectorAll('*'), function (el) {
         var r = el.getBoundingClientRect();
         if (!r.height && !r.width) return;
+        // Decoration that is placed absolutely and takes no pointer events is
+        // meant to bleed off the edge, and the slide clips it. Measuring its
+        // unclipped box reports an overflow that nobody can see. The same
+        // exemption the footer check already makes, made here.
+        var cs = getComputedStyle(el);
+        if (cs.position === 'absolute' && cs.pointerEvents === 'none') return;
         var b = r.bottom - box.top, rr = r.right - box.left;
         if (b > maxB) { maxB = b; culprit = el.tagName.toLowerCase() + '.' + (el.className || '?'); }
         if (rr > maxR) maxR = rr;
@@ -297,7 +345,11 @@
           if (el.children.length) return;                 // only leaf boxes
           var r = el.getBoundingClientRect();
           if (!r.height || !r.width) return;
-          if (r.bottom > ftTop + 1) {
+          // Crossing IN is the defect: the box starts above the band and ends
+          // inside it. A box that begins inside the band is footer furniture,
+          // put there on purpose. A deck whose footer is a row of cells has only
+          // one of them marked .ft, and the siblings beside it are not faults.
+          if (r.bottom > ftTop + 1 && r.top < ftTop - 1) {
             bad++;
             out.push('   ! FOOTER clash ' + el.tagName.toLowerCase() + '.' +
                      (el.className || '?') + ' bottom=' + Math.round(r.bottom) +
