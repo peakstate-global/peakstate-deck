@@ -33,12 +33,59 @@
   };
 
   var KEY = 'deckComments:' + (DECK.file || location.pathname);
-  var state = { comments: [], showMarks: true, showBrand: true, noteEdits: {}, trayOpen: false, hidden: {},
+
+  /* ── the stored shape carries a version, so it can be changed later ───────
+     A review is the reader's work, held only in localStorage, and it outlives
+     the deck build it was written against. The exported payload has said
+     `version: 4` for a while; the STORED state said nothing, so a change to its
+     shape had no way to announce itself. An old review would merge field by
+     field into the new defaults and look fine while meaning something else —
+     the quiet half of the same fault `labels` was added to fix for slides.
+
+     STATE_VERSION is the shape, not the feature set: bump it only when an
+     existing field changes meaning or goes away, and add the step that carries
+     old data across. Adding a new field with a sane default needs no bump,
+     because Object.assign below already fills it in.
+
+     Nothing is ever discarded. A review from a NEWER runtime keeps its unknown
+     fields — Object.assign preserves them and save() writes them back — so
+     opening a deck on an older build and closing it again does not quietly
+     strip the reader's work. */
+  var STATE_VERSION = 1;
+  var MIGRATIONS = {
+    /* 0 → 1: the state before it was versioned. No field changed meaning at the
+       bump, so this only stamps it; the entry exists to make the shape of a
+       future migration obvious rather than to do work. */
+    0: function (old) { return old; }
+  };
+  function migrate(stored) {
+    var from = typeof stored.v === 'number' ? stored.v : 0;
+    if (from > STATE_VERSION) {
+      // Written by a newer runtime. Read it, keep every field, change nothing.
+      try { console.warn('deck review saved by a newer build (v' + from + '); left as it is'); } catch (e) {}
+      return stored;
+    }
+    while (from < STATE_VERSION) {
+      var step = MIGRATIONS[from];
+      if (!step) break;             // no path: leave the data alone rather than mangle it
+      stored = step(stored) || stored;
+      from += 1;
+    }
+    stored.v = Math.max(from, typeof stored.v === 'number' ? stored.v : 0);
+    return stored;
+  }
+
+  var state = { v: STATE_VERSION,
+               comments: [], showMarks: true, showBrand: true, noteEdits: {}, trayOpen: false, hidden: {},
                starred: {}, order: null, dirty: false,
                ovStarredOnly: false, ovShowHidden: true };
-  try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+  try {
+    var stored = JSON.parse(localStorage.getItem(KEY) || '{}');
+    state = Object.assign(state, migrate(stored));
+  } catch (e) {}
   function save() {
     state.labels = labelSnapshot();
+    if (typeof state.v !== 'number' || state.v < STATE_VERSION) state.v = STATE_VERSION;
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
   }
 
@@ -1612,6 +1659,10 @@
     return JSON.stringify({
       kind: 'deck-comments',
       version: 4,
+      // The payload contract is 4; stateVersion is the shape of the stored
+      // review that produced it. They move independently and both matter when
+      // a round trip has to be read back months later.
+      stateVersion: STATE_VERSION,
       // Short on purpose. The long form lives in the peakstate-deck SKILL.md; a
       // paragraph repeated in every round trip is a paragraph that stops being
       // read, and it is paid for on both sides.

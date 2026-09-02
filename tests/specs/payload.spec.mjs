@@ -186,3 +186,68 @@ test('S does nothing while presenting', async ({ page }) => {
   await page.locator('body').press('Escape');
   await expect(page.locator('.dcx-bar [data-a="star"]')).toHaveAttribute('aria-pressed', 'false');
 });
+
+/* ── the stored shape carries a version ───────────────────────────────────
+   A review lives only in localStorage and outlives the build it was written
+   against. Before this, the stored state announced nothing about its shape, so
+   a change to a field's meaning would merge silently into the new defaults and
+   look fine while meaning something else. These cover the two cases that lose
+   a reader's work if they go wrong: a review written before versioning, and one
+   written by a build newer than the runtime opening it. */
+
+/** Plant a saved review under the key the runtime reads, then load the deck.
+ *  `labels` is filled in from the deck itself unless the caller sets it: a real
+ *  saved review always carries that snapshot, and without it re-anchoring
+ *  correctly refuses to place a number-keyed record — which is a different
+ *  behaviour from the one these tests are about. */
+async function seedReview(page, url, stored) {
+  await page.goto(url);                       // an origin to write localStorage against
+  await page.evaluate(({ u, s }) => {
+    const file = document.querySelector('meta[name="deck-file"]')?.content;
+    if (!s.labels) {
+      s.labels = {};
+      [...document.querySelectorAll('deck-stage > section')].forEach((sec, i) => {
+        s.labels[i + 1] = sec.dataset.slideId || sec.dataset.screenLabel;
+      });
+    }
+    localStorage.setItem('deckComments:' + (file || new URL(u).pathname), JSON.stringify(s));
+  }, { u: page.url(), s: stored });
+  await page.goto(url);
+  await page.waitForSelector('.dcx-bar');
+}
+
+function readStored(page) {
+  return page.evaluate(() => {
+    const file = document.querySelector('meta[name="deck-file"]')?.content;
+    return JSON.parse(localStorage.getItem('deckComments:' + (file || location.pathname)) || '{}');
+  });
+}
+
+test('an unversioned review is adopted, not discarded, and stamped', async ({ page }) => {
+  await seedReview(page, MINTED, {
+    comments: [{ at: 1, slide: 2, slideLabel: 'The board', text: 'kept', body: 'kept', status: 'new' }],
+    starred: { 3: true },
+  });
+  // The reader's work survives the bump; that is the whole point of the seam.
+  const payload = await copyPayload(page);
+  expect(payload.commentCount, 'a pre-version review must not be dropped').toBe(1);
+  expect(payload.stateVersion).toBe(1);
+
+  const stored = await readStored(page);
+  expect(stored.v, 'the shape is stamped once it has been read').toBe(1);
+  expect(stored.starred['3'], 'unrelated fields survive the migration').toBe(true);
+});
+
+test('a review from a newer build keeps its unknown fields', async ({ page }) => {
+  await seedReview(page, MINTED, {
+    v: 99,
+    comments: [{ at: 2, slide: 2, slideLabel: 'The board', text: 'future', body: 'future', status: 'new' }],
+    somethingWeDoNotKnowAbout: { keep: 'me' },
+  });
+  const stored = await readStored(page);
+  // Opening a deck on an older build and closing it again must not strip work
+  // the reader did on a newer one.
+  expect(stored.v, 'a newer shape is not downgraded').toBe(99);
+  expect(stored.somethingWeDoNotKnowAbout, 'unknown fields are preserved')
+    .toEqual({ keep: 'me' });
+});
