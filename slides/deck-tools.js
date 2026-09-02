@@ -172,10 +172,44 @@
         if (!t) return;
         add('text', el, { text: t, runs: runsOf(el), rotate: 0, brand: 'mark' });
       });
+      /* A CSS counter is not in the DOM, so innerText misses it and the number
+         never reaches PowerPoint. An agenda page loses 01..0n; worse, a
+         references list loses the numbers every <sup class="cite"> on every
+         other slide points at, so the citations aim at nothing. The value
+         cannot be read back either — getComputedStyle returns the unresolved
+         counter() expression, not the digit — so it is recomputed here from the
+         item's position and its list's origin. Same bargain as
+         data-pptx-underline above: CSS drew something it left nowhere readable,
+         and the deck hands it over rather than letting the exporter guess. */
+      var counterText = function (el) {
+        var spec = getComputedStyle(el, '::before').content;
+        if (!spec || spec.indexOf('counter(') === -1) return '';
+        var m = spec.match(/counter\(\s*([\w-]+)\s*(?:,\s*([\w-]+))?\s*\)/);
+        var parent = el.parentElement;
+        if (!m || !parent) return '';
+        var name = m[1], style = m[2] || 'decimal';
+        var origin = 0;
+        var rm = (getComputedStyle(parent).counterReset || '')
+                   .match(new RegExp('\\b' + name + '\\s+(-?\\d+)'));
+        if (rm) origin = parseInt(rm[1], 10);
+        var n = origin, kids = parent.children;
+        for (var i = 0; i < kids.length; i++) {
+          if (new RegExp('\\b' + name + '\\b')
+                .test(getComputedStyle(kids[i]).counterIncrement || '')) n += 1;
+          if (kids[i] === el) break;
+        }
+        var num = (style === 'decimal-leading-zero' && n < 10) ? '0' + n : String(n);
+        /* Whatever literal the rule sets beside the counter — counter(r) ".  "
+           gives the full stop the reference list is read by. */
+        var lit = (spec.match(/"([^"]*)"/g) || [])
+                    .map(function (q) { return q.slice(1, -1); }).join('');
+        return (num + lit).replace(/\s+$/, '') + ' ';
+      };
+
       slide.querySelectorAll('*').forEach(function (el) {
         if (el.closest('svg') || el.closest('.notesrc') || inline(el) || el.querySelector('svg, img')) return;
         if (el.dataset.pptxSplit || el.dataset.pptxBrand === 'mark') return;
-        var text = (el.innerText || '').trim();
+        var text = (counterText(el) + (el.innerText || '')).trim();
         if (!text) return;
         if (el.querySelector('[data-pptx-split]')) {
           // Its words now belong to the split shapes. What is left is whatever

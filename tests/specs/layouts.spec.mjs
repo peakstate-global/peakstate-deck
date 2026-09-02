@@ -15,6 +15,7 @@
  */
 import { test, expect } from '@playwright/test';
 import { shot } from './helpers.mjs';
+import { readFileSync } from 'node:fs';
 
 const THEME = '/theme/deck.html';
 
@@ -148,4 +149,44 @@ test('no slide in the shipped example deck clips', async ({ page }) => {
       .filter((x) => x.by > 2));
   expect(over, `slides overrun the canvas: ${JSON.stringify(over)}`).toEqual([]);
   await shot(page, 'theme-deck-all-slides');
+});
+
+test.describe('counters survive the PowerPoint export', () => {
+  /* innerText does not see a ::before, so a CSS counter is invisible to the
+     layout dump the exporter reads. Left alone, an agenda exports with no
+     numbers and a references list exports with none either — which silently
+     breaks every <sup class="cite">n</sup> pointing at it from another slide.
+     deck-tools.js recomputes the value; this is the check that it still does. */
+  async function withCounterText(page) {
+    const src = readFileSync(new URL('../../slides/deck-tools.js', import.meta.url), 'utf8');
+    const fn = src.match(/var counterText = function \(el\) \{[\s\S]*?\n      \};/);
+    expect(fn, 'counterText has been renamed or removed from deck-tools.js').not.toBeNull();
+    await page.evaluate((body) => {
+      window.counterText = eval('(' + body.replace(/^var counterText = /, '').replace(/;$/, '') + ')');
+    }, fn[0]);
+  }
+
+  test('agenda numbers reach the dump, running on across both columns', async ({ page }) => {
+    await openStatic(page);
+    await withCounterText(page);
+    const nums = await page.evaluate(() =>
+      [...document.querySelectorAll('.agenda li')].map((li) => window.counterText(li).trim()));
+    expect(nums).toEqual(['01', '02', '03', '04']);
+  });
+
+  test('reference numbers reach the dump, with the stop the list is read by', async ({ page }) => {
+    await openStatic(page);
+    await withCounterText(page);
+    const nums = await page.evaluate(() =>
+      [...document.querySelectorAll('.refpage ol.apa li')].map((li) => window.counterText(li).trim()));
+    expect(nums).toEqual(['1.', '2.', '3.']);
+  });
+
+  test('an element with no counter is left alone', async ({ page }) => {
+    await openStatic(page);
+    await withCounterText(page);
+    const blank = await page.evaluate(() =>
+      window.counterText(document.querySelector('.slide-header')));
+    expect(blank).toBe('');
+  });
 });
