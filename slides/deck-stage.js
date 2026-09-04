@@ -1966,11 +1966,54 @@
     });
   }
 
+  /* ── Self-heal: a slide arriving is never mid-exit ──────────────────────
+     A stranded animation looks exactly like missing words. An exit flash fills
+     BOTH ends of its keyframes, so an element still carrying the class paints
+     at opacity 0 while its box keeps its full size, and `.deck-exiting` hides
+     everything on a section except the parts that are flying out. Both are
+     removed on a setTimeout, and a timer is a promise rather than a guarantee:
+     a backgrounded tab throttles it, a paused frame defers it, and stepping
+     back onto a slide inside that window arrives before it fires.
+
+     So the ARRIVING slide clears its own leftovers, every time, instead of
+     trusting the timer that was meant to. It also says so, because a slide
+     that needed healing is the only witness we get to a bug that has never
+     reproduced on demand. */
+  function healSlide(sec) {
+    var found = [];
+    if (sec.classList.contains('deck-exiting')) {
+      sec.classList.remove('deck-exiting');
+      found.push('deck-exiting');
+    }
+    Array.prototype.forEach.call(
+      sec.querySelectorAll('.deck-flash-out-x,.deck-flash-out-y'),
+      function (el) {
+        el.classList.remove('deck-flash-out-x', 'deck-flash-out-y');
+        found.push('out-flash on ' + (el.className || el.tagName).toString().slice(0, 40));
+      }
+    );
+    // A morph does not fill, so it cannot strand an element invisible — but it
+    // CAN hold a stale width or font-size that the next morph then measures as
+    // the element's natural size. Cancelling is free and keeps the geometry
+    // honest.
+    Array.prototype.forEach.call(sec.querySelectorAll('*'), function (el) {
+      if (!el.getAnimations) return;
+      el.getAnimations().forEach(function (an) { if (an.id === 'deck-morph') an.cancel(); });
+    });
+    if (found.length && window.console && console.warn) {
+      console.warn('[deck-stage] healed a stranded animation on slide "' +
+        (sec.getAttribute('data-slide-id') || '?') + '": ' + found.join(', '));
+    }
+  }
+
   var last = null;
   function onChange() {
     var live = document.querySelector('deck-stage > section[data-deck-active]');
     if (live === last) return;
     var leaving = last;
+    // Before the morph measures anything: a slide holding a stranded exit is
+    // the wrong geometry to morph FROM and the wrong thing to show.
+    if (live) healSlide(live);
     // Measured before anything is hidden or animated, because a morph needs the
     // outgoing element's real geometry.
     morph(leaving, live);
