@@ -7,3 +7,6 @@ tests/out/
 # Fonts are referenced, never shipped. See the README.
 fonts/
 test-results/
+
+# Private domain and name list for the publishability guard, never published
+.leakrc

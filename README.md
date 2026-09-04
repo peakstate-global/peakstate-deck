@@ -74,7 +74,7 @@ and morph transitions. `--theme <name>` names the PowerPoint layouts and the fon
 | `slides/README.md` | The engine's reference: surfaces, treatments, the markup each one wants. |
 | `assets/deck-comments.js` | The review layer, for collecting comments on a built deck. |
 | `themes/peak-state/` | The Peak State look. Colours, type, treatments, the diamond. |
-| `scripts/check-portable.py` | Fails if any file hardcodes an absolute home directory. |
+| `scripts/check-no-leaks.py` | Refuses a commit carrying an absolute home path, a credential, a private domain or a dead link. Vendored from the `skilltastic` skill — edit it there, then copy it back. |
 | `tests/` | A Playwright suite for the review layer. `cd tests && npm ci && npm test`. |
 | `reference/` | Deeper notes on the payload, the overview screen and the internals. |
 
@@ -124,7 +124,7 @@ Get them from Google Fonts and put the `.ttf` files where the two readers look:
 
 ## Checks
 
-    python3 scripts/check-portable.py     # no absolute home paths anywhere
+    python3 scripts/check-no-leaks.py --all   # nothing here is unpublishable anywhere
     cd tests && npm ci && npm test        # the review layer, in a real browser
 
 Both run on every push. See `.github/workflows/check.yml`.

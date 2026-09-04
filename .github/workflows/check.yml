@@ -14,8 +14,8 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: No absolute home paths
-        run: python3 scripts/check-portable.py
+      - name: Publishable — leaks, portability, front matter
+        run: python3 scripts/check-no-leaks.py --all
 
       - name: deck init scaffolds a deck that builds
         run: |
