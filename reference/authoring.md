@@ -30,6 +30,24 @@ empty.
 printed. **Nothing beats vacuous content**: an empty half of a slide is a
 composition, a sentence about the slide is noise the room has to read past.
 
+## Every slide reads cold
+
+**A reader sees one slide and nothing before it.** They arrive from a link, a printed
+handout, an export, or by scrolling backwards. A bullet that only makes sense after the
+previous slide is a bullet that fails for most of the people who read it.
+
+- **A pointer is never the content.** A section number, ticket, migration, commit, id or
+  filename is an address. State the substance on the slide and put the pointer in brackets
+  after it. "Closed by §3.195" tells the room nothing. "The second gap turned out not to
+  exist, because the cost never passes through that account (§3.195)" tells them everything.
+- **Every identifier gets a one-clause gloss at first use**, then it goes bare. `gl_rebuild`
+  (the job that projects the schedule forward). A deck usually needs the gloss again on a
+  later slide, because a slide is not read in order.
+- **A bare name is not a claim.** Name the thing and say what it is in the same line.
+- **Say the mechanism, not just the outcome.** "The report needs no change" is a headline
+  with no evidence under it. Give the reason in the same breath.
+- **No em dash.** Use a full stop, a comma clause or brackets.
+
 ## Speaker notes
 
 
