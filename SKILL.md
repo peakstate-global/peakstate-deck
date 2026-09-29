@@ -19,6 +19,17 @@ framework. `index.html?audit` reports per-slide overflow; "all N slides clean" i
 | Add the review layer | The next section |
 | Work a returned payload | `reference/the-payload.md` |
 
+## Every word on a slide earns its place
+
+**Add text only when it adds value, never to fill a slot in the template.** A footer, an
+eyebrow, a subtitle or a caption that restates the headline, labels the device or narrates the
+slide is noise. It competes with the content and makes the slide harder to read.
+
+- **Footers carry the page number and nothing else.** No footer strapline, tagline or summary.
+- **Before adding any secondary line, ask what the reader loses without it.** If the answer is
+  nothing, leave the space empty. Empty space is a design choice, not a hole to fill.
+- **Space freed by removed text goes to the content**, for example larger illustrations.
+
 ## The review layer
 
 `html-brief` gives a document selection comments and a Copy-responses payload.
