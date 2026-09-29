@@ -10,6 +10,7 @@ the browser and round-trip the comments, **export** it to native PowerPoint.
 
 A deck is one `index.html` with `deck-stage.js` and `deck-tools.js` beside it. No build step, no server, no
 framework. `index.html?audit` reports per-slide overflow; "all N slides clean" is the pass.
+After a deck builds and audits clean, `/draft-eval` scores it before anyone reviews it.
 
 | Job | Start here |
 |---|---|
