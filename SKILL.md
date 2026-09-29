@@ -19,6 +19,14 @@ framework. `index.html?audit` reports per-slide overflow; "all N slides clean" i
 | Add the review layer | The next section |
 | Work a returned payload | `reference/the-payload.md` |
 
+## Design the arc before the slides
+
+**Run `/narrative-arc` before authoring or reflowing a deck, and build nothing until its spine is approved.** It names the audience, the job the deck does for them, the beliefs and pains they arrive with, the shift, and each section's premise with the move it makes.
+
+- **The slides carry the claims; the speaker notes carry the narrative.** Every note says what its slide claims and gives the line that carries the room from the last slide into this one and on to the next.
+- **The first slide of each section names the belief it answers.**
+- **Teach the vocabulary before the audience applies it**, and end on where to start rather than on a method.
+
 ## Every word on a slide earns its place
 
 **Add text only when it adds value, never to fill a slot in the template.** A footer, an
