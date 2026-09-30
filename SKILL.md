@@ -28,6 +28,23 @@ After a deck builds and audits clean, `/draft-eval` scores it before anyone revi
 - **The first slide of each section names the belief it answers.**
 - **Teach the vocabulary before the audience applies it**, and end on where to start rather than on a method.
 
+## Decide the terms on a hidden slide
+
+**A deck decides which terms it uses and which it does not, before any slide is built.** Prefer plain English. A term that is not plain English stays only if it earns its place, and then a visible slide introduces it early, visually, with a metaphor or an example, before its first use. A taxonomy id such as D1 is fine when its letter means something and the id is reused wherever that item appears.
+
+The decisions live on a hidden terms slide early in the deck:
+
+    <section data-role="terms" data-hidden data-hidden-src>
+      <dl>
+        <dt>churn</dt><dd>Customers who leave in a period. Introduced on the retention slide.</dd>
+      </dl>
+      <ul><li><s>synergy</s> &rarr; working together</li></ul>
+    </section>
+
+- **Each kept term is one `<dt>term</dt><dd>definition</dd>` pair.** Terms set aside go in a list with the plain words used instead, never in a `<dt>`, so every `<dt>` is a term in use.
+- **The visible slide that introduces a term carries `data-introduces="term"`**, comma-separated for several (`data-introduces="churn,cohort"`). Spell each term exactly as its `<dt>`.
+- **Write both hidden attributes.** The runtime reads `data-hidden-src`: it dims the slide in edit mode and skips it when presenting. `data-hidden` is the shared marker that evaluators read, and the review layer rewrites it from `data-hidden-src` on load, so it cannot stand alone. A generator's `hidden=True` emits `data-hidden-src`; add `data-hidden` beside it.
+
 ## Every word on a slide earns its place
 
 **Add text only when it adds value, never to fill a slot in the template.** A footer, an
