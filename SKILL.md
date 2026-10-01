@@ -74,6 +74,10 @@ For every slide, answer three questions in the generator, as a comment above the
 
   Text alone is the last resort, and only when a visual would add nothing.
 
+- **One visual per slide, for its main point only.** If a slide makes two points, illustrate the main one and leave the other as text. A second visual competes with the first and turns the slide into clutter.
+- **A visual must aid comprehension or add joy.** An icon placed because the space looked empty does neither. Section dividers and closing lines usually need no visual: a strong sentence stands alone.
+- **Never hand-draw icons in SVG.** Use an established icon set (Lucide, ISC licence, at <https://lucide.dev>) or the Noun Project when the owner gives access, or use no icon.
+- **Illustrations use the house style:** the robot-monkey line art in the `peak-state-design` skill (`assets/characters/robot-monkey/README.md`, drawn with Nano Banana 2 from its two reference images). The robot monkey is always the AI and the people are always people. One hero image per deck may break the style when the moment calls for it, such as a full-slide cartoon at the turning point.
 - **Charts show what the data says, and only that.** Plot only the points the source gives. Label every value, and say on the slide when a line joins only two measured points.
 - **Motion is part of the metaphor when it means something.** A placard that rises from below, a bar chart that climbs, a needle that turns. Use `data-build` for one item per click (see `slides/README.md`), and keep print and reduced motion static.
 - **Illustrations hold a consistent style across a deck** (one illustrator, one set of recurring characters). Say in the attribution that they are AI-generated.

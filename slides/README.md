@@ -136,11 +136,12 @@ first line of the entry sits flush and every later line is indented. **Every
 entry carries its full URL as a clickable link** (`<a href>`, styled with no
 underline), so a reader can open the source from the slide or the PDF.
 
-**Type is large by default (21px).** Add `class="apa dense"` (17px) only when a
-page carries more than ten entries, and split across two references pages
-before going smaller.
+**Keep the references and the provenance block on one slide.** Type is 21px by
+default; for more than eight entries add `class="apa dense"` (15px), which fits
+fourteen entries beside the provenance block. Split across two references pages
+only past that.
 
-**The page holds fourteen entries in `.dense`, and about eight at the default size.**
+**The page holds fourteen entries in `.dense` (15px), and about eight at the default size.**
 Measured, not guessed, and enforced by `tests/specs/layouts.spec.mjs`. Past fourteen it clips silently, because the
 canvas is `overflow: hidden` — nothing on screen tells you the last source is
 gone. Split across two references pages rather than shrinking the type; 15px

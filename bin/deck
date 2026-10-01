@@ -81,11 +81,20 @@ BUILD_PY = '''#!/usr/bin/env python3
 
 Each file in slides/ is one <section>. Rename them to reorder the deck.
 """
+import re
 from pathlib import Path
 
 HERE = Path(__file__).parent
 TITLE = {title!r}
 HEAD = {head!r}
+
+# Inline every stylesheet. Opened from file://, Chrome treats a linked sheet as
+# cross-origin, so the overview cannot read its rules and every thumbnail loses
+# the slide size, padding and background. Inlined rules are always readable.
+def _inline(m):
+    p = HERE / m.group(1)
+    return f"<style>/* {{m.group(1)}} */\\n{{p.read_text()}}\\n</style>" if p.exists() else m.group(0)
+HEAD = re.sub(r'<link rel="stylesheet" href="([^"]+)">', _inline, HEAD)
 
 sections = sorted(HERE.glob("slides/*.html"))
 if not sections:

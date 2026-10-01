@@ -161,7 +161,7 @@
 .apa li::before { content: counter(r) "."; position: absolute; left: 0; width: 38px;
   text-indent: 0; text-align: right; font-family: var(--font-mono);
   font-size: .9em; color: var(--ps-sienna); }
-.apa.dense li { font-size: 17px; margin-bottom: 8px; }
+.apa.dense li { font-size: 15px; line-height: 1.32; margin-bottom: 6px; }
 .apa a { color: inherit; text-decoration: none; }
 .apa a:hover { color: var(--ps-sienna); }
 .meta .apa li { color: #B5A899; }
