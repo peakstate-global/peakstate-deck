@@ -282,7 +282,7 @@ test('an answered comment opens as a thread, and a follow-up reopens it with fol
   expect(p.openCount).toBe(0);
 
   await thread.locator('textarea').fill('And the author?');
-  await thread.locator('button').click();
+  await thread.locator('.ctsave').click();
   await expect(page.locator('.dcx-panel .cthread .ctwho')).toHaveText(['You', 'Response', 'You']);
 
   // On the slide, the lit Slide comment control opens the same thread, as in peakstate-brief.
@@ -291,14 +291,21 @@ test('an answered comment opens as a thread, and a follow-up reopens it with fol
   await page.locator('.dcx-bar [data-a="slide"]').click();
   await expect(page.locator('.dcx-pop .ctwho')).toHaveText(['You', 'Response', 'You']);
   await page.locator('.dcx-pop .cthread textarea').fill('And the date format?');
-  await page.locator('.dcx-pop .cthread button').click();
+  await page.locator('.dcx-pop .cthread .ctsave').click();
   await expect(page.locator('.dcx-pop .ctwho')).toHaveText(['You', 'Response', 'You', 'You']);
+
+  // A follow-up the response has not seen yet is edited in place, and the edit survives a reload.
+  await page.locator('.dcx-pop .ctedit').nth(1).click();
+  await page.locator('.dcx-pop .ctmsg textarea').fill('And the date format, please?');
+  await page.locator('.dcx-pop .ctedit').nth(1).click();
+  await expect(page.locator('.dcx-pop .cthread')).toContainText('And the date format, please?');
   await page.locator('.dcx-pop [data-a="cancel"]').click();
+  await openDeck(page, MINTED);
 
   p = await copyPayload(page);
   expect(p.openCount).toBe(1);
   expect(p.comments[0]).toMatchObject({
     status: 'new', resolutionNote: 'It proves the date only.',
-    follow_up: ['And the author?', 'And the date format?'],
+    follow_up: ['And the author?', 'And the date format, please?'],
   });
 });

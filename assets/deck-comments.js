@@ -310,6 +310,9 @@
     '  font:400 13px/1.45 "Inter",sans-serif}',
     '.dcx .cthread button{align-self:flex-end;appearance:none;border:0;border-radius:8px;cursor:pointer;',
     '  background:#A93D1A;color:#fff;font:500 12px/1 "Inter",sans-serif;padding:7px 12px}',
+    '.dcx .cthread button.ctedit{background:none;color:#B5A899;padding:3px 0 0;cursor:pointer;',
+    '  font:500 11px/1.4 "Inter",sans-serif;text-decoration:underline}',
+    '.dcx .cthread button.ctedit:hover{color:#F5F0E8}',
     '.dcx-panel .empty{color:#8B8079;font-size:13px;padding:16px 6px;text-align:center;line-height:1.5}',
     '.dcx-tray{left:0;right:0;bottom:0;background:rgba(14,10,8,.97);',
     '  border-top:1px solid rgba(245,240,232,.18);padding:14px 20px 16px;',
@@ -2014,6 +2017,7 @@
 
   /* The conversation on one answered comment: what the reader wrote, Claude's
      note as the Response, then each follow-up, then a box to carry it on.
+     A follow-up the response has not seen yet can still be edited in place.
      Text goes in by textContent, never parsed. */
   function threadHTML(c, r) {
     var h = '<div class="cthread"><div class="ctmsg"><span class="ctwho">You</span>' +
@@ -2022,11 +2026,12 @@
       (r.note ? '<span data-t="r"></span>'
         : '<em class="ctnone">Marked as addressed, with no written response.</em>') + '</div></div>';
     followUps(c).forEach(function (_, i) {
-      h += '<div class="ctmsg"><span class="ctwho">You</span><div class="cttext" data-t="f' + i + '"></div></div>';
+      h += '<div class="ctmsg"><span class="ctwho">You</span><div class="cttext" data-t="f' + i + '"></div>' +
+        (i >= (r.seen || 0) ? '<button type="button" class="ctedit" data-f="' + i + '">Edit</button>' : '') + '</div>';
     });
     return h + '<label class="ctlabel">Continue the conversation</label>' +
       '<textarea placeholder="Reply to this response"></textarea>' +
-      '<button type="button">Save</button></div>';
+      '<button type="button" class="ctsave">Save</button></div>';
   }
   function wireThread(d, c, after) {
     var r = resolutionFor(c);
@@ -2037,15 +2042,34 @@
     if (!state.replyDrafts) state.replyDrafts = {};
     ta.value = state.replyDrafts[c.cid] || '';
     // deck-stage listens for arrows and number keys on document.
-    ['keydown', 'keyup', 'keypress'].forEach(function (t) {
-      ta.addEventListener(t, function (e) {
-        e.stopPropagation();
-        if (t === 'keydown' && e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commit(); }
+    function guard(box, done) {
+      ['keydown', 'keyup', 'keypress'].forEach(function (t) {
+        box.addEventListener(t, function (e) {
+          e.stopPropagation();
+          if (t === 'keydown' && e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); done(); }
+        });
       });
-    });
+    }
+    guard(ta, commit);
     // A typed reply survives a repaint of the list.
     ta.addEventListener('input', function () { state.replyDrafts[c.cid] = ta.value; save(); });
-    d.querySelector('.cthread button').addEventListener('click', commit);
+    d.querySelector('.cthread .ctsave').addEventListener('click', commit);
+    // Edit swaps the follow-up for a box; Save edit writes it back in place.
+    Array.prototype.forEach.call(d.querySelectorAll('.cthread .ctedit'), function (b) {
+      var i = +b.dataset.f, text = d.querySelector('[data-t="f' + i + '"]'), box;
+      b.addEventListener('click', function () {
+        if (!box) {
+          box = el('textarea'); box.value = c.thread[i].text;
+          text.textContent = ''; text.appendChild(box); guard(box, keep);
+          b.textContent = 'Save edit'; box.focus();
+        } else keep();
+      });
+      function keep() {
+        var v = box.value.trim();
+        if (v && v !== c.thread[i].text) { c.thread[i].text = v; touch(); say('Reply edited'); } else render();
+        if (after) after();
+      }
+    });
     function commit() {
       var v = ta.value.trim();
       if (!v) return;
