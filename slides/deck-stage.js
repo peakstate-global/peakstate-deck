@@ -1971,14 +1971,20 @@
       var dw = Math.abs(aw - bw) > 0.5, dh = Math.abs(ah - bh) > 0.5;
       if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && !dw && !dh) return;
       var f = { transform: 'translate(' + dx + 'px,' + dy + 'px)' }, t = { transform: 'none' };
-      if (dw) { f.width = aw + 'px'; t.width = bw + 'px'; }
-      if (dh) { f.height = ah + 'px'; t.height = bh + 'px'; }
-      // Type that changes size has to animate its SIZE, not just its box. FLIP
+      // Type that changes size has to scale its glyphs, not just its box. FLIP
       // on width alone moves the frame and snaps the glyphs, which reads as a
-      // cut inside a moving box.
+      // cut inside a moving box. It scales by TRANSFORM, never by animating
+      // font-size, width or height: those are layout properties, so every frame
+      // reflowed the siblings below the word and the whole slide shuddered.
       var fa = parseFloat(getComputedStyle(old).fontSize) || 0;
       var fb = parseFloat(getComputedStyle(now[k]).fontSize) || 0;
-      if (fa && fb && Math.abs(fa - fb) > 0.5) { f.fontSize = fa + 'px'; t.fontSize = fb + 'px'; }
+      if (fa && fb && Math.abs(fa - fb) > 0.5) {
+        f.transform += ' scale(' + (fa / fb) + ')';
+        f.transformOrigin = t.transformOrigin = '0 0';
+      } else {
+        if (dw) { f.width = aw + 'px'; t.width = bw + 'px'; }
+        if (dh) { f.height = ah + 'px'; t.height = bh + 'px'; }
+      }
       now[k].animate([f, t], { duration: MORPH, easing: MORPH_EASE, id: 'deck-morph' });
     });
   }
