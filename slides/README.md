@@ -268,6 +268,8 @@ three things that should travel; nothing else moves.
 |---|---|
 | `data-morph="key"` | The opt-in. The same key on both sides makes them one thing |
 | `data-morph="none"` | Never morphs |
+| `data-morph-scale` | Scales the element by transform as it travels, so its text and parts shrink together instead of reflowing. Images and drawings do this already. Put the size difference on a wrapper (`transform: scale()`) so both sides lay out the same, and keep any rotation on a child, because the morph owns the element's own `transform` |
+| `data-morph-ms` | On the arriving section, the morph's duration in ms, for a hand-off that is the point of the slide |
 | `data-morph-link` | On either of two **adjacent** slides, opts that one pair into morphing. Two ordinary slides cut |
 | `data-entry` / `data-exit` | Beats a key **between states**, because something that flashes in should not also be flown in. On a linked pair the key wins, since that pair is a designed hand-off |
 

@@ -2000,7 +2000,9 @@
       // A picture (an image, an inline drawing or a shape inside one) scales
       // by transform on both axes, so a shape stretches as it travels.
       // Resizing its box instead would reflow the text laid out around it.
-      if (el instanceof SVGElement || el.tagName === 'IMG') {
+      // `data-morph-scale` opts any element into the same: a placard whose type
+      // and stick shrink together, rather than a box the text reflows inside.
+      if (el instanceof SVGElement || el.tagName === 'IMG' || el.hasAttribute('data-morph-scale')) {
         if (dw || dh) f.transform += ' scale(' + (bw ? aw / bw : 1) + ',' + (bh ? ah / bh : 1) + ')';
         f.transformOrigin = t.transformOrigin = '0 0';
         if (svgChild) f.transformBox = t.transformBox = 'fill-box';
