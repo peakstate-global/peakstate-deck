@@ -56,9 +56,10 @@ The decisions live on a hidden terms slide early in the deck:
 - **Encodings.** Every colour, line, circle and position means something the slide or notes make clear. Use the fewest encodings the story needs. Nothing the idea needs is cut off. A chart says what it measures, for whom, and its takeaway; a recommendation says what to do and when, set apart from the findings.
 - **Frameworks.** One model per idea. Ids use a letter that stands for something and appear wherever the item does. Each framework has one look, used identically everywhere and unlike every other framework's.
 - **Devices.** One device per slide, varied across the deck; curiosity counts. Narrative beats strict flow, and a case may sit in the notes.
-- **Sequence.** Adjacent slides differ in background, so each new idea reads as new; a morph pair shares one, because it is one idea moving. A slide that carries several parts reveals them one click at a time, in teaching order.
+- **Sequence.** The background changes between sections, not between every slide; inside a section, flip one only where the reader named two neighbours as too similar. A morph pair shares one background, because it is one idea moving, and on a morph the rest of the slide waits until the travellers land (the runtime does this). A removal the reader asked for once is not a licence to remove a related element later. A slide that carries several parts reveals them one click at a time, in teaching order.
 - **Tables** pad every cell on both sides, so no text sits flush against a neighbouring cell's fill. It is the theme's standard table style (`themes/peak-state/treatments.css`), not a per-deck fix.
-- **Icons** come from one consistent, recognisable set across the deck, never drawn ad hoc.
+- **Icons** come from one consistent, recognisable set across the deck, or are drawn in the deck's own illustration style, never drawn ad hoc.
+- **Evidence** is current: an evidence slide uses this year's data where it exists, with each figure's limit in the sources field.
 - **Journey.** Every slide's job in the journey is visible: a close-up says which item it belongs to, and an evidence slide says what it proves.
 - **Protect what works.** Praised elements go on `keep.json` beside the deck; a rewrite that removes one says why. A change marked worse is reverted first, then the new idea is applied. Fix the pattern across every slide, not only the slide flagged.
 
