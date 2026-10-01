@@ -1818,7 +1818,8 @@
       noteEditInstruction: edits.length
         ? 'noteEdits[] are speaker notes the user rewrote in the browser. Write each one into the generator as that slide\'s note, replacing previousNote, then rebuild.'
         : undefined,
-      orphanedComments: (state.comments || []).filter(function (c) { return c.orphan; })
+      // An orphan already answered stays closed; only an open one asks for a decision.
+      orphanedComments: (state.comments || []).filter(function (c) { return c.orphan && isOpen(c); })
         .map(function (c) {
           return { slideId: mints ? c.slideId : undefined, slideLabel: c.slideLabel,
                    target: c.target, quote: c.quote, comment: c.comment, at: c.at };
