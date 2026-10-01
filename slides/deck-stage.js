@@ -1286,11 +1286,28 @@
      *  nothing further in that direction. */
     _advance(dir, reason) {
       if (!this._slides.length) return;
+      // Click builds: elements marked data-build appear one per forward step
+      // (and leave one per back step) before the deck moves to another slide.
+      const cur = this._slides[this._index];
+      const steps = cur ? [...cur.querySelectorAll('[data-build]')] : [];
+      if (steps.length && !document.documentElement.hasAttribute('data-builds-all')) {
+        if (dir > 0) {
+          const nxt = steps.find((el) => !el.hasAttribute('data-built'));
+          if (nxt) { nxt.setAttribute('data-built', ''); return; }
+        } else {
+          const shown = steps.filter((el) => el.hasAttribute('data-built'));
+          if (shown.length) { shown[shown.length - 1].removeAttribute('data-built'); return; }
+        }
+      }
       let i = this._index + dir;
       while (i >= 0 && i < this._slides.length && this._slides[i].hasAttribute('data-deck-skip')) {
         i += dir;
       }
       if (i < 0 || i >= this._slides.length) { this._flashOverlay(); return; }
+      // Arriving forward shows no builds yet; arriving backward shows them all.
+      this._slides[i].querySelectorAll('[data-build]').forEach((el) => {
+        if (dir > 0) el.removeAttribute('data-built'); else el.setAttribute('data-built', '');
+      });
       this._go(i, reason);
     }
 
@@ -2070,3 +2087,6 @@
   window.deckStatePages = markPrintPages;
   window.deckRenumber = renumber;
 })();
+
+// Audit, export and print see every click build at once.
+if (/[?&](export|audit|print)\b/.test(location.search)) document.documentElement.setAttribute('data-builds-all', '');

@@ -30,7 +30,7 @@ After a deck builds and audits clean, `/draft-eval` scores it before anyone revi
 
 ## Decide the terms on a hidden slide
 
-**A deck decides which terms it uses and which it does not, before any slide is built.** Prefer plain English. A term that is not plain English stays only if it earns its place, and then a visible slide introduces it early, visually, with a metaphor or an example, before its first use. A taxonomy id such as D1 is fine when its letter means something and the id is reused wherever that item appears.
+**A deck decides which terms it uses and which it does not, before any slide is built.** The slide is titled **Definitions** and renders each kept term as a boxed card (`.defs-grid .term`, the same shape as the peakstate-brief definitions block), in large type. When the terms do not fit at 24px, split them across two Definitions slides rather than shrinking the text. Prefer plain English. A term that is not plain English stays only if it earns its place, and then a visible slide introduces it early, visually, with a metaphor or an example, before its first use. A taxonomy id such as D1 is fine when its letter means something and the id is reused wherever that item appears.
 
 The decisions live on a hidden terms slide early in the deck:
 
@@ -57,6 +57,26 @@ The decisions live on a hidden terms slide early in the deck:
 - **Frameworks.** One model per idea. Ids use a letter that stands for something and appear wherever the item does. Each framework has one look, used identically everywhere and unlike every other framework's.
 - **Devices.** One device per slide, varied across the deck; curiosity counts. Narrative beats strict flow, and a case may sit in the notes.
 - **Protect what works.** Praised elements go on `keep.json` beside the deck; a rewrite that removes one says why. A change marked worse is reverted first, then the new idea is applied. Fix the pattern across every slide, not only the slide flagged.
+
+## Every slide carries a visual, and the best one is the metaphor
+
+**A deck is a visual medium. Before writing any slide, find the visual metaphor for its main point, then decide how to show it.** Text-only slides are the exception, and each one needs a reason.
+
+For every slide, answer three questions in the generator, as a comment above the slide:
+
+- **What is the one point?** One sentence.
+- **What is its visual metaphor?** A protest crowd for objections, a seesaw for a shift in weight, a dial for degrees of autonomy, a road for a journey, a stamp for a verdict.
+- **How can we show it?** Choose the highest rung that is feasible:
+  1. **The content sits inside the metaphor.** The objections are the words on the protest placards; the cheap work and the precious work sit on the two ends of the seesaw; the four levels of autonomy are the marks on the dial. This is the goal.
+  2. **An illustration** that carries the metaphor, with the text beside it.
+  3. **An infographic or chart** that shows the number's shape: a falling line, a pair of bars, a scale comparison. A number that changes over time is shown as a chart, never as a sentence.
+  4. **A symbol or icon** that marks the idea.
+
+  Text alone is the last resort, and only when a visual would add nothing.
+
+- **Charts show what the data says, and only that.** Plot only the points the source gives. Label every value, and say on the slide when a line joins only two measured points.
+- **Motion is part of the metaphor when it means something.** A placard that rises from below, a bar chart that climbs, a needle that turns. Use `data-build` for one item per click (see `slides/README.md`), and keep print and reduced motion static.
+- **Illustrations hold a consistent style across a deck** (one illustrator, one set of recurring characters). Say in the attribution that they are AI-generated.
 
 ## Every word on a slide earns its place
 

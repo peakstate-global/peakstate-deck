@@ -151,13 +151,19 @@
 .refpage { display: grid; grid-template-columns: 1.55fr 1fr; gap: 52px;
   align-items: start; height: 100%; align-content: start; }
 .apa { list-style: none; counter-reset: r; margin: 0; padding: 0; }
-/* A hanging indent, the way APA sets a reference list. Deliberately not a grid:
-   the number and the entry are one flowing paragraph. */
-.apa li { counter-increment: r; font-family: var(--font-sans); font-size: 15px;
-  line-height: 1.35; margin-bottom: 7px; color: var(--fg-2);
-  padding-left: 34px; text-indent: -34px; }
-.apa li::before { content: counter(r) ".\00a0\00a0"; font-family: var(--font-mono);
-  font-size: 14px; color: var(--ps-sienna); }
+/* APA 7 hanging indent: the first line of each entry sits flush, every later
+   line is indented. The number hangs in its own gutter to the left, so the
+   indent reads as APA rather than as a numbered list. Type is large by default;
+   add .dense only when the page carries more than ten entries. */
+.apa li { counter-increment: r; position: relative; font-family: var(--font-sans);
+  font-size: 21px; line-height: 1.4; margin-bottom: 12px; color: var(--fg-2);
+  padding-left: calc(46px + 1.6em); text-indent: -1.6em; }
+.apa li::before { content: counter(r) "."; position: absolute; left: 0; width: 38px;
+  text-indent: 0; text-align: right; font-family: var(--font-mono);
+  font-size: .9em; color: var(--ps-sienna); }
+.apa.dense li { font-size: 17px; margin-bottom: 8px; }
+.apa a { color: inherit; text-decoration: none; }
+.apa a:hover { color: var(--ps-sienna); }
 .meta .apa li { color: #B5A899; }
 sup.cite { font-family: var(--font-mono); font-size: .62em; color: var(--ps-sienna);
   padding-left: 2px; vertical-align: super; }
@@ -259,3 +265,25 @@ section.exercise h2, section.exercise p { color: var(--ps-cream-ink); }
 .refpage .pblock.pblock { grid-template-columns: 1fr; gap: 18px; }
 .refpage .pblock .v { font-size: 16px; line-height: 1.4; }
 .refpage .pblock .k { font-size: 13px; margin-bottom: 6px; }
+
+/* ── the definitions slide ──────────────────────────────────────────────────
+   Titled "Definitions". One boxed card per term, the same shape as the
+   peakstate-brief definitions block: the term, then what it means in this
+   deck, then where the deck introduces it. Large type; split across two
+   slides rather than shrinking past 22px. */
+.defs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 40px; }
+.defs-grid .term { border: 1px solid var(--hairline); border-radius: 10px; background: rgba(255,255,255,.55);
+  padding: 26px 30px; }
+.defs-grid .term h4 { font-family: var(--font-serif); font-weight: 400; font-size: 38px; margin: 0 0 12px; }
+.defs-grid .term p { font-family: var(--font-serif); font-size: 24px; line-height: 1.4; margin: 0; }
+.defs-grid .term .foot { font-family: var(--font-sans); font-size: 16px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--fg-2); margin-top: 14px; }
+.defs-out { margin-top: 28px; font-family: var(--font-sans); font-size: 22px; color: var(--fg-2); }
+.defs-out s { color: var(--fg-2); } .defs-out b { color: var(--ps-charcoal-ink); font-weight: 500; }
+
+/* Click builds: hidden until their click, then they rise into place. */
+html:not([data-builds-all]) [data-build]:not([data-built]) { opacity: 0; transform: translateY(120px); }
+[data-build] { transition: opacity .45s ease, transform .55s cubic-bezier(.2,.9,.3,1.2); }
+html[data-builds-all] [data-build] { transition: none !important; }
+@media print { [data-build] { opacity: 1 !important; transform: none !important; } }
+@media (prefers-reduced-motion: reduce) { [data-build] { transition: opacity .2s; } }

@@ -131,12 +131,17 @@ Every claim in the deck carries `<sup class="cite">n</sup>` pointing at its entr
 </div>
 ```
 
-`.apa li` is a hanging indent, not a grid: the number and the entry are one
-flowing paragraph, which is what APA sets and what stops the list doubling in
-height.
+`.apa li` is an APA 7 hanging indent: the number hangs in its own gutter, the
+first line of the entry sits flush and every later line is indented. **Every
+entry carries its full URL as a clickable link** (`<a href>`, styled with no
+underline), so a reader can open the source from the slide or the PDF.
 
-**The page holds fourteen entries.** Measured, not guessed, and enforced by
-`tests/specs/layouts.spec.mjs`. Past fourteen it clips silently, because the
+**Type is large by default (21px).** Add `class="apa dense"` (17px) only when a
+page carries more than ten entries, and split across two references pages
+before going smaller.
+
+**The page holds fourteen entries in `.dense`, and about eight at the default size.**
+Measured, not guessed, and enforced by `tests/specs/layouts.spec.mjs`. Past fourteen it clips silently, because the
 canvas is `overflow: hidden` — nothing on screen tells you the last source is
 gone. Split across two references pages rather than shrinking the type; 15px
 sans is already the floor for something read in a room. The agenda page holds
@@ -181,6 +186,14 @@ URL; the sidecar, **relatively** (`deck-name.html.sourced`), so the pair
 survives being moved or sent on. Never an absolute local path — it breaks for
 every reader but you and leaks a directory structure into a document that
 travels.
+
+## Click builds
+
+Mark any element `data-build` and it appears on its own click, in document order,
+before the deck moves to the next slide. Going back removes them one at a time.
+No extra slides and no state groups. `treatments.css` styles the arrival (fade
+and rise); override the transform per deck for a different entrance. `?audit`,
+`?export` and print show every build at once.
 
 ## Slides a delivery does not use
 
