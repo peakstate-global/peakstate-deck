@@ -1911,6 +1911,23 @@
     });
     return map;
   }
+  // The angle an element is drawn at, summed over itself and its ancestors up to
+  // its slide. A rotated rect reports only its upright bounding box.
+  function angleOf(el) {
+    var deg = 0;
+    for (var n = el; n && n.tagName !== 'SECTION'; n = n.parentElement) {
+      var m = /matrix\(([^)]+)\)/.exec(getComputedStyle(n).transform || '');
+      if (m) { var p = m[1].split(',').map(parseFloat); deg += Math.atan2(p[1], p[0]) * 180 / Math.PI; }
+    }
+    return deg;
+  }
+  // The box the glyphs occupy, which a block element's own box is not.
+  function glyphs(el) {
+    var r = document.createRange();
+    r.selectNodeContents(el);
+    var g = r.getBoundingClientRect();
+    return (g.width || g.height) ? g : el.getBoundingClientRect();
+  }
   function morph(from, to) {
     if (!from || !to || !to.animate) return;
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -1988,7 +2005,10 @@
       var dx = (a.left - b.left) / sc, dy = (a.top - b.top) / sc;
       var aw = a.width / sc, bw = b.width / sc, ah = a.height / sc, bh = b.height / sc;
       var dw = Math.abs(aw - bw) > 0.5, dh = Math.abs(ah - bh) > 0.5;
-      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && !dw && !dh) return;
+      // An element set at an angle (a stamp) turns as it travels.
+      var rot = svgChild ? 0 : angleOf(old) - angleOf(el);
+      var turned = Math.abs(rot) > 0.5;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && !dw && !dh && !turned) return;
       var f = { transform: 'translate(' + dx + 'px,' + dy + 'px)' }, t = { transform: 'none' };
       // Type that changes size has to scale its glyphs, not just its box. FLIP
       // on width alone moves the frame and snaps the glyphs, which reads as a
@@ -2006,9 +2026,17 @@
         if (dw || dh) f.transform += ' scale(' + (bw ? aw / bw : 1) + ',' + (bh ? ah / bh : 1) + ')';
         f.transformOrigin = t.transformOrigin = '0 0';
         if (svgChild) f.transformBox = t.transformBox = 'fill-box';
-      } else if (fa && fb && Math.abs(fa - fb) > 0.5) {
-        f.transform += ' scale(' + (fa / fb) + ')';
-        f.transformOrigin = t.transformOrigin = '0 0';
+      } else if (turned || (fa && fb && Math.abs(fa - fb) > 0.5)) {
+        // Map glyph centre to glyph centre, turning and scaling about it. A box
+        // centre is wrong here: a block headword spans its column, and a stamp
+        // carries padding and a border.
+        var ga = glyphs(old), gb = glyphs(el);
+        var ox = (gb.left + gb.width / 2 - b.left) / sc, oy = (gb.top + gb.height / 2 - b.top) / sc;
+        var tx = (ga.left + ga.width / 2 - gb.left - gb.width / 2) / sc;
+        var ty = (ga.top + ga.height / 2 - gb.top - gb.height / 2) / sc;
+        var s = fa && fb ? fa / fb : 1;
+        f.transform = 'translate(' + tx + 'px,' + ty + 'px) rotate(' + rot + 'deg) scale(' + s + ')';
+        f.transformOrigin = t.transformOrigin = ox + 'px ' + oy + 'px';
       } else {
         if (dw) { f.width = aw + 'px'; t.width = bw + 'px'; }
         if (dh) { f.height = ah + 'px'; t.height = bh + 'px'; }
