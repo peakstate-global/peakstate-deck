@@ -105,10 +105,10 @@ test.describe('agenda page', () => {
 test.describe('references page', () => {
   test('holds fourteen entries beside the provenance block', async ({ page }) => {
     await openStatic(page);
-    // Fourteen is the measured ceiling, not a round number: it is what a real
-    // claims deck runs to, and the row metrics were tightened once to reach it
-    // (12 entries before, 14 after). Past it, split the page rather than
-    // shrinking the type again — 15px sans is already the floor for a room.
+    // Fourteen is the measured ceiling in .dense (15px), the class slides/README.md
+    // asks for past eight entries. The default size is 21px and holds about eight.
+    // Past fourteen, split the page rather than shrinking the type again.
+    await page.evaluate(() => document.querySelector('.refpage ol.apa').classList.add('dense'));
     await grow(page, '.refpage ol.apa', 14);
     expect(await clipped(page, '.refpage'), 'fourteen entries should fit').toBe(false);
     await shot(page, 'refs-14-entries');

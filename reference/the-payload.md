@@ -73,6 +73,11 @@ The UI rename from "Comment slide" to "Slide comment" touched **no payload key**
 A whole-page comment is still `"target": "slide"`, so saved payloads and existing
 `review-resolutions.json` files are untouched.
 
+**A comment with a follow-up carries `follow_up[]`**, the reader's replies to
+`resolutionNote` in the order written. Its `status` is `new` again until a
+resolution with `seen` equal to the follow-up count answers it. The field is
+absent when there are none, so this is an addition inside version 4, not a bump.
+
 **`comments[]` carries the OPEN ones only.** Anything already ticked off has been
 read, acted on and reported, so copying it back is noise in both directions;
 `addressedCount` records how many were left out. `noteEdits[]` sits alongside.

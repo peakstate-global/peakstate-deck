@@ -210,7 +210,15 @@
     var e = (state.noteEdits || {})[n];
     return e === undefined ? originalNote(n) : e;
   }
-  function statusOf(c) { var r = resolutionFor(c); return r ? (r.status || 'addressed') : 'new'; }
+  /* A follow-up the reader adds after Claude's answer reopens the comment, so
+     it travels in the next Copy whatever its status was. `seen` on the
+     resolution is how many follow-ups that answer already covers. */
+  function followUps(c) { return (c.thread || []).map(function (m) { return m.text; }); }
+  function statusOf(c) {
+    var r = resolutionFor(c);
+    if (!r) return 'new';
+    return followUps(c).length > (r.seen || 0) ? 'new' : (r.status || 'addressed');
+  }
   function isOpen(c) { var st = statusOf(c); return st === 'new' || st === 'question'; }
 
   /* ── styles ─────────────────────────────────────────────────────────── */
@@ -286,7 +294,22 @@
     '.dcx-panel .tick.addressed{background:rgba(208,181,97,.2);color:#D0B561}',
     '.dcx-panel .tick.wontfix{background:rgba(245,240,232,.12);color:#B5A899}',
     '.dcx-panel .tick.question{background:rgba(169,61,26,.25);color:#E0876A}',
-    '.dcx-panel .resnote{font:400 12px/1.5 "Inter",sans-serif;color:#8B8079;margin-top:6px}',
+    // A comment Claude has answered reads as a conversation, as in peakstate-brief.
+    '.dcx-panel .item.done > :not(.cthread){opacity:.5}',
+    '.dcx-panel .item.done{opacity:1}',
+    '.dcx-panel .cthread{margin-top:8px;display:flex;flex-direction:column;gap:6px;cursor:default}',
+    '.dcx-panel .ctmsg{border-left:2px solid rgba(245,240,232,.18);padding:2px 0 2px 9px}',
+    '.dcx-panel .ctmsg.ctreply{border-left-color:#D0B561}',
+    '.dcx-panel .ctwho{display:block;font:600 10px/1.4 "JetBrains Mono",monospace;letter-spacing:.1em;',
+    '  text-transform:uppercase;color:#8B8079}',
+    '.dcx-panel .cttext{font:400 13px/1.45 "Inter",sans-serif;color:#F5F0E8;white-space:pre-wrap}',
+    '.dcx-panel .ctnone{color:#8B8079}',
+    '.dcx-panel .ctlabel{font:500 11px/1.4 "Inter",sans-serif;color:#B5A899;margin-top:4px}',
+    '.dcx-panel .cthread textarea{width:100%;min-height:54px;resize:vertical;background:rgba(245,240,232,.06);',
+    '  border:1px solid rgba(245,240,232,.18);border-radius:8px;color:#F5F0E8;padding:7px 9px;',
+    '  font:400 13px/1.45 "Inter",sans-serif}',
+    '.dcx-panel .cthread button{align-self:flex-end;appearance:none;border:0;border-radius:8px;cursor:pointer;',
+    '  background:#A93D1A;color:#fff;font:500 12px/1 "Inter",sans-serif;padding:7px 12px}',
     '.dcx-panel .empty{color:#8B8079;font-size:13px;padding:16px 6px;text-align:center;line-height:1.5}',
     '.dcx-tray{left:0;right:0;bottom:0;background:rgba(14,10,8,.97);',
     '  border-top:1px solid rgba(245,240,232,.18);padding:14px 20px 16px;',
@@ -1768,7 +1791,8 @@
           quote: c.quote, comment: c.comment, at: c.at,
           status: statusOf(c),
           addressedInBuild: r ? (r.build || null) : null,
-          resolutionNote: r ? (r.note || null) : null
+          resolutionNote: r ? (r.note || null) : null,
+          follow_up: followUps(c).length ? followUps(c) : undefined
         };
       })
     }, null, 2);
@@ -1924,17 +1948,17 @@
           (st === 'addressed' ? '\u2713 ADDRESSED' : st === 'wontfix' ? '\u2013 NOT DOING' : '? DISCUSS') +
           '</span>') +
         (c.quote ? '<div class="quote"></div>' : '') +
-        '<div class="body"></div>' +
-        (r && r.note ? '<div class="resnote"></div>' : '');
+        (r ? threadHTML(c, r) : '<div class="body"></div>');
+      if (r) d.querySelector('[data-a="edit"]').textContent = 'Edit original';
       d.querySelector('.slide').textContent = c.orphan
         ? '\u26A0 ORPHANED \u00b7 was on \u201c' + (c.slideLabel || '\u2014') + '\u201d'
         : 'Slide ' + c.slide + ' \u00b7 ' + (c.slideLabel || '\u2014');
-      if (r && r.note) d.querySelector('.resnote').textContent = r.note;
       if (c.quote) d.querySelector('.quote').textContent = c.quote;
-      d.querySelector('.body').textContent = c.comment;
+      if (r) wireThread(d, c); else d.querySelector('.body').textContent = c.comment;
 
       var delBtn = d.querySelector('[data-a="del"]'), armed = false;
       d.addEventListener('click', function (e) {
+        if (e.target.closest('.cthread')) return;   // typing a reply is not navigating
         var a = e.target.dataset && e.target.dataset.a;
         if (a === 'del') {
           if (!armed) { armed = true; delBtn.textContent = 'Confirm'; delBtn.classList.add('danger'); return; }
@@ -1945,6 +1969,51 @@
       });
       panel.appendChild(d);
     });
+  }
+
+  /* The conversation on one answered comment: what the reader wrote, Claude's
+     note as the Response, then each follow-up, then a box to carry it on.
+     Text goes in by textContent, never parsed. */
+  function threadHTML(c, r) {
+    var h = '<div class="cthread"><div class="ctmsg"><span class="ctwho">You</span>' +
+      '<div class="cttext" data-t="c"></div></div>' +
+      '<div class="ctmsg ctreply"><span class="ctwho">Response</span><div class="cttext">' +
+      (r.note ? '<span data-t="r"></span>'
+        : '<em class="ctnone">Marked as addressed, with no written response.</em>') + '</div></div>';
+    followUps(c).forEach(function (_, i) {
+      h += '<div class="ctmsg"><span class="ctwho">You</span><div class="cttext" data-t="f' + i + '"></div></div>';
+    });
+    return h + '<label class="ctlabel">Continue the conversation</label>' +
+      '<textarea placeholder="Reply to this response"></textarea>' +
+      '<button type="button">Save</button></div>';
+  }
+  function wireThread(d, c) {
+    var r = resolutionFor(c);
+    d.querySelector('[data-t="c"]').textContent = c.comment;
+    if (r.note) d.querySelector('[data-t="r"]').textContent = r.note;
+    followUps(c).forEach(function (t, i) { d.querySelector('[data-t="f' + i + '"]').textContent = t; });
+    var ta = d.querySelector('.cthread textarea');
+    if (!state.replyDrafts) state.replyDrafts = {};
+    ta.value = state.replyDrafts[c.cid] || '';
+    // deck-stage listens for arrows and number keys on document.
+    ['keydown', 'keyup', 'keypress'].forEach(function (t) {
+      ta.addEventListener(t, function (e) {
+        e.stopPropagation();
+        if (t === 'keydown' && e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commit(); }
+      });
+    });
+    // A typed reply survives a repaint of the list.
+    ta.addEventListener('input', function () { state.replyDrafts[c.cid] = ta.value; save(); });
+    d.querySelector('.cthread button').addEventListener('click', commit);
+    function commit() {
+      var v = ta.value.trim();
+      if (!v) return;
+      if (!c.thread) c.thread = [];
+      c.thread.push({ by: 'reader', text: v, at: new Date().toISOString() });
+      delete state.replyDrafts[c.cid];
+      touch();
+      say('Reply added');
+    }
   }
 
   function goTo(n) {

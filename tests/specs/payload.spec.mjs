@@ -251,3 +251,43 @@ test('a review from a newer build keeps its unknown fields', async ({ page }) =>
   expect(stored.somethingWeDoNotKnowAbout, 'unknown fields are preserved')
     .toEqual({ keep: 'me' });
 });
+
+test('an answered comment opens as a thread, and a follow-up reopens it with follow_up[]', async ({ page }) => {
+  await openDeck(page, MINTED);
+  await goToSlide(page, 5);
+  await page.locator('.dcx-bar [data-a="slide"]').click();
+  await writeComment(page, 'Say what the stamp proves.');
+  const at = await page.evaluate(() => {
+    const k = Object.keys(localStorage).find((x) => x.startsWith('deckComments:'));
+    return JSON.parse(localStorage.getItem(k)).comments[0].at;
+  });
+
+  // The build embeds review-resolutions.json; here the test embeds it.
+  const res = JSON.stringify({ resolutions: [{ at, status: 'addressed', note: 'It proves the date only.' }] });
+  await page.route('**/deck-minted.html', async (route) => {
+    const body = (await (await route.fetch()).text()).replace('</head>',
+      `<script type="application/json" id="deck-resolutions">${res}</script></head>`);
+    await route.fulfill({ body, contentType: 'text/html' });
+  });
+  await openDeck(page, MINTED);
+
+  await page.locator('.dcx-bar [data-a="list"]').click();
+  const thread = page.locator('.dcx-panel .cthread');
+  await expect(thread.locator('.ctwho')).toHaveText(['You', 'Response']);
+  await expect(thread).toContainText('It proves the date only.');
+  await expect(page.locator('.dcx-panel [data-a="edit"]')).toHaveText('Edit original');
+
+  // Settled: nothing open travels.
+  let p = await copyPayload(page);
+  expect(p.openCount).toBe(0);
+
+  await thread.locator('textarea').fill('And the author?');
+  await thread.locator('button').click();
+  await expect(page.locator('.dcx-panel .cthread .ctwho')).toHaveText(['You', 'Response', 'You']);
+
+  p = await copyPayload(page);
+  expect(p.openCount).toBe(1);
+  expect(p.comments[0]).toMatchObject({
+    status: 'new', resolutionNote: 'It proves the date only.', follow_up: ['And the author?'],
+  });
+});

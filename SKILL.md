@@ -152,8 +152,20 @@ Keep a `review-resolutions.json` beside the deck:
 ] }
 ```
 
-`status` is `addressed`, `wontfix` or `question`. `note` is what to tell the
-reader, and it renders under the comment in the list.
+`status` is `addressed`, `wontfix` or `question`. `note` is the reply to the
+reader. In the list, an answered comment opens as a thread, as in peakstate-brief:
+**You** (the comment), **Response** (the `note`), each follow-up, then a
+**Continue the conversation** box. **Edit original** sits beside it.
+
+**A follow-up reopens the comment.** Whatever its status, a comment with a
+follow-up the answer has not covered counts as `new`, so it travels in the next
+Copy with `follow_up[]` beside `resolutionNote`. To answer it, rewrite `note` so
+it covers the follow-up too, and set `seen` to the number of follow-ups it now
+answers:
+
+```json
+{ "at": "…", "status": "addressed", "note": "The answer, now covering the follow-up.", "seen": 1 }
+```
 
 The build embeds this file as a JSON block the runtime reads:
 
