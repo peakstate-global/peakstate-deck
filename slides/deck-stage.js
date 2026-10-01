@@ -1950,28 +1950,27 @@
     var dur = +to.getAttribute('data-morph-ms') || MORPH;
     // The deck's own scale, for elements that have no offsetWidth to measure it by.
     var secScale = to.offsetWidth ? to.getBoundingClientRect().width / to.offsetWidth : 1;
-    // Something with no counterpart on the slide before did not travel from
-    // anywhere, so it must not fly: it fades. Only the OUTERMOST new thing
-    // fades, or every node inside it fades again on top of its parent.
     var matched = Object.keys(now).filter(function (k) { return was[k]; })
       .map(function (k) { return now[k]; });
-    var fresh = Object.keys(now).filter(function (k) { return !was[k]; })
-      .map(function (k) { return now[k]; })
-      // A wrapper around something that DID travel is not itself new. Without
-      // this the whole layout fades and the morphing children fade with it.
-      .filter(function (el) {
-        return !matched.some(function (m) { return el.contains(m); });
-      });
     // Only on a LINKED hand-off. Between states an element that appears in the
     // map for the first time is usually a keying artefact rather than a new
     // object, and fading something the reader can already see is a flicker.
     if (linked) {
-      fresh.filter(function (el) {
-        return !fresh.some(function (other) { return other !== el && other.contains(el); });
-      }).forEach(function (el) {
-        el.animate([{ opacity: 0 }, { opacity: 1 }],
-                   { duration: dur, easing: 'linear', id: 'deck-morph' });
-      });
+      // Everything on the arriving slide that does not travel waits until the
+      // travellers have landed, so the eye follows the morph first and reads
+      // the rest of the slide after it. Keyed or not: a card body with no
+      // data-morph would otherwise sit there in full while the title glides.
+      var travels = function (el) { return matched.some(function (m) { return el === m || el.contains(m); }); };
+      var hold = function (el) {
+        Array.prototype.forEach.call(el.children, function (c) {
+          // The running header and footer belong to the deck, not the slide.
+          if (matched.indexOf(c) > -1 || c.matches('.hd, .ft')) return;
+          if (travels(c)) { hold(c); return; }
+          c.animate([{ opacity: 0 }, { opacity: 1 }],
+                    { duration: 300, delay: dur, fill: 'backwards', easing: 'linear', id: 'deck-morph' });
+        });
+      };
+      hold(to);
     }
     Object.keys(now).forEach(function (k) {
       var old = was[k];
