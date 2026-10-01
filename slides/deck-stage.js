@@ -1927,6 +1927,12 @@
       if (!adjacent || !linked) return;
     }
     var was = morphMap(from, linked), now = morphMap(to, linked);
+    // `data-morph-ms` on the arriving section slows one hand-off down, for a
+    // morph that IS the point of the slide (a shape that stretches as the room
+    // watches). Everything else keeps the flash's clock.
+    var dur = +to.getAttribute('data-morph-ms') || MORPH;
+    // The deck's own scale, for elements that have no offsetWidth to measure it by.
+    var secScale = to.offsetWidth ? to.getBoundingClientRect().width / to.offsetWidth : 1;
     // Something with no counterpart on the slide before did not travel from
     // anywhere, so it must not fly: it fades. Only the OUTERMOST new thing
     // fades, or every node inside it fades again on top of its parent.
@@ -1947,7 +1953,7 @@
         return !fresh.some(function (other) { return other !== el && other.contains(el); });
       }).forEach(function (el) {
         el.animate([{ opacity: 0 }, { opacity: 1 }],
-                   { duration: MORPH, easing: 'linear', id: 'deck-morph' });
+                   { duration: dur, easing: 'linear', id: 'deck-morph' });
       });
     }
     Object.keys(now).forEach(function (k) {
@@ -1965,7 +1971,20 @@
       // a width or a translate is set in LAYOUT pixels. Mixing the two makes the
       // morph travel the wrong distance and then jump the rest of the way when
       // the animation releases. Everything below is divided back into layout px.
-      var sc = b.width / (now[k].offsetWidth || 1) || 1;
+      // offsetWidth exists on HTML elements only. An inline <svg> has none, and
+      // dividing by a stand-in 1 sent it travelling a whole screen width.
+      var el = now[k], ow = el.offsetWidth;
+      var sc = (ow ? b.width / ow : secScale) || 1;
+      // Inside a drawing a CSS translate is in the drawing's user units.
+      // ponytail: an SVG child carrying its own transform attribute is skipped,
+      // because a CSS transform replaces that attribute for the animation's life.
+      // Key its parent or an untransformed child instead.
+      var svgChild = el instanceof SVGElement && !(el instanceof SVGSVGElement);
+      if (svgChild) {
+        if (el.hasAttribute('transform')) return;
+        var m = el.getScreenCTM();
+        if (m) sc = Math.hypot(m.a, m.b) || sc;
+      }
       var dx = (a.left - b.left) / sc, dy = (a.top - b.top) / sc;
       var aw = a.width / sc, bw = b.width / sc, ah = a.height / sc, bh = b.height / sc;
       var dw = Math.abs(aw - bw) > 0.5, dh = Math.abs(ah - bh) > 0.5;
@@ -1978,14 +1997,32 @@
       // reflowed the siblings below the word and the whole slide shuddered.
       var fa = parseFloat(getComputedStyle(old).fontSize) || 0;
       var fb = parseFloat(getComputedStyle(now[k]).fontSize) || 0;
-      if (fa && fb && Math.abs(fa - fb) > 0.5) {
+      // A picture (an image, an inline drawing or a shape inside one) scales
+      // by transform on both axes, so a shape stretches as it travels.
+      // Resizing its box instead would reflow the text laid out around it.
+      if (el instanceof SVGElement || el.tagName === 'IMG') {
+        if (dw || dh) f.transform += ' scale(' + (bw ? aw / bw : 1) + ',' + (bh ? ah / bh : 1) + ')';
+        f.transformOrigin = t.transformOrigin = '0 0';
+        if (svgChild) f.transformBox = t.transformBox = 'fill-box';
+      } else if (fa && fb && Math.abs(fa - fb) > 0.5) {
         f.transform += ' scale(' + (fa / fb) + ')';
         f.transformOrigin = t.transformOrigin = '0 0';
       } else {
         if (dw) { f.width = aw + 'px'; t.width = bw + 'px'; }
         if (dh) { f.height = ah + 'px'; t.height = bh + 'px'; }
+        // A box anchored by its right or bottom edge, or centred, moves when
+        // its size changes, so the translate measured at the END size lands it
+        // in the wrong place at the start. Measure it once at the start size.
+        if (dw || dh) {
+          var sw = el.style.width, sh = el.style.height;
+          if (dw) el.style.width = f.width;
+          if (dh) el.style.height = f.height;
+          var r = el.getBoundingClientRect();
+          el.style.width = sw; el.style.height = sh;
+          f.transform = 'translate(' + (a.left - r.left) / sc + 'px,' + (a.top - r.top) / sc + 'px)';
+        }
       }
-      now[k].animate([f, t], { duration: MORPH, easing: MORPH_EASE, id: 'deck-morph' });
+      now[k].animate([f, t], { duration: dur, easing: MORPH_EASE, id: 'deck-morph' });
     });
   }
 
