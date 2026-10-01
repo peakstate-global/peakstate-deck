@@ -1955,19 +1955,32 @@
     // Only on a LINKED hand-off. Between states an element that appears in the
     // map for the first time is usually a keying artefact rather than a new
     // object, and fading something the reader can already see is a flicker.
+    var lead = 0;
     if (linked) {
       // Everything on the arriving slide that does not travel waits until the
       // travellers have landed, so the eye follows the morph first and reads
       // the rest of the slide after it. Keyed or not: a card body with no
       // data-morph would otherwise sit there in full while the title glides.
+      // data-morph-lead marks a thing the reader must see BEFORE anything moves
+      // (the outline a shape leaves behind): it fades in quickly first, and the
+      // travellers hold their start pose until it has.
+      lead = to.querySelector('[data-morph-lead]') ? 250 : 0;
       var travels = function (el) { return matched.some(function (m) { return el === m || el.contains(m); }); };
       var hold = function (el) {
         Array.prototype.forEach.call(el.children, function (c) {
           // The running header and footer belong to the deck, not the slide.
           if (matched.indexOf(c) > -1 || c.matches('.hd, .ft')) return;
+          // A click build not yet built is hidden by CSS; a fade would show it,
+          // then drop it again when the fade ends.
+          if (c.matches('[data-build]:not([data-built])')) return;
+          if (c.matches('[data-morph-lead]')) {
+            c.animate([{ opacity: 0 }, { opacity: 1 }],
+                      { duration: lead, fill: 'backwards', easing: 'linear', id: 'deck-morph' });
+            return;
+          }
           if (travels(c)) { hold(c); return; }
           c.animate([{ opacity: 0 }, { opacity: 1 }],
-                    { duration: 300, delay: dur, fill: 'backwards', easing: 'linear', id: 'deck-morph' });
+                    { duration: 300, delay: lead + dur, fill: 'backwards', easing: 'linear', id: 'deck-morph' });
         });
       };
       hold(to);
@@ -2051,7 +2064,7 @@
           f.transform = 'translate(' + (a.left - r.left) / sc + 'px,' + (a.top - r.top) / sc + 'px)';
         }
       }
-      now[k].animate([f, t], { duration: dur, easing: MORPH_EASE, id: 'deck-morph' });
+      now[k].animate([f, t], { duration: dur, delay: lead, fill: 'backwards', easing: MORPH_EASE, id: 'deck-morph' });
     });
   }
 
