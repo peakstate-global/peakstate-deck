@@ -64,15 +64,17 @@ def flag(name: str, default: str | None = None) -> str | None:
     return sys.argv[i]
 
 
-def presenter_notes(script: str | None, note: str | None) -> str:
+def presenter_notes(script: str | None, note: str | None, sources: str | None = None) -> str:
     """PowerPoint's one notes field, carrying both a narration script and the
     speaker note. Ticket #28: script first, a rule, then the note. A deck with
-    no script (the common case today) keeps the plain note, unchanged."""
+    no script (the common case today) keeps the plain note, unchanged. The
+    sources field, never spoken, goes last under its own rule and label, so the
+    presenter can tell it from the note."""
     script = (script or "").strip()
     note = note or ""
-    if not script:
-        return note
-    return f"SCRIPT:\n{script}\n\n---\n\nNOTES:\n{note}"
+    out = f"SCRIPT:\n{script}\n\n---\n\nNOTES:\n{note}" if script else note
+    sources = (sources or "").strip()
+    return f"{out}\n\n---\n\nSOURCES (NOT SPOKEN):\n{sources}" if sources else out
 
 
 DECK = HERE / flag("--deck", "shift-keynote-deck.html")
@@ -1001,7 +1003,7 @@ def main() -> None:
             # Done once the mark has both halves: the diamond and the words.
             if len({b["type"] for b in brand_items}) >= 2:
                 brand_done = True
-            slide.notes_slide.notes_text_frame.text = presenter_notes(s.get("script"), s.get("note"))
+            slide.notes_slide.notes_text_frame.text = presenter_notes(s.get("script"), s.get("note"), s.get("sources"))
             if s.get("state"):
                 morph(slide)
             if s.get("hidden"):

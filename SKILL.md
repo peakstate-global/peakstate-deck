@@ -45,6 +45,19 @@ The decisions live on a hidden terms slide early in the deck:
 - **The visible slide that introduces a term carries `data-introduces="term"`**, comma-separated for several (`data-introduces="churn,cohort"`). Spell each term exactly as its `<dt>`.
 - **Write both hidden attributes.** The runtime reads `data-hidden-src`: it dims the slide in edit mode and skips it when presenting. `data-hidden` is the shared marker that evaluators read, and the review layer rewrites it from `data-hidden-src` on load, so it cannot stand alone. A generator's `hidden=True` emits `data-hidden-src`; add `data-hidden` beside it.
 
+## Design rules
+
+**Judge every slide as a first-time audience member would, and make every word, mark and model earn its place.** `/draft-eval` grades these; hold a revision against them before the reader sees it.
+
+- **Words.** A first-time reader takes the point with nothing to guess. A question or label makes sense without the speaker. List items share one form; questions in a sequence share one polarity. A non-plain term is introduced early, visually, with a metaphor or example, then may be reused, ideally with context clues. A loaded word ("kill") has its object in view.
+- **Economy and authority.** Every word and element serves the message: no meta-commentary, reading instructions or "this, not that". The slide states the position plainly; no hedge on its face. A text-heavy slide moves its story to the speaker notes.
+- **Sources field.** Sources, limits and "not tested" caveats go in `#slide-sources`, never on the slide and never in the spoken note (`reference/authoring.md`, *Sources field*).
+- **Shape.** Name the shape of the idea, then draw it: a journey is a map, a spread a curve, a filter a funnel, a ladder shows every rung. Draw it true to the thing (contours never cross, paths wind) and recognisable at a glance, never a photo-real imitation. The mascot appears only when it plays a part.
+- **Encodings.** Every colour, line, circle and position means something the slide or notes make clear. Use the fewest encodings the story needs. Nothing the idea needs is cut off. A chart says what it measures, for whom, and its takeaway; a recommendation says what to do and when, set apart from the findings.
+- **Frameworks.** One model per idea. Ids use a letter that stands for something and appear wherever the item does. Each framework has one look, used identically everywhere and unlike every other framework's.
+- **Devices.** One device per slide, varied across the deck; curiosity counts. Narrative beats strict flow, and a case may sit in the notes.
+- **Protect what works.** Praised elements go on `keep.json` beside the deck; a rewrite that removes one says why. A change marked worse is reverted first, then the new idea is applied. Fix the pattern across every slide, not only the slide flagged.
+
 ## Every word on a slide earns its place
 
 **Add text only when it adds value, never to fill a slot in the template.** A footer, an

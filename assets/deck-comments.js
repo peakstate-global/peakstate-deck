@@ -192,6 +192,20 @@
     for (var i = 0; i < NOTES.length; i++) if (NOTES[i].index === n) return NOTES[i].note || '';
     return '';
   }
+  /* The sources field: provenance the presenter can consult and never says.
+     #slide-sources, an array of {index, sources} keyed like the notes. Read
+     only, shown in the tray under the note, and never in noteEdits, so it can
+     not leak into the speaker notes on the round trip. */
+  var SOURCES = [];
+  (function () {
+    var tag = document.getElementById('slide-sources');
+    if (!tag) return;
+    try { SOURCES = JSON.parse(tag.textContent) || []; } catch (e) {}
+  })();
+  function sourcesFor(n) {
+    for (var i = 0; i < SOURCES.length; i++) if (SOURCES[i].index === n) return SOURCES[i].sources || '';
+    return '';
+  }
   function noteFor(n) {
     var e = (state.noteEdits || {})[n];
     return e === undefined ? originalNote(n) : e;
@@ -290,6 +304,11 @@
     '  color:#F5F0E8;border:1px solid rgba(245,240,232,.2);border-radius:6px;padding:10px;',
     '  font:400 14px/1.55 "Inter",system-ui,sans-serif}',
     '.dcx-tray textarea:focus{outline:2px solid #A93D1A}',
+    '.dcx-tray .src{margin-top:10px;font:400 13px/1.55 "Inter",system-ui,sans-serif;color:#C9BFB4;',
+    '  border-left:3px solid #8B8079;padding:4px 0 4px 12px;white-space:pre-wrap}',
+    '.dcx-tray .src b{display:block;font:500 10px/1 "JetBrains Mono",monospace;letter-spacing:.16em;',
+    '  text-transform:uppercase;color:#8B8079;margin-bottom:6px}',
+    '.dcx-tray .src[hidden]{display:none}',
     '.dcx-toast{bottom:24px;left:50%;transform:translateX(-50%);background:#D0B561;color:#0E0A08;',
     '  font:600 13px/1 "Inter",sans-serif;padding:11px 18px;border-radius:999px;opacity:0;',
     '  transition:opacity .18s;pointer-events:none}',
@@ -487,7 +506,8 @@
   tray.style.display = 'none';
   tray.innerHTML = '<div class="hdr"><b></b><span class="edited" hidden>EDITED</span>' +
     '<span class="sp"><span data-a="revert">Revert</span><span data-a="close">Close</span></span></div>' +
-    '<textarea placeholder="Speaker notes for this slide"></textarea>';
+    '<textarea placeholder="Speaker notes for this slide"></textarea>' +
+    '<div class="src" hidden><b>Sources \u00b7 not spoken</b><span></span></div>';
   document.body.appendChild(tray);
   tray.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
@@ -625,6 +645,9 @@
       'Slide ' + cur.index + ' \u00b7 ' + (labelOf(cur.node) || '—');
     tray.querySelector('.edited').hidden = state.noteEdits[cur.index] === undefined;
     if (!keepValue) tray.querySelector('textarea').value = noteFor(cur.index);
+    var src = sourcesFor(cur.index);
+    tray.querySelector('.src span').textContent = src;
+    tray.querySelector('.src').hidden = !src;
   }
 
   var badge = el('div', 'dcx dcx-hidden-badge');

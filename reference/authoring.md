@@ -82,6 +82,23 @@ exports exactly as it always has.
 field: the script, a rule, then the note (`SCRIPT:` / `---` / `NOTES:`). A slide
 with no script keeps the plain note it always had.
 
+## Sources field
+
+
+Provenance the presenter may need and never says goes in a third place, apart from the
+speaker note and the narration script: `<script type="application/json"
+id="slide-sources">`, an array of `{index, sources}`, keyed exactly like `#speaker-notes`.
+Sources, sample sizes, limits and caveats such as "the study did not test this" live here,
+so the slide states the position plainly and the note stays an instruction to the presenter.
+
+- **The notes tray shows it** under the note, labelled *Sources, not spoken*, read only.
+- **The payload never carries it.** It is not a note, so it never rides back in `noteEdits[]`.
+- **`export-pptx.py` appends it** to PowerPoint's notes field after a rule, under
+  `SOURCES (NOT SPOKEN):`, so the presenter can tell it from the note.
+- **`/draft-eval` reads it** as the unit's `sources`: a number sourced there counts as sourced.
+
+Optional. A deck with no `#slide-sources` block behaves exactly as before.
+
 ## Hidden slides and performance mode
 
 

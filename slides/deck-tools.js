@@ -32,6 +32,16 @@
     var scriptsTag = document.getElementById('slide-scripts');
     if (scriptsTag) SCRIPTS = JSON.parse(scriptsTag.textContent) || [];
   } catch (e) { SCRIPTS = []; }
+  // Sibling again: array of {index, sources}, the non-spoken provenance field.
+  var SOURCES = [];
+  try {
+    var sourcesTag = document.getElementById('slide-sources');
+    if (sourcesTag) SOURCES = JSON.parse(sourcesTag.textContent) || [];
+  } catch (e) { SOURCES = []; }
+  function sourcesAt(idx) {
+    for (var i = 0; i < SOURCES.length; i++) if (SOURCES[i].index === idx + 1) return SOURCES[i].sources || '';
+    return '';
+  }
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
 
   /* border-radius is resolved against the box, so "50%" and "999px" both mean
@@ -286,7 +296,7 @@
                hidden: slide.hasAttribute('data-hidden-src') || slide.hasAttribute('data-hidden'),
                state: slide.getAttribute('data-state-group') || '',
                items: items, note: (NOTES[idx] || {}).note || '',
-               script: (SCRIPTS[idx] || {}).script || '' };
+               script: (SCRIPTS[idx] || {}).script || '', sources: sourcesAt(idx) };
     });
     freeze.remove();
     var tag = document.createElement('script');

@@ -29,4 +29,9 @@ assert out.index("SCRIPT:") < out.index("---") < out.index("NOTES:")
 out2 = presenter_notes("Say it.", None)
 assert out2 == "SCRIPT:\nSay it.\n\n---\n\nNOTES:\n"
 
-print("presenter_notes: 5 checks passed")
+# Sources field: last, under its own rule and label; absent sources change nothing.
+out3 = presenter_notes(None, "Turn here.", "Smith 2020; did not test the advice.")
+assert out3 == "Turn here.\n\n---\n\nSOURCES (NOT SPOKEN):\nSmith 2020; did not test the advice."
+assert presenter_notes(None, "Turn here.", "  ") == "Turn here."
+
+print("presenter_notes: 7 checks passed")
