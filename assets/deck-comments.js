@@ -297,18 +297,18 @@
     // A comment Claude has answered reads as a conversation, as in peakstate-brief.
     '.dcx-panel .item.done > :not(.cthread){opacity:.5}',
     '.dcx-panel .item.done{opacity:1}',
-    '.dcx-panel .cthread{margin-top:8px;display:flex;flex-direction:column;gap:6px;cursor:default}',
-    '.dcx-panel .ctmsg{border-left:2px solid rgba(245,240,232,.18);padding:2px 0 2px 9px}',
-    '.dcx-panel .ctmsg.ctreply{border-left-color:#D0B561}',
-    '.dcx-panel .ctwho{display:block;font:600 10px/1.4 "JetBrains Mono",monospace;letter-spacing:.1em;',
+    '.dcx .cthread{margin-top:8px;display:flex;flex-direction:column;gap:6px;cursor:default}',
+    '.dcx .ctmsg{border-left:2px solid rgba(245,240,232,.18);padding:2px 0 2px 9px}',
+    '.dcx .ctmsg.ctreply{border-left-color:#D0B561}',
+    '.dcx .ctwho{display:block;font:600 10px/1.4 "JetBrains Mono",monospace;letter-spacing:.1em;',
     '  text-transform:uppercase;color:#8B8079}',
-    '.dcx-panel .cttext{font:400 13px/1.45 "Inter",sans-serif;color:#F5F0E8;white-space:pre-wrap}',
-    '.dcx-panel .ctnone{color:#8B8079}',
-    '.dcx-panel .ctlabel{font:500 11px/1.4 "Inter",sans-serif;color:#B5A899;margin-top:4px}',
-    '.dcx-panel .cthread textarea{width:100%;min-height:54px;resize:vertical;background:rgba(245,240,232,.06);',
+    '.dcx .cttext{font:400 13px/1.45 "Inter",sans-serif;color:#F5F0E8;white-space:pre-wrap}',
+    '.dcx .ctnone{color:#8B8079}',
+    '.dcx .ctlabel{font:500 11px/1.4 "Inter",sans-serif;color:#B5A899;margin-top:4px}',
+    '.dcx .cthread textarea{width:100%;min-height:54px;resize:vertical;background:rgba(245,240,232,.06);',
     '  border:1px solid rgba(245,240,232,.18);border-radius:8px;color:#F5F0E8;padding:7px 9px;',
     '  font:400 13px/1.45 "Inter",sans-serif}',
-    '.dcx-panel .cthread button{align-self:flex-end;appearance:none;border:0;border-radius:8px;cursor:pointer;',
+    '.dcx .cthread button{align-self:flex-end;appearance:none;border:0;border-radius:8px;cursor:pointer;',
     '  background:#A93D1A;color:#fff;font:500 12px/1 "Inter",sans-serif;padding:7px 12px}',
     '.dcx-panel .empty{color:#8B8079;font-size:13px;padding:16px 6px;text-align:center;line-height:1.5}',
     '.dcx-tray{left:0;right:0;bottom:0;background:rgba(14,10,8,.97);',
@@ -450,7 +450,11 @@
     var hlCss = el('style');
     hlCss.textContent =
       '::highlight(deck-comment){background:rgba(208,181,97,.30);' +
-      'text-decoration:underline;text-decoration-color:#D0B561;text-underline-offset:4px}';
+      'text-decoration:underline;text-decoration-color:#D0B561;text-underline-offset:4px}' +
+      // Answered: no fill, so it stops asking for attention, but still
+      // underlined, because clicking it is how the reader finds the reply.
+      '::highlight(deck-comment-replied){text-decoration:underline dotted;' +
+      'text-decoration-color:#D0B561;text-decoration-thickness:2px;text-underline-offset:4px}';
     document.head.appendChild(hlCss);
   }
 
@@ -790,19 +794,25 @@
     if (!HL_OK) return;
     liveRanges = [];
     CSS.highlights.delete('deck-comment');
+    CSS.highlights.delete('deck-comment-replied');
     if (!state.showMarks) return;
     var cur = currentSlide();
-    var hl = new Highlight();
-    var any = false;
+    var hl = new Highlight(), hlr = new Highlight();
+    var any = false, anyr = false;
     state.comments.forEach(function (c) {
       if (c.slide !== cur.index || c.target !== 'selection') return;
       if (c.orphan) return;     // its slide is gone; painting it would be a lie
-      if (!isOpen(c)) return;   // ticked off, so stop drawing attention to it
+      // Ticked off with no reply: stop drawing attention to it. Ticked off WITH
+      // a reply: keep a quiet mark, because the reply is read by clicking it.
+      var replied = !isOpen(c) && resolutionFor(c);
+      if (!isOpen(c) && !replied) return;
       var r = findRange(cur.node, c.quote, c.nth || 0);
       if (!r) return;
-      hl.add(r); liveRanges.push({ cid: c.cid, range: r }); any = true;
+      if (replied) { hlr.add(r); anyr = true; } else { hl.add(r); any = true; }
+      liveRanges.push({ cid: c.cid, range: r });
     });
     if (any) CSS.highlights.set('deck-comment', hl);
+    if (anyr) CSS.highlights.set('deck-comment-replied', hlr);
   }
 
   /* ── popover ────────────────────────────────────────────────────────── */
@@ -899,12 +909,42 @@
     });
   }
 
+  /* An answered comment opens where it lives as a conversation, not as an
+     edit box, the same as peakstate-brief. Edit original drops to the old box. */
+  function openThread(x, y, c, onClosed) {
+    closePop();
+    pop = el('div', 'dcx dcx-pop');
+    pop.style.left = Math.max(12, Math.min(x, innerWidth - 404)) + 'px';
+    pop.style.top = Math.max(12, Math.min(y, innerHeight - 420)) + 'px';
+    pop.innerHTML = (c.quote ? '<div class="q"></div>' : '') + threadHTML(c, resolutionFor(c)) +
+      '<div class="dcx-row"><button class="ghost" data-a="editorig">Edit original</button>' +
+      '<button data-a="cancel">Close</button></div>';
+    if (c.quote) pop.querySelector('.q').textContent = c.quote;
+    popReturn = onClosed || null;
+    document.body.appendChild(pop);
+    wireThread(pop, c, function () { popReturn = null; openThread(x, y, c, onClosed); });
+    setTimeout(function () { pop && pop.querySelector('.cthread textarea').focus(); }, 10);
+    pop.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePop(); }
+    }, true);
+    pop.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+    pop.addEventListener('click', function (e) {
+      var btn = e.target.closest('button'), a = btn && btn.dataset.a;
+      if (a === 'cancel') return closePop();
+      if (a === 'editorig') {
+        popReturn = null;
+        openPop(x, y, { quote: c.quote, slide: c.slide, slideLabel: c.slideLabel,
+                        slideId: c.slideId, nth: c.nth }, c, onClosed);
+      }
+    });
+  }
+
   function remove(cid) {
     state.comments = state.comments.filter(function (c) { return c.cid !== cid; });
     touch(); paint(); renderOv(); say('Comment deleted');
   }
 
-  function editComment(c, onClosed) {
+  function editComment(c, onClosed, asEdit) {
     var r = null;
     if (c.target === 'selection') {
       var node = slideNode(c.slide);
@@ -913,6 +953,7 @@
     var x = innerWidth - 460, y = 90;
     if (r) { var b = r.getBoundingClientRect(); x = b.left; y = b.bottom + 10; }
     if (ovOpen()) { x = Math.max(12, innerWidth / 2 - 196); y = 120; }
+    if (resolutionFor(c) && !asEdit) return openThread(x, y, c, onClosed);
     openPop(x, y, { quote: c.quote, slide: c.slide, slideLabel: c.slideLabel,
                     slideId: c.slideId, nth: c.nth },
       c, onClosed);
@@ -1127,7 +1168,7 @@
   // highlights and the count badge.
   function hasSlideComment(n) {
     return state.comments.some(function (c) {
-      return c.slide === n && c.target === 'slide' && isOpen(c);
+      return c.slide === n && c.target === 'slide' && (isOpen(c) || resolutionFor(c));
     });
   }
   // One slide-level comment per slide: a second call edits the first rather
@@ -1965,7 +2006,7 @@
           return remove(c.cid);
         }
         goTo(c.slide);
-        if (a === 'edit') setTimeout(function () { editComment(c); }, 260);
+        if (a === 'edit') setTimeout(function () { editComment(c, null, true); }, 260);
       });
       panel.appendChild(d);
     });
@@ -1987,7 +2028,7 @@
       '<textarea placeholder="Reply to this response"></textarea>' +
       '<button type="button">Save</button></div>';
   }
-  function wireThread(d, c) {
+  function wireThread(d, c, after) {
     var r = resolutionFor(c);
     d.querySelector('[data-t="c"]').textContent = c.comment;
     if (r.note) d.querySelector('[data-t="r"]').textContent = r.note;
@@ -2013,6 +2054,7 @@
       delete state.replyDrafts[c.cid];
       touch();
       say('Reply added');
+      if (after) after();
     }
   }
 

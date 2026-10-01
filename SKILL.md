@@ -155,7 +155,10 @@ Keep a `review-resolutions.json` beside the deck:
 `status` is `addressed`, `wontfix` or `question`. `note` is the reply to the
 reader. In the list, an answered comment opens as a thread, as in peakstate-brief:
 **You** (the comment), **Response** (the `note`), each follow-up, then a
-**Continue the conversation** box. **Edit original** sits beside it.
+**Continue the conversation** box. **Edit original** sits beside it. The same
+thread opens on the slide: an answered highlight stays painted as a dotted gold
+underline, and an answered slide comment keeps **Slide comment** lit, so
+clicking either one opens the conversation where the comment was made.
 
 **A follow-up reopens the comment.** Whatever its status, a comment with a
 follow-up the answer has not covered counts as `new`, so it travels in the next

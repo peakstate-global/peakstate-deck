@@ -285,9 +285,20 @@ test('an answered comment opens as a thread, and a follow-up reopens it with fol
   await thread.locator('button').click();
   await expect(page.locator('.dcx-panel .cthread .ctwho')).toHaveText(['You', 'Response', 'You']);
 
+  // On the slide, the lit Slide comment control opens the same thread, as in peakstate-brief.
+  await page.locator('.dcx-bar [data-a="list"]').click();
+  await goToSlide(page, 5);
+  await page.locator('.dcx-bar [data-a="slide"]').click();
+  await expect(page.locator('.dcx-pop .ctwho')).toHaveText(['You', 'Response', 'You']);
+  await page.locator('.dcx-pop .cthread textarea').fill('And the date format?');
+  await page.locator('.dcx-pop .cthread button').click();
+  await expect(page.locator('.dcx-pop .ctwho')).toHaveText(['You', 'Response', 'You', 'You']);
+  await page.locator('.dcx-pop [data-a="cancel"]').click();
+
   p = await copyPayload(page);
   expect(p.openCount).toBe(1);
   expect(p.comments[0]).toMatchObject({
-    status: 'new', resolutionNote: 'It proves the date only.', follow_up: ['And the author?'],
+    status: 'new', resolutionNote: 'It proves the date only.',
+    follow_up: ['And the author?', 'And the date format?'],
   });
 });
