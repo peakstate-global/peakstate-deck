@@ -56,6 +56,10 @@ The decisions live on a hidden terms slide early in the deck:
 - **Encodings.** Every colour, line, circle and position means something the slide or notes make clear. Use the fewest encodings the story needs. Nothing the idea needs is cut off. A chart says what it measures, for whom, and its takeaway; a recommendation says what to do and when, set apart from the findings.
 - **Frameworks.** One model per idea. Ids use a letter that stands for something and appear wherever the item does. Each framework has one look, used identically everywhere and unlike every other framework's.
 - **Devices.** One device per slide, varied across the deck; curiosity counts. Narrative beats strict flow, and a case may sit in the notes.
+- **Sequence.** Adjacent slides differ in background, so each new idea reads as new; a morph pair shares one, because it is one idea moving. A slide that carries several parts reveals them one click at a time, in teaching order.
+- **Tables** pad every cell on both sides, so no text sits flush against a neighbouring cell's fill. It is the theme's standard table style (`themes/peak-state/treatments.css`), not a per-deck fix.
+- **Icons** come from one consistent, recognisable set across the deck, never drawn ad hoc.
+- **Journey.** Every slide's job in the journey is visible: a close-up says which item it belongs to, and an evidence slide says what it proves.
 - **Protect what works.** Praised elements go on `keep.json` beside the deck; a rewrite that removes one says why. A change marked worse is reverted first, then the new idea is applied. Fix the pattern across every slide, not only the slide flagged.
 
 ## Every slide carries a visual, and the best one is the metaphor

@@ -140,9 +140,17 @@
    rule and 22px of padding. It collides with the matrix's .move COLUMN and
    draws a bar hard against the first words of every row. Cells get room to
    breathe instead, and no cell text sits against a rule. */
-.matrix td.move { border-left: 0; padding-left: 0; }
+.matrix td.move { border-left: 0; }
 .matrix td.scale { padding-left: 36px; }
 .matrix th, .matrix td { padding-right: 36px; }
+
+/* Every table cell is padded on BOTH sides. A cell with no side padding puts
+   its text flush against the next cell's fill or rule, so two cells read as
+   one, and a highlighted cell's colour runs into its neighbour's words. This
+   is the standard for every table in a deck, not a per-deck fix: :where()
+   keeps it at zero specificity, so a deck may widen it but should never zero
+   it. */
+:where(deck-stage) :where(table) :where(th, td) { padding-left: 22px; padding-right: 22px; }
 /* ── the references page ───────────────────────────────────────────────────
    APA 7 on the left, numbered, and the provenance block on the right with its
    References line removed because this page IS that line. Every claim in the
@@ -171,7 +179,7 @@ sup.cite { font-family: var(--font-mono); font-size: .62em; color: var(--ps-sien
 
 /* the references page: twelve short rows plus the block, so everything is
    tightened until the page holds all of it without a second slide */
-.matrix.refs td { padding: 9px 26px 9px 0; font-size: 17px; }
+.matrix.refs td { padding: 9px 18px; font-size: 17px; }
 .matrix.refs td.own, .matrix.refs td.scale { font-family: var(--font-sans); font-size: 15px; }
 .matrix.refs td.move { font-size: 18px; }
 .matrix.refs td.scale { padding-left: 26px; white-space: nowrap; }
@@ -182,7 +190,6 @@ sup.cite { font-family: var(--font-mono); font-size: .62em; color: var(--ps-sien
 .pblock.small.boxed .v { font-size: 14px; line-height: 1.35; }
 .pblock.small.boxed .k { font-size: 13px; }
 .pblock.small.boxed .k, .pblock.small.boxed .v { padding-top: 6px; }
-.matrix th:last-child, .matrix td:last-child { padding-right: 0; }
 
 /* ── exercise slides: the timebox becomes the object ───────────────────────
    Charcoal surface and a dial you can read from the back of the room, so a
