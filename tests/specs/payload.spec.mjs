@@ -1,6 +1,6 @@
 /* The payload, the two chrome-free modes, and comment re-anchoring. */
 import { test, expect } from '@playwright/test';
-import { openDeck, goToSlide, selectOnSlide, writeComment, copyPayload,
+import { openDeck, goToSlide, currentSlide, selectOnSlide, writeComment, copyPayload,
          MINTED, RELABELLED, LEGACY } from './helpers.mjs';
 
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
@@ -308,4 +308,16 @@ test('an answered comment opens as a thread, and a follow-up reopens it with fol
     status: 'new', resolutionNote: 'It proves the date only.',
     follow_up: ['And the author?', 'And the date format, please?'],
   });
+});
+
+test('presenting never lands on a hidden last slide', async ({ page }) => {
+  await openDeck(page, MINTED);
+  await goToSlide(page, 8);
+  await page.locator('.dcx-bar [data-a="hide"]').click();
+  // Slide 7 is hidden in the fixture's source, so 6 is the last visible slide.
+  await goToSlide(page, 6);
+  await page.locator('.dcx-bar [data-a="perform"]').click();
+  await page.locator('body').press('ArrowRight');
+  await page.waitForTimeout(200);
+  expect(await currentSlide(page)).toBe(6);
 });

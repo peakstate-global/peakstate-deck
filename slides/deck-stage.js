@@ -43,9 +43,11 @@
  *     e.detail.reason        // 'init' | 'keyboard' | 'click' | 'tap' | 'api'
  *   });
  *
- * Persistence: none at the deck level. The host app keeps the current slide
- * in its own URL (?slide=) and re-delivers it via location.hash on load, so a
- * bare load with no hash always starts at slide 1.
+ * Persistence: none at the deck level. A framing host keeps the current slide
+ * in its own URL and re-delivers it on load as #N, or as slide=N beside a
+ * review seed (#review=…&slide=N). The deck posts {type:'deck-slide', slide}
+ * to its parent on every change so the host can follow. A bare load with no
+ * hash always starts at slide 1.
  *
  * Usage:
  *   <style>deck-stage:not(:defined){visibility:hidden}</style>
@@ -1054,7 +1056,10 @@
       // The host's ?slide= param is delivered as a #<int> hash (1-indexed) on
       // the iframe src. No hash → slide 1; the deck itself keeps no position
       // state across loads.
-      const h = (location.hash || '').match(/^#(\d+)$/);
+      // A framing page that also seeds a review sends both in one fragment,
+      // #review=…&slide=N, so slide=N is read as well as the bare #N.
+      const hash = location.hash || '';
+      const h = hash.match(/^#(\d+)$/) || hash.match(/[#&]slide=(\d+)(?:&|$)/);
       if (h) {
         const n = parseInt(h[1], 10) - 1;
         if (n >= 0 && n < this._slides.length) this._index = n;
@@ -1084,6 +1089,12 @@
       if (broadcast) {
         // (1) Legacy: host-window postMessage for speaker-notes renderers.
         try { window.postMessage({ slideIndexChanged: curr, deckTotal: this._slides.length, deckSkipped: this._skippedIndices() }, '*'); } catch (e) {}
+        // (1b) The framing page, so it can keep the slide in its own address:
+        //      a reload or a shared link then lands on this slide. A sandboxed
+        //      frame can reach its parent only this way.
+        if (window.parent !== window) {
+          try { window.parent.postMessage({ type: 'deck-slide', slide: curr + 1 }, '*'); } catch (e) {}
+        }
 
         // (2) In-page CustomEvent on the <deck-stage> element itself.
         //     Bubbles and composes out of shadow DOM so slide code can listen:

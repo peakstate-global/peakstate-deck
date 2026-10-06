@@ -614,17 +614,19 @@
     if (stage && typeof stage.goTo === 'function') stage.goTo(i);
   }
 
-  // Skip a hidden slide while presenting, in whichever direction we were going.
+  // Skip a hidden slide while presenting: the nearest visible slide in the
+  // direction we were going, else the nearest one behind. Stepping back one at
+  // the end of the deck used to land on a hidden first or last slide.
   function skipHidden() {
     if (!performing) return;
-    var all = slides(), cur = currentSlide();
-    var i = cur.index - 1;
-    var guard = 0;
-    while (all[i] && all[i].hasAttribute('data-hidden') && guard++ < all.length) {
-      i += lastDir;
-      if (i < 0 || i >= all.length) { i -= lastDir; break; }
-    }
-    if (i !== cur.index - 1) goToStage(i);
+    var all = slides(), from = currentSlide().index - 1;
+    if (!all[from] || !all[from].hasAttribute('data-hidden')) return;
+    [lastDir, -lastDir].some(function (d) {
+      for (var i = from + d; i >= 0 && i < all.length; i += d) {
+        if (!all[i].hasAttribute('data-hidden')) { goToStage(i); return true; }
+      }
+      return false;
+    });
   }
 
   function setPerforming(on) {
