@@ -10,7 +10,7 @@
   "kind": "deck-comments",
   "version": 4,
   "instruction": "…what to do with this…",
-  "deck": { "title": "…", "file": "…", "source": "…", "build": "…", "buildHash": "…" },
+  "deck": { "title": "…", "file": "…", "source": "…", "build": "…", "buildHash": "…", "url": "…" },
   "slideCount": 20,
   "capturedAt": "…",
   "commentCount": 2,
@@ -37,6 +37,15 @@ Alongside those, and all optional:
 | `orphanedComments` | `[{slideId, slideLabel, target, quote, comment, at}]` | Comments whose slide is gone. Ask, never reassign. |
 
 `target` is `selection` (anchored to `quote`) or `slide` (the whole page).
+
+**`deck.url` is where the deck is published, when it is.** It comes from a
+`<meta name="deck-url">` tag, which the publishing step stamps into the deck, and
+falls back to the page address when the deck is read from a web server without
+one. It is empty for a local file that has never been published. So a payload
+copied from the local file and one copied from the published copy both name the
+two places the deck lives: `deck.file` here, `deck.url` there. When it is set,
+republish after the rebuild so the two copies match. Like `slideId`, this is an
+additive key and did not bump the version.
 
 **`slideId` is how the receiving agent finds the slide, and the number is not.**
 Every array above that names a slide carries it, alongside the `slide` number and

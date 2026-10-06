@@ -116,7 +116,7 @@ Then, in the deck HTML, after the deck script:
 
     <script src="deck-comments.js"></script>
 
-And in `<head>`, four meta tags — **this is the part that makes the payload
+And in `<head>`, the meta tags — **this is the part that makes the payload
 self-sufficient**, so do not skip it:
 
     <meta name="deck-file"        content="path/to/deck.html">
@@ -132,6 +132,9 @@ self-sufficient**, so do not skip it:
 - `deck-build-hash` — a short content hash of the slides. It is what lets Claude
   notice that the deck moved after the comments were written.
 - `deck-resolutions` — where the ticked-off comments live. See below.
+- `deck-url` — optional: where the deck is published. Written by the publishing
+  step, not by hand, and carried into the payload as `deck.url`
+  (`reference/the-payload.md`).
 
 A generator should emit all four. In Python:
 

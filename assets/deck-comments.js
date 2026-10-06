@@ -29,7 +29,12 @@
     source: meta('deck-source') || '',
     build: meta('deck-build') || '',
     buildHash: meta('deck-build-hash') || '',
-    resolutions: meta('deck-resolutions') || ''
+    resolutions: meta('deck-resolutions') || '',
+    // Where the deck is published, so a payload copied from either copy names
+    // both. The meta tag is stamped by whatever publishes the deck and carries
+    // the stable address; a deck opened from a web server without it falls back
+    // to the page it was read on.
+    url: meta('deck-url') || (/^https?:$/.test(location.protocol) ? location.origin + location.pathname : '')
   };
 
   var KEY = 'deckComments:' + (DECK.file || location.pathname);
@@ -1764,7 +1769,9 @@
         + 'is done, write {at, status, note} for each handled comment into the file at '
         + 'deck.resolutions, keyed by the comment\'s "at", and rebuild. If deck.buildHash is not '
         + 'the current build, say so before acting. Every array here is a CHANGE the reader made; '
-        + 'anything they left alone is summarised in unchanged and needs no action.',
+        + 'anything they left alone is summarised in unchanged and needs no action. If deck.url is '
+        + 'set, the deck is also published there: republish it after the rebuild so the local '
+        + 'file and the published copy match.',
       deck: DECK,
       slideCount: slides().length,
       capturedAt: new Date().toISOString(),
