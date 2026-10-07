@@ -608,6 +608,8 @@
     if (posEl) posEl.textContent = cur.index + ' / ' + slides().length;
     badge.style.display = (cur.node && cur.node.hasAttribute('data-hidden') && !performing)
       ? 'block' : 'none';
+    // Presenting and hiding both change what the slide numbers count.
+    if (window.deckRenumber) window.deckRenumber();
   }
 
   var performing = false, lastDir = 1;

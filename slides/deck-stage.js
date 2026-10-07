@@ -2200,22 +2200,43 @@
   /* The counter counts SLIDES, and a group of states is one slide. Without this
      a nine-state build reads "12 / 37" while the slide's own footer says 08,
      and the presenter believes one of them. */
+  // One numbering. While reviewing, every counter shows a slide's position in
+  // the deck, hidden slides included: the review bar, the comment payload and
+  // the overview all use that number, so a slide is called the same thing
+  // everywhere. Presenting, print and export number only the slides shown,
+  // so the room never sees a jump past a hidden slide. A slide's footer number
+  // is any [data-slide-number] or [data-pptx-brand="number"] element in it.
+  function shown(sec) {
+    return !(sec.hasAttribute('data-hidden') || sec.hasAttribute('data-deck-pass') || sec.hasAttribute('data-deck-skip'));
+  }
+  var printing = false;
+  window.addEventListener('beforeprint', function () { printing = true; renumber(); });
+  window.addEventListener('afterprint', function () { printing = false; renumber(); });
   function renumber() {
+    var all = slides();
+    var presenting = printing || document.body.classList.contains('dcx-performing') ||
+      document.documentElement.hasAttribute('data-builds-all');
+    var n = 0, seen = null, numbers = [];
+    all.forEach(function (sec, i) {
+      if (!presenting) { numbers.push(i + 1); return; }
+      var g = sec.getAttribute('data-state-group');
+      if (shown(sec) && (!g || g !== seen)) n++;
+      seen = g || null;
+      numbers.push(n);
+    });
+    all.forEach(function (sec, i) {
+      sec.querySelectorAll('[data-slide-number],[data-pptx-brand="number"]').forEach(function (el) {
+        el.textContent = String(numbers[i]);
+      });
+    });
     var stageEl = document.querySelector('deck-stage');
     if (!stageEl || !stageEl.shadowRoot) return;
     var cur = stageEl.shadowRoot.querySelector('.current');
     var tot = stageEl.shadowRoot.querySelector('.total');
     if (!cur || !tot) return;
-    var n = 0, seen = null, numbers = [];
-    slides().forEach(function (sec) {
-      var g = sec.getAttribute('data-state-group');
-      if (!g || g !== seen) n++;
-      seen = g || null;
-      numbers.push(n);
-    });
-    tot.textContent = String(n);
+    tot.textContent = String(presenting ? n : all.length);
     var live = document.querySelector('deck-stage > section[data-deck-active]');
-    var i = slides().indexOf(live);
+    var i = all.indexOf(live);
     if (i > -1) cur.textContent = String(numbers[i]);
   }
 

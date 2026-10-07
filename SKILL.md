@@ -143,6 +143,12 @@ A generator should emit all four. In Python:
     build_hash = hashlib.sha256(body.encode()).hexdigest()[:12]
     build_at = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
+## Slide numbers are one numbering
+
+**While reviewing, every counter shows a slide's position in the deck, hidden slides included**,
+so the number on the footer is the number in the bar and in the payload. Only presenting, print and
+export count the slides shown. See `slides/README.md`, *Slide numbers*.
+
 ## Ticking comments off
 
 

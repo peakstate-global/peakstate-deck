@@ -196,6 +196,17 @@ No extra slides and no state groups. `treatments.css` styles the arrival (fade
 and rise); override the transform per deck for a different entrance. `?audit`,
 `?export` and print show every build at once.
 
+## Slide numbers
+
+**One number per slide while reviewing: its position in the deck, hidden slides
+included.** The review bar, the footer, the navigation pill, the overview and the
+comment payload all show it, so a slide is called the same thing everywhere.
+Presenting, print and `?export` number only the slides shown, with the states of
+one slide sharing a number, so the room never sees a jump past a hidden slide.
+`deck-stage.js` writes the number into any `[data-slide-number]` or
+`[data-pptx-brand="number"]` element in a slide; a generator only needs to emit
+the element.
+
 ## Push transitions
 
 Set `transition="push"` on `<deck-stage>` and every slide change that is not a
