@@ -2131,8 +2131,13 @@
     var g = from.getAttribute('data-state-group');
     if (g && g === to.getAttribute('data-state-group')) return true;
     var all = slides(), i = all.indexOf(from), j = all.indexOf(to);
-    return Math.abs(i - j) === 1 && i > -1 && j > -1 &&
-      (from.hasAttribute('data-morph-link') || to.hasAttribute('data-morph-link'));
+    if (!(Math.abs(i - j) === 1 && i > -1 && j > -1 &&
+          (from.hasAttribute('data-morph-link') || to.hasAttribute('data-morph-link')))) return false;
+    // A link on one slide joins it to BOTH neighbours, so a linked pair counts as
+    // a morph only when something actually travels between them. Otherwise it
+    // pushes, rather than cutting with nothing moving.
+    var was = morphMap(from, true);
+    return Object.keys(morphMap(to, true)).some(function (k) { return was[k]; });
   }
   // Push: a deck that sets transition="push" on <deck-stage> slides the next
   // slide in and the current one off, on every change that is not a morph.
