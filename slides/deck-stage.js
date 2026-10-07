@@ -2136,7 +2136,8 @@
   }
   // Push: a deck that sets transition="push" on <deck-stage> slides the next
   // slide in and the current one off, on every change that is not a morph.
-  // Forward pushes left, back pushes right. Off in print, export, audit and
+  // Forward: the slide leaves up off the top and the next rises from below.
+  // Back reverses it. Off in print, export, audit and
   // reduced motion, where the change is a cut as before.
   var PUSH = 620;
   function push(from, to) {
@@ -2147,10 +2148,10 @@
     var all = slides(), dir = all.indexOf(to) > all.indexOf(from) ? 1 : -1;
     var opts = { duration: PUSH, easing: 'cubic-bezier(.65,0,.35,1)' };
     from.classList.add('deck-pushing');
-    from.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(' + (-dir * 100) + '%)' }], opts)
+    from.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(' + (-dir * 100) + '%)' }], opts)
       .finished.then(function () { from.classList.remove('deck-pushing'); },
                      function () { from.classList.remove('deck-pushing'); });
-    to.animate([{ transform: 'translateX(' + (dir * 100) + '%)' }, { transform: 'translateX(0)' }], opts);
+    to.animate([{ transform: 'translateY(' + (dir * 100) + '%)' }, { transform: 'translateY(0)' }], opts);
   }
 
   var last = null;

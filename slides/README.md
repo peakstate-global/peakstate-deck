@@ -199,8 +199,8 @@ and rise); override the transform per deck for a different entrance. `?audit`,
 ## Push transitions
 
 Set `transition="push"` on `<deck-stage>` and every slide change that is not a
-morph pushes: the next slide slides in and the current one slides off, left going
-forward and right going back. Morphs keep their morph, which means two states of
+morph pushes: the current slide leaves up off the top and the next one rises from below.
+Going back reverses it. Morphs keep their morph, which means two states of
 one slide, or two adjacent slides with `data-morph-link` on either. A pair that
 is really one slide with something landing on it (a stamp, a highlight) should be
 linked, or the identical slide slides off and back on. Print, `?export`, `?audit`
