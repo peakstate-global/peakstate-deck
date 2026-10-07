@@ -1311,7 +1311,11 @@
         }
       }
       let i = this._index + dir;
-      while (i >= 0 && i < this._slides.length && this._slides[i].hasAttribute('data-deck-skip')) {
+      // data-deck-pass: a slide the review layer hides while presenting. Passed
+      // over here rather than landed on and left, so a push goes straight to the
+      // next visible slide instead of sliding the hidden one through.
+      while (i >= 0 && i < this._slides.length &&
+             (this._slides[i].hasAttribute('data-deck-skip') || this._slides[i].hasAttribute('data-deck-pass'))) {
         i += dir;
       }
       if (i < 0 || i >= this._slides.length) { this._flashOverlay(); return; }

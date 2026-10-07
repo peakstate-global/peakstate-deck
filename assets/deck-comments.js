@@ -588,6 +588,9 @@
     slides().forEach(function (sec, i) {
       if (effHidden(i + 1, sec)) sec.setAttribute('data-hidden', '');
       else sec.removeAttribute('data-hidden');
+      // While presenting, the deck runtime steps straight past a hidden slide.
+      if (performing && sec.hasAttribute('data-hidden')) sec.setAttribute('data-deck-pass', '');
+      else sec.removeAttribute('data-deck-pass');
     });
     var cur = currentSlide();
     var hb = bar.querySelector('[data-a="hide"]');

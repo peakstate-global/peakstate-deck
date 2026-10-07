@@ -321,3 +321,13 @@ test('presenting never lands on a hidden last slide', async ({ page }) => {
   await page.waitForTimeout(200);
   expect(await currentSlide(page)).toBe(6);
 });
+
+test('presenting marks hidden slides for the runtime to pass over, and leaving clears it', async ({ page }) => {
+  await openDeck(page, MINTED);
+  await page.locator('.dcx-bar [data-a="perform"]').click();
+  // Slide 7 is hidden in the fixture's source.
+  await expect(page.locator('deck-stage > section').nth(6)).toHaveAttribute('data-deck-pass', '');
+  await expect(page.locator('deck-stage > section[data-deck-pass]')).toHaveCount(1);
+  await page.locator('body').press('Escape');
+  await expect(page.locator('deck-stage > section[data-deck-pass]')).toHaveCount(0);
+});
