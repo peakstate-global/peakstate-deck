@@ -1808,7 +1808,9 @@
        parts that should fly out. */
     'deck-stage > section.deck-exiting{opacity:1!important;visibility:hidden!important;',
     '  z-index:5!important;background:transparent!important;pointer-events:none!important}',
-    'deck-stage > section.deck-exiting [data-exit]{visibility:visible!important}'
+    'deck-stage > section.deck-exiting [data-exit]{visibility:visible!important}',
+    /* Push holds the outgoing slide in view while it slides off. */
+    'deck-stage > section.deck-pushing{opacity:1!important;visibility:visible!important;z-index:4!important;pointer-events:none!important}'
   ].join('\n');
   document.head.appendChild(css);
 
@@ -2119,6 +2121,34 @@
     }
   }
 
+  // Whether two slides morph: two states of one slide always do, and two
+  // ordinary slides only when adjacent and linked. The same rule morph() runs.
+  function morphs(from, to) {
+    var g = from.getAttribute('data-state-group');
+    if (g && g === to.getAttribute('data-state-group')) return true;
+    var all = slides(), i = all.indexOf(from), j = all.indexOf(to);
+    return Math.abs(i - j) === 1 && i > -1 && j > -1 &&
+      (from.hasAttribute('data-morph-link') || to.hasAttribute('data-morph-link'));
+  }
+  // Push: a deck that sets transition="push" on <deck-stage> slides the next
+  // slide in and the current one off, on every change that is not a morph.
+  // Forward pushes left, back pushes right. Off in print, export, audit and
+  // reduced motion, where the change is a cut as before.
+  var PUSH = 620;
+  function push(from, to) {
+    var stage = document.querySelector('deck-stage');
+    if (!stage || stage.getAttribute('transition') !== 'push' || !to.animate) return;
+    if (document.documentElement.hasAttribute('data-builds-all')) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var all = slides(), dir = all.indexOf(to) > all.indexOf(from) ? 1 : -1;
+    var opts = { duration: PUSH, easing: 'cubic-bezier(.65,0,.35,1)' };
+    from.classList.add('deck-pushing');
+    from.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(' + (-dir * 100) + '%)' }], opts)
+      .finished.then(function () { from.classList.remove('deck-pushing'); },
+                     function () { from.classList.remove('deck-pushing'); });
+    to.animate([{ transform: 'translateX(' + (dir * 100) + '%)' }, { transform: 'translateX(0)' }], opts);
+  }
+
   var last = null;
   function onChange() {
     var live = document.querySelector('deck-stage > section[data-deck-active]');
@@ -2130,6 +2160,7 @@
     // Measured before anything is hidden or animated, because a morph needs the
     // outgoing element's real geometry.
     morph(leaving, live);
+    if (leaving && live && !morphs(leaving, live)) push(leaving, live);
     if (leaving && leaving.querySelector('[data-exit]')) {
       // Hold it on top for the length of the flash, then let it go. Runs in both
       // directions: going back through a build should undo it, not cut to it.
