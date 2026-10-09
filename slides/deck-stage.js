@@ -2157,6 +2157,25 @@
       .finished.then(function () { from.classList.remove('deck-pushing'); },
                      function () { from.classList.remove('deck-pushing'); });
     to.animate([{ transform: 'translateY(' + (dir * 100) + '%)' }, { transform: 'translateY(0)' }], opts);
+    parallax(from, to, dir, opts);
+  }
+  // Parallax: a layer marked data-parallax="0.3" travels at 0.3 of the push, so
+  // far layers drift while the slide moves past them. Above 1 it travels faster,
+  // for a near layer. It rides on the `translate` property, because the slide
+  // and a morph both own `transform`. The offset is in layout pixels, the same
+  // space as the slide's own translateY(100%). A slow layer trails the slide, so
+  // it needs (1 - speed) of the slide's height of overhang to show no gap.
+  function parallax(from, to, dir, opts) {
+    // Leaving: the layer ends (1 - speed) of a slide behind. Entering: it starts there.
+    [[from, false], [to, true]].forEach(function (side) {
+      var sec = side[0], H = sec.offsetHeight;
+      sec.querySelectorAll('[data-parallax]').forEach(function (el) {
+        var speed = parseFloat(el.getAttribute('data-parallax'));
+        if (isNaN(speed) || speed === 1 || !el.animate) return;
+        el.animate([{ translate: side[1] ? '0 ' + (-dir * H * (1 - speed)) + 'px' : '0 0' },
+                    { translate: side[1] ? '0 0' : '0 ' + (dir * H * (1 - speed)) + 'px' }], opts);
+      });
+    });
   }
 
   var last = null;

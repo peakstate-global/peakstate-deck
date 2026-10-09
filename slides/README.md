@@ -217,6 +217,15 @@ is really one slide with something landing on it (a stamp, a highlight) should b
 linked, or the identical slide slides off and back on. Print, `?export`, `?audit`
 and reduced motion get a cut, as before. PowerPoint export does not carry it yet.
 
+**Parallax.** During a push, a layer marked `data-parallax="0.3"` travels at 0.3 of
+the slide's speed, so a far background drifts while the slide moves past it. A
+value above 1 travels faster, for a near layer. The layer rides on the CSS
+`translate` property, so its own `transform` and a morph are untouched. A slow
+layer trails its slide by (1 - speed) of the slide height, so extend it that far
+past the top and bottom edges (`top: -70%; bottom: -70%` at 0.3) or the slide
+shows a gap. Give the same background to two neighbouring slides and the change
+reads as a camera moving through one scene.
+
 ## Slides a delivery does not use
 
 Mark them in the generator rather than deleting them:

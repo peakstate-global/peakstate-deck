@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Parallax test deck · peakstate-deck fixtures</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="deck.css">
+<style>
+  section { overflow: hidden; }
+  .sky { position: absolute; left: 0; right: 0; top: -70%; bottom: -70%; background: linear-gradient(#D0B561, #C95A33); }
+</style>
+</head>
+<body>
+<!-- Two pushed slides, each with a far layer at 0.3 of the push and a plain box. -->
+<deck-stage design-width="1920" design-height="1080" transition="push">
+  <section data-slide-id="one" data-screen-label="One"><div class="sky" data-parallax="0.3"></div><div class="box">one</div></section>
+  <section data-slide-id="two" data-screen-label="Two"><div class="sky" data-parallax="0.3"></div><div class="box">two</div></section>
+</deck-stage>
+<script src="deck-stage.js"></script>
+</body>
+</html>

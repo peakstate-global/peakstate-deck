@@ -76,8 +76,12 @@ instead of cutting.** The audience should feel they move through one world, not 
   slides of a linked pair, placed a short distance apart, and set `data-morph-ms` long enough to
   feel like a camera move. The runtime pans the background first and the new foreground arrives
   when it lands. Keep the shift small (a tenth of the slide width or less) so it reads as a camera
-  move, not as a second subject. True layered parallax, where near and far layers move at
-  different speeds during the change, is not built in the runtime yet.
+  move, not as a second subject.
+- **Parallax for depth.** On a pushed change, mark a background layer `data-parallax="0.3"` and
+  it travels at 0.3 of the slide's speed, so far things drift and near things pass. Use the same
+  background on neighbouring slides of one section and the push feels like a camera moving
+  through one scene. The layer must extend past the slide's top and bottom (`slides/README.md`,
+  *Push transitions*).
 - **Zoom into a detail.** Key the detail on both slides, small on the first and large on the
   second, with `data-morph-scale`. The next slide is the inside of the thing the audience was
   looking at.
@@ -108,6 +112,7 @@ Pick the motion that acts out the idea. These are starting points, not a fixed l
 | A system still live or watching | A subtle blinking cursor or slow pulse (`data-ambient`) |
 | Time passing, a living scene | A slow background drift (`data-ambient`) |
 | Moving deeper into one idea | A zoom morph into a detail, or a pan across one scene on a linked pair |
+| Travelling through one world | Parallax: far layers drift slower than the slide during the push |
 
 ## Worked examples from the reference deck
 
