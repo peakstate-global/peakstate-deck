@@ -67,10 +67,11 @@ The decisions live on a hidden terms slide early in the deck:
 
 **A deck is a visual medium. Before writing any slide, find the visual metaphor for its main point, then decide how to show it.** Text-only slides are the exception, and each one needs a reason.
 
-For every slide, answer three questions in the generator, as a comment above the slide:
+For every slide, answer four questions in the generator, as a comment above the slide:
 
 - **What is the one point?** One sentence.
 - **What is its visual metaphor?** A protest crowd for objections, a seesaw for a shift in weight, a dial for degrees of autonomy, a road for a journey, a stamp for a verdict.
+- **How does it move, and when does it settle?** One sentence on what the motion says, or `Motion: none`, and the settle time.
 - **How can we show it?** Choose the highest rung that is feasible:
   1. **The content sits inside the metaphor.** The objections are the words on the protest placards; the cheap work and the precious work sit on the two ends of the seesaw; the four levels of autonomy are the marks on the dial. This is the goal.
   2. **An illustration** that carries the metaphor, with the text beside it.
@@ -84,7 +85,8 @@ For every slide, answer three questions in the generator, as a comment above the
 - **Never hand-draw icons in SVG.** Use an established icon set (Lucide, ISC licence, at <https://lucide.dev>) or the Noun Project when the owner gives access, or use no icon.
 - **Illustrations use the house style:** the robot-monkey line art in the `peak-state-design` skill (`assets/characters/robot-monkey/README.md`, drawn with Nano Banana 2 from its two reference images). The robot monkey is always the AI and the people are always people. One hero image per deck may break the style when the moment calls for it, such as a full-slide cartoon at the turning point.
 - **Charts show what the data says, and only that.** Plot only the points the source gives. Label every value, and say on the slide when a line joins only two measured points.
-- **Motion is part of the metaphor when it means something.** A placard that rises from below, a bar chart that climbs, a needle that turns. Use `data-build` for one item per click (see `slides/README.md`), and keep print and reduced motion static.
+- **Every movement means something, and all movement settles by 7 seconds (design for 5).** A placard that rises from below, a bar chart that climbs, numbers that shake in proportion to how unreliable they are and then go still. After the settle point the slide is a still picture, so the audience, or the video edit, comes back to the speaker. No infinite loops. The settled frame must make the point on its own, because print and reduced motion show only that frame. Use `data-build` for one item per click (see `slides/README.md`). The rules, a table of metaphors and their matching motion, and worked examples are in `reference/motion-and-metaphor.md`: read it before planning a deck's visuals.
+- **Aim for a visual on nine presented slides in ten, and about 25 words or fewer on a slide that is not doing technical heavy lifting.** A technical slide states its rule in one line and puts the detail inside an artefact (a log, a scorecard, a label) that arrives on the next click.
 - **Illustrations hold a consistent style across a deck** (one illustrator, one set of recurring characters). Say in the attribution that they are AI-generated.
 
 ## Every word on a slide earns its place
@@ -242,5 +244,6 @@ Open one when its line is true of the work in front of you; never preload them.
 | `reference/the-overview.md` | You are working on the overview, the bar, or the keyboard |
 | `reference/identity.md` | Slides moved or were renamed, or the deck has states |
 | `reference/authoring.md` | You are writing or generating the deck itself |
+| `reference/motion-and-metaphor.md` | You are planning, building or reviewing a deck's visuals, animation or transitions |
 | `reference/internals.md` | You edited `deck-comments.js` and need to know what must still hold |
 | `reference/powerpoint-export.md` | You are exporting to PowerPoint, changing the exporter, or a deck came back from it wrong |
