@@ -29,6 +29,34 @@ After a deck builds and audits clean, `/draft-eval` scores it before anyone revi
 - **The first slide of each section names the belief it answers.**
 - **Teach the vocabulary before the audience applies it**, and end on where to start rather than on a method.
 
+## Say who the deck is for on a hidden charter slide
+
+**Every deck carries a hidden charter slide straight after the title slide.** It tells a presenter, a
+reviewer or a future editor, in under a minute, who the deck is for and what it does, so nobody has
+to reconstruct the arc to decide whether to use it. It is filled from the arc sheet, never invented
+at build time.
+
+    <section data-role="charter" data-hidden data-hidden-src>
+      <h2>Who this deck is for</h2>
+      <dl>
+        <dt>For</dt><dd>Who is in the room, what they know, what they answer for.</dd>
+        <dt>Run it when</dt><dd>The moment it fits, its format and length, and what to run before or after it.</dd>
+        <dt>The journey</dt><dd>From "what they would say arriving" to "what they can say leaving".</dd>
+      </dl>
+      <h3>It answers</h3>
+      <ol><li>Three to five questions the audience leaves able to answer, each one a full question in their words.</li></ol>
+    </section>
+
+- **Four parts, always:** the audience, when to run it, the journey in one from-to line, and three to
+  five questions it answers. Write the questions as the audience would ask them; they double as the
+  learning outcomes.
+- **"Run it when" names the sequence** where the deck is one of a set: which deck comes before, which
+  after, and what changes if it runs alone.
+- **Same hidden attributes as the terms slide** (`data-hidden` and `data-hidden-src`), so it never
+  presents and never counts as a presented slide.
+- **It sits at position two**, before the terms slide, because the reader decides whether the deck is
+  the right one before learning its vocabulary.
+
 ## Decide the terms on a hidden slide
 
 **A deck decides which terms it uses and which it does not, before any slide is built.** The slide is titled **Definitions** and renders each kept term as a boxed card (`.defs-grid .term`, the same shape as the peakstate-brief definitions block), in large type. When the terms do not fit at 24px, split them across two Definitions slides rather than shrinking the text. Prefer plain English. A term that is not plain English stays only if it earns its place, and then a visible slide introduces it early, visually, with a metaphor or an example, before its first use. A taxonomy id such as D1 is fine when its letter means something and the id is reused wherever that item appears.
