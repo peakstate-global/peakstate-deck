@@ -23,6 +23,9 @@ reference standard for how visual a deck should be.
   one line, and the artefact arrives on the next click (`data-build`). In the reference deck, six
   slides of 126 to 216 words work this way, and each one reads as a picture of the thing, not as a
   paragraph.
+- **A visual is explained in the speaker notes, never on the slide.** A pun, a callback, a
+  label or a colour that needs words gets them in the notes, where the speaker picks them up. Do
+  not add a caption, legend or label to the slide to satisfy a reviewer or a grader.
 - **Vary the kind of visual across the deck.** The reference deck uses line-art illustrations, a
   single-panel cartoon, a ranked chart, an object (a riveted black box), a dictionary entry, a
   rubber stamp, mock artefacts and big numbers. No two neighbouring slides use the same kind.
