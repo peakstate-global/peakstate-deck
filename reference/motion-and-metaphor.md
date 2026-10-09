@@ -153,3 +153,10 @@ Add two lines to the comment above each slide, after the point, the metaphor and
 
 Write `Motion: none` when the slide is still. A deck where every slide says `none` is a deck that
 has not asked the question.
+
+Emit the motion line onto the slide too, so a grader who sees only a screenshot knows what moves
+and why. `/draft-eval` reads it and scores whether the motion carries the point:
+
+    <section data-motion="the numbers shake in proportion to their rate, then go still">
+
+`data-motion="none"` says the slide is still on purpose.

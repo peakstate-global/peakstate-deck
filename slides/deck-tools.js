@@ -399,7 +399,10 @@
      (a typed log) is not seen; step the builds here if that ever matters. ── */
   if (/[?&]motion\b/.test(location.search)) {
     var SETTLE = 7000;
-    var frame = function () { return new Promise(function (r) { requestAnimationFrame(function () { setTimeout(r, 60); }); }); };
+    // A timer, not requestAnimationFrame: headless --dump-dom runs on virtual
+    // time and never paints, so a frame callback would never fire.
+    // getAnimations() flushes style, so the arrival animations are there.
+    var frame = function () { return new Promise(function (r) { setTimeout(r, 60); }); };
     var motionAudit = async function () {
       await customElements.whenDefined('deck-stage');
       var lines = [], bad = 0;
@@ -408,7 +411,7 @@
         var c = cards[k];
         if (c.hasAttribute('data-hidden-src') || c.hasAttribute('data-hidden')) continue;
         host.goTo(k);
-        await frame(); await frame();
+        await frame();
         var end = 0, loops = 0, ambient = 0;
         document.getAnimations().forEach(function (a) {
           var t = a.effect && a.effect.target;

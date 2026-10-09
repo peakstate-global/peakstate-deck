@@ -72,7 +72,7 @@ For every slide, answer four questions in the generator, as a comment above the 
 
 - **What is the one point?** One sentence.
 - **What is its visual metaphor?** A protest crowd for objections, a seesaw for a shift in weight, a dial for degrees of autonomy, a road for a journey, a stamp for a verdict.
-- **How does it move, and when does it settle?** One sentence on what the motion says, or `Motion: none`, and the settle time.
+- **How does it move, and when does it settle?** One sentence on what the motion says, or `Motion: none`, and the settle time. Emit the sentence as `data-motion` on the section, so `/draft-eval` can score it.
 - **How can we show it?** Choose the highest rung that is feasible:
   1. **The content sits inside the metaphor.** The objections are the words on the protest placards; the cheap work and the precious work sit on the two ends of the seesaw; the four levels of autonomy are the marks on the dial. This is the goal.
   2. **An illustration** that carries the metaphor, with the text beside it.
