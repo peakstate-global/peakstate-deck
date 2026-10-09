@@ -31,6 +31,7 @@ createServer(async (req, res) => {
   if (path.endsWith('/deck-comments.js')) file = ASSET;
   else if (path.startsWith('/theme/')) file = safe(THEME, path.slice('/theme'.length));
   else if (path.endsWith('/deck-stage.js')) file = join(SLIDES, 'deck-stage.js');
+  else if (path.endsWith('/deck-tools.js')) file = join(SLIDES, 'deck-tools.js');
   else file = safe(FIXTURES, path);
   try {
     const body = await readFile(file);

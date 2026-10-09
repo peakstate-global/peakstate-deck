@@ -2,8 +2,8 @@
 
 **A deck carries its meaning in pictures and movement, and the words are the last resort.** Every
 presented slide has a visual that shows its one point. Every movement on a slide says something
-about that point. All movement settles within 7 seconds, so the room (or the video edit) comes back
-to the speaker.
+about that point. The foreground movement settles within 7 seconds, so the room (or the video
+edit) comes back to the speaker. Subtle background loops may run for the whole slide.
 
 Read this when you plan, build or review the visuals and motion of a deck. The worked examples come
 from a workshop deck on AI hallucination and provenance (34 presented slides), which is the
@@ -35,11 +35,20 @@ reference standard for how visual a deck should be.
 
 - **Every movement means something.** Before you add a movement, write what it says in one
   sentence. If the sentence is "it looks lively", delete the movement.
-- **All motion settles by 7 seconds after the slide arrives, or after the click that started it.
-  Design for 5.** After that the slide is a still picture. On stage the audience looks back at the
-  speaker. In a video edit, the settle point is where the cut goes back to the speaker.
-- **No infinite loops.** A blinking cursor, a pulse or a drifting background never settles. If a
-  loop carries meaning (a guardrail still watching), run it a fixed number of times and stop.
+- **Foreground motion settles by 7 seconds after the slide arrives, or after the click that
+  started it. Design for 5.** Foreground motion is anything that draws the eye: an entrance, a
+  morph, a chart drawing, a stamp, a shake. After the settle point the foreground is still. On
+  stage the audience looks back at the speaker. In a video edit, the settle point is where the cut
+  goes back to the speaker.
+- **Subtle loops are welcome when they mean something.** A blinking cursor says the system is
+  still live. Slow drifting clouds say time passes. A faint pulse on a node says it is the one in
+  focus. A loop is subtle when it is small, slow and low in contrast, so it does not pull the eye
+  away from the speaker. Mark the element, or a wrapper, `data-ambient`, which tells the motion
+  audit the loop is on purpose.
+- **Check it with `index.html?motion`.** The motion audit visits every presented slide and reports
+  when its motion settles. A slide that settles after 7 seconds is `LATE`. A loop outside
+  `data-ambient` is `LOOP`. Each one is a problem to fix or to mark. It sees arrival motion only,
+  not motion that a click build or a script timer starts.
 - **Motion slows to rest.** Use an ease-out, a damped shake or a small overshoot that settles. A
   hard stop at full speed reads as a glitch.
 - **The settled frame is the slide.** Print, `?export`, reduced motion and a paused video show the
@@ -52,7 +61,31 @@ reference standard for how visual a deck should be.
 - **Move whole things, never text the layout flows around.** A morph that reflows a line looks like
   the layout is tearing. Scale or translate a wrapper instead (`slides/README.md`, *Morph*).
 - **The push between slides only says "next".** Save meaningful motion for inside the slide, and
-  link a pair (`data-morph-link`) when the next slide is the same thing changing.
+  make the move between slides immersive wherever the next slide continues the same world (the
+  next section).
+
+## Immersive transitions
+
+**When the next slide continues the same scene or the same object, carry the audience across
+instead of cutting.** The audience should feel they move through one world, not flip cards.
+
+- **Morph the thing that continues.** Link the pair (`data-morph-link`) and key the element that
+  carries over (`data-morph="key"`): the stamp word becomes the dictionary headword, the sentence
+  passes into the black box. Two or three keyed elements, never the whole slide.
+- **Pan across one scene.** Key a background layer (a horizon, a landscape, a texture) on both
+  slides of a linked pair, placed a short distance apart, and set `data-morph-ms` long enough to
+  feel like a camera move. The runtime pans the background first and the new foreground arrives
+  when it lands. Keep the shift small (a tenth of the slide width or less) so it reads as a camera
+  move, not as a second subject. True layered parallax, where near and far layers move at
+  different speeds during the change, is not built in the runtime yet.
+- **Zoom into a detail.** Key the detail on both slides, small on the first and large on the
+  second, with `data-morph-scale`. The next slide is the inside of the thing the audience was
+  looking at.
+- **Keep the immersive move for continuity.** A section change is a real change of place, so it
+  pushes or cuts. Immersion between unrelated slides is arbitrary motion.
+- **Distant callbacks.** When a later slide answers an earlier one (a problem board and its answer
+  board), make them neighbours, or repeat the earlier board just before the answer so the pair can
+  morph.
 
 ## Match the motion to the metaphor
 
@@ -72,6 +105,9 @@ Pick the motion that acts out the idea. These are starting points, not a fixed l
 | Pieces combine into a whole | Parts travel in and lock together |
 | Erosion, decay, loss | Fade, crumble or drain, slowly |
 | Order from chaos | Scattered items slide into a grid |
+| A system still live or watching | A subtle blinking cursor or slow pulse (`data-ambient`) |
+| Time passing, a living scene | A slow background drift (`data-ambient`) |
+| Moving deeper into one idea | A zoom morph into a detail, or a pan across one scene on a linked pair |
 
 ## Worked examples from the reference deck
 
@@ -113,7 +149,7 @@ below the label, with a smear on the wall where it slid down. Not every story ne
 Add two lines to the comment above each slide, after the point, the metaphor and how it is shown:
 
     # Motion: the numbers shake in proportion to their rate, then go still.
-    # Settles by: 7s.
+    # Settles by: 7s. Ambient: none.
 
 Write `Motion: none` when the slide is still. A deck where every slide says `none` is a deck that
 has not asked the question.

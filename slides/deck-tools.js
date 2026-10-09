@@ -6,6 +6,9 @@
                editable PowerPoint text boxes instead of flat slide images.
      ?audit    overflow self-check. Prints a per-slide report and replaces the
                page with it. A slide whose content exceeds 1920x1080 is a bug.
+     ?motion   settle self-check. Visits every presented slide and reports
+               when its motion ends; past 7s, or a loop not marked
+               data-ambient, is a problem.
 
    Port notes: the old engine kept exactly one slide in the DOM flow at a time
    (.on) and measured at 1600x900. deck-stage lays every <section> out at its
@@ -384,5 +387,51 @@
     document.body.innerHTML = '<pre style="font:14px/1.5 ui-monospace,Menlo,monospace;' +
       'padding:32px;white-space:pre-wrap;background:#111;color:#eee;min-height:100vh"></pre>';
     document.body.firstChild.textContent = report;
+  }
+
+  /* ── Motion self-check ──────────────────────────────────────────────────
+     Visits every presented slide and reads the animations running on it.
+       settles Xs  the last finite animation ends X seconds after arrival
+       LATE        it ends after 7s: the room cannot come back to the speaker
+       LOOP        an animation runs for ever and is not inside [data-ambient]
+       ambient     a declared background loop, allowed and counted
+     ponytail: arrival only. Motion started by a click build or a script timer
+     (a typed log) is not seen; step the builds here if that ever matters. ── */
+  if (/[?&]motion\b/.test(location.search)) {
+    var SETTLE = 7000;
+    var frame = function () { return new Promise(function (r) { requestAnimationFrame(function () { setTimeout(r, 60); }); }); };
+    var motionAudit = async function () {
+      await customElements.whenDefined('deck-stage');
+      var lines = [], bad = 0;
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) lines.push('reduced motion is on: nothing animates, so nothing is measured', '');
+      for (var k = 0; k < cards.length; k++) {
+        var c = cards[k];
+        if (c.hasAttribute('data-hidden-src') || c.hasAttribute('data-hidden')) continue;
+        host.goTo(k);
+        await frame(); await frame();
+        var end = 0, loops = 0, ambient = 0;
+        document.getAnimations().forEach(function (a) {
+          var t = a.effect && a.effect.target;
+          if (!t || !c.contains(t)) return;
+          var ct = a.effect.getComputedTiming();
+          if (ct.endTime === Infinity) { if (t.closest('[data-ambient]')) ambient++; else loops++; }
+          else end = Math.max(end, ct.endTime);
+        });
+        var late = end > SETTLE;
+        if (late) bad++;
+        if (loops) bad++;
+        lines.push(pad2(k + 1) + ' ' + (late ? 'LATE ' : '') + (end ? 'settles ' + (end / 1000).toFixed(1) + 's' : (loops ? '' : 'still')) +
+                   (loops ? '  LOOP x' + loops + ' (mark data-ambient if it is background)' : '') +
+                   (ambient ? '  ' + ambient + ' ambient' : '') +
+                   '  [' + (c.getAttribute('data-screen-label') || '') + ']');
+      }
+      lines.push('', bad ? bad + ' PROBLEM(S)' : 'all presented slides settle by ' + SETTLE / 1000 + 's');
+      var report = lines.join('\n');
+      console.log(report);
+      document.body.innerHTML = '<pre id="motion-report" style="font:14px/1.5 ui-monospace,Menlo,monospace;' +
+        'padding:32px;white-space:pre-wrap;background:#111;color:#eee;min-height:100vh"></pre>';
+      document.body.firstChild.textContent = report;
+    };
+    motionAudit();
   }
 })();

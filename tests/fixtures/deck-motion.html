@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Motion test deck · peakstate-deck fixtures</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="deck.css">
+<style>
+  @keyframes rise { from { transform: translateY(40px); } to { transform: none; } }
+  @keyframes pulse { 50% { opacity: .5; } }
+  .dot { width: 80px; height: 80px; background: #C95A33; }
+  section[data-deck-active] .quick { animation: rise .5s ease-out 1s both; }
+  section[data-deck-active] .slow  { animation: rise 2s ease-out 6s both; }
+  section[data-deck-active] .loop  { animation: pulse 2s infinite; }
+</style>
+</head>
+<body>
+<!-- One slide per verdict the motion audit can give: settles in time, settles
+     late, loops without saying so, and loops as a declared ambient element. -->
+<deck-stage design-width="1920" design-height="1080">
+  <section data-slide-id="still" data-screen-label="Still"><div class="dot"></div></section>
+  <section data-slide-id="quick" data-screen-label="Quick"><div class="dot quick"></div></section>
+  <section data-slide-id="slow" data-screen-label="Slow"><div class="dot slow"></div></section>
+  <section data-slide-id="loop" data-screen-label="Loop"><div class="dot loop"></div></section>
+  <section data-slide-id="ambient" data-screen-label="Ambient"><div data-ambient><div class="dot loop"></div></div><div class="dot quick"></div></section>
+  <section data-slide-id="hidden" data-screen-label="Hidden" data-hidden-src data-hidden><div class="dot slow"></div></section>
+</deck-stage>
+<script src="deck-stage.js"></script>
+<script src="deck-tools.js"></script>
+</body>
+</html>
