@@ -259,7 +259,9 @@
     '.dcx-bar .dcx-count.zero{background:rgba(245,240,232,.18);color:#F5F0E8}',
     '.dcx-bar .sep{width:1px;height:20px;background:rgba(245,240,232,.16);margin:0 4px}',
     '.dcx-pop{background:#0E0A08;border:1px solid rgba(245,240,232,.2);border-radius:10px;',
-    '  padding:12px;width:392px;box-shadow:0 10px 40px rgba(0,0,0,.55)}',
+    '  padding:12px;width:392px;box-shadow:0 10px 40px rgba(0,0,0,.55);',
+    // A long thread scrolls inside the popover, never past the viewport; 76px keeps the bar clear.
+    '  max-height:calc(100vh - 76px);overflow:auto;overscroll-behavior:contain}',
     '.dcx-pop .q{font:400 12px/1.5 "JetBrains Mono",monospace;color:#D0B561;max-height:66px;',
     '  overflow:hidden;margin-bottom:9px;border-left:2px solid #A93D1A;padding-left:9px}',
     '.dcx-pop textarea{width:100%;height:94px;resize:vertical;background:#1A1614;color:#F5F0E8;',
@@ -275,7 +277,8 @@
     '.dcx-row button.pri{background:#A93D1A;border-color:#A93D1A}',
     '.dcx-row button.ghost{margin-right:auto;border-color:rgba(245,240,232,.14);color:#B5A899}',
     '.dcx-row button.danger{background:#A93D1A;border-color:#A93D1A;color:#fff}',
-    '.dcx-panel{top:60px;right:16px;width:430px;max-height:72vh;overflow:auto;',
+    '.dcx-panel{top:60px;right:16px;width:430px;max-height:calc(100vh - 76px);overflow:auto;',
+    '  overscroll-behavior:contain;',
     '  background:rgba(14,10,8,.97);border:1px solid rgba(245,240,232,.16);border-radius:10px;',
     '  padding:10px;box-shadow:0 10px 40px rgba(0,0,0,.5)}',
     '.dcx-panel .item{border-top:1px solid rgba(245,240,232,.12);padding:11px 4px;cursor:pointer;',
@@ -846,11 +849,15 @@
     if (back) back();
   }
 
+  // Placed after it is in the page, from its real height; the CSS caps that height.
+  function fitPop(y) {
+    pop.style.top = Math.max(12, Math.min(y, innerHeight - pop.offsetHeight - 12)) + 'px';
+  }
+
   function openPop(x, y, ctx, existing, onClosed) {
     closePop();
     pop = el('div', 'dcx dcx-pop');
     pop.style.left = Math.max(12, Math.min(x, innerWidth - 404)) + 'px';
-    pop.style.top = Math.max(12, Math.min(y, innerHeight - 250)) + 'px';
     pop.innerHTML =
       (ctx.quote ? '<div class="q"></div>' : '') +
       '<textarea placeholder="What should change here, or what do you want to discuss?"></textarea>' +
@@ -866,6 +873,7 @@
     var ta = pop.querySelector('textarea');
     if (existing) ta.value = existing.comment;
     document.body.appendChild(pop);
+    fitPop(y);
 
     // Never autofocus on a fresh SELECTION: focusing collapses it and kills
     // Cmd-C. An existing comment, or a whole-slide comment, has no selection to
@@ -935,7 +943,6 @@
     closePop();
     pop = el('div', 'dcx dcx-pop');
     pop.style.left = Math.max(12, Math.min(x, innerWidth - 404)) + 'px';
-    pop.style.top = Math.max(12, Math.min(y, innerHeight - 420)) + 'px';
     pop.innerHTML = (c.quote ? '<div class="q"></div>' : '') + threadHTML(c, resolutionFor(c)) +
       '<div class="dcx-row"><button class="ghost" data-a="editorig">Edit original</button>' +
       '<button data-a="cancel">Close</button></div>';
@@ -943,6 +950,7 @@
     popReturn = onClosed || null;
     document.body.appendChild(pop);
     wireThread(pop, c, function () { popReturn = null; openThread(x, y, c, onClosed); });
+    fitPop(y);
     setTimeout(function () { pop && pop.querySelector('.cthread textarea').focus(); }, 10);
     pop.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePop(); }

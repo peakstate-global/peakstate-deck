@@ -157,6 +157,8 @@ This does the same for a **slide deck**: select text on a slide, write a note,
 hit Copy, paste the JSON into chat. The payload says which build was reviewed
 and where every note belongs, so no other context is needed.
 
+- **Comment panels scroll internally and never run past the viewport.** Every popover, thread and comment list caps its height to the window, less the bar, and scrolls inside itself, so the last comment and its reply box are always reachable.
+
 ## Install it into a deck
 
 
