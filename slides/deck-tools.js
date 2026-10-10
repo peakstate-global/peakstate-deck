@@ -373,6 +373,38 @@
 
       /* getBoundingClientRect is post-scale; normalise back to design pixels */
       var scale = box.width / W || 1;
+
+      /* BALANCE: the content sits centred between the slide heading and the
+         footer. More than BAL design px more empty space on one side than the
+         other is a defect: a slide whose notes or columns were removed keeps
+         its content hugging the heading with a hole underneath. Only a slide
+         with an h2 heading is measured (a title or divider is laid out on
+         purpose), and data-balance="off" on a section opts out a deliberate
+         layout. Absolute decoration with no pointer events is ignored, as above. */
+      var BAL = 120, head = c.querySelector('h2');
+      if (head && ft && c.getAttribute('data-balance') !== 'off') {
+        var hb = head.getBoundingClientRect().bottom, ftT = ft.getBoundingClientRect().top;
+        var lo = Infinity, hi = -Infinity;
+        [].forEach.call(c.querySelectorAll('*'), function (el) {
+          // A box counts when it holds no element children, or holds text of its own (a
+          // paragraph with a <br> in it is still the last line of content).
+          var ownText = [].some.call(el.childNodes, function (n) { return n.nodeType === 3 && n.textContent.trim(); });
+          if ((el.children.length && !ownText) || head.contains(el) || el.closest('.ft, .hd, .cite')) return;
+          var cs = getComputedStyle(el);
+          if (cs.display === 'none' || (cs.position === 'absolute' && cs.pointerEvents === 'none')) return;
+          var r = el.getBoundingClientRect();
+          if (!r.width || !r.height || r.top < hb - 2 || r.bottom > ftT + 2) return;
+          lo = Math.min(lo, r.top); hi = Math.max(hi, r.bottom);
+        });
+        if (lo !== Infinity) {
+          var gapT = Math.round((lo - hb) / scale), gapB = Math.round((ftT - hi) / scale);
+          if (Math.abs(gapB - gapT) > BAL) {
+            bad++;
+            out.push('   ! BALANCE off-centre: ' + gapT + 'px above the content, ' + gapB +
+                     'px below; centre it between the heading and the footer');
+          }
+        }
+      }
       maxB = Math.round(maxB / scale); maxR = Math.round(maxR / scale);
       var over = Math.max(maxB - H, maxR - W);
       if (over > 1) bad++;
