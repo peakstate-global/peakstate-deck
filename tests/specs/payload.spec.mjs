@@ -296,9 +296,17 @@ test('an answered comment opens as a thread, and a follow-up reopens it with fol
 
   // A follow-up the response has not seen yet is edited in place, and the edit survives a reload.
   await page.locator('.dcx-pop .ctedit').nth(1).click();
+  // While it is edited, the edit owns the only Save: the reply box and its Save hide.
+  await expect(page.locator('.dcx-pop .cthread > textarea')).toBeHidden();
+  await expect(page.locator('.dcx-pop .ctsave')).toBeHidden();
+  const editSave = page.locator('.dcx-pop .ctedit.on');
+  await expect(editSave).toHaveText('Save');
+  expect(await editSave.evaluate((b) => getComputedStyle(b).backgroundColor)).toBe('rgb(169, 61, 26)');
   await page.locator('.dcx-pop .ctmsg textarea').fill('And the date format, please?');
-  await page.locator('.dcx-pop .ctedit').nth(1).click();
+  await editSave.click();
   await expect(page.locator('.dcx-pop .cthread')).toContainText('And the date format, please?');
+  await expect(page.locator('.dcx-pop .cthread > textarea')).toBeVisible();
+  await expect(page.locator('.dcx-pop .ctsave')).toBeVisible();
   await page.locator('.dcx-pop [data-a="cancel"]').click();
   await openDeck(page, MINTED);
 

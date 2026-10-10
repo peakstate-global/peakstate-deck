@@ -318,6 +318,11 @@
     '.dcx .cthread button.ctedit{background:none;color:#B5A899;padding:3px 0 0;cursor:pointer;',
     '  font:500 11px/1.4 "Inter",sans-serif;text-decoration:underline}',
     '.dcx .cthread button.ctedit:hover{color:#F5F0E8}',
+    // While a follow-up is being edited it owns the only Save: the reply box hides.
+    '.dcx .cthread button.ctedit.on{background:#A93D1A;color:#fff;text-decoration:none;padding:7px 12px;',
+    '  font:500 12px/1 "Inter",sans-serif;margin-top:6px;display:block;margin-left:auto}',
+    '.dcx .cthread button.ctedit.on:hover{filter:brightness(1.1)}',
+    '.dcx .cthread.editing > :is(.ctlabel, textarea, .ctsave){display:none}',
     '.dcx-panel .empty{color:#8B8079;font-size:13px;padding:16px 6px;text-align:center;line-height:1.5}',
     '.dcx-tray{left:0;right:0;bottom:0;background:rgba(14,10,8,.97);',
     '  border-top:1px solid rgba(245,240,232,.18);padding:14px 20px 16px;',
@@ -2076,7 +2081,9 @@
         if (!box) {
           box = el('textarea'); box.value = c.thread[i].text;
           text.textContent = ''; text.appendChild(box); guard(box, keep);
-          b.textContent = 'Save edit'; box.focus();
+          b.textContent = 'Save'; b.classList.add('on');
+          // The repaint after keep() rebuilds the thread, so the reply box comes back.
+          d.querySelector('.cthread').classList.add('editing'); box.focus();
         } else keep();
       });
       function keep() {

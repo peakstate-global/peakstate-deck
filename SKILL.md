@@ -223,6 +223,22 @@ thread opens on the slide: an answered highlight stays painted as a dotted gold
 underline, and an answered slide comment keeps **Slide comment** lit, so
 clicking either one opens the conversation where the comment was made.
 
+**A thread shows one Save at a time.** Editing a follow-up hides the
+**Continue the conversation** box and its Save until the edit is saved. The
+follow-up being edited carries its own primary **Save** button in the accent
+colour, never a text link. Once it is saved, the reply box comes back.
+
+**Cmd+S (Ctrl+S) sends, wherever focus is.** When a delivery helper adds a
+**Send** action beside Copy, it binds the key on the window in the capture
+phase. A review-layer text box stops keystrokes from reaching the deck, so a
+listener lower down never sees the key and the browser opens its own Save Page
+dialog. An editor that uses the key itself calls `preventDefault`, and the
+helper then skips the send.
+
+**A send result is a notification, never a control.** The confirmation is a
+toast: an icon and plain text, below the bar, with no button shape, no border,
+no hover state and no pointer events. It fades after a few seconds.
+
 **A follow-up reopens the comment.** Whatever its status, a comment with a
 follow-up the answer has not covered counts as `new`, so it travels in the next
 Copy with `follow_up[]` beside `resolutionNote`. To answer it, rewrite `note` so
