@@ -84,6 +84,7 @@ The decisions live on a hidden terms slide early in the deck:
 
 **Judge every slide as a first-time audience member would, and make every word, mark and model earn its place.** `/draft-eval` grades these; hold a revision against them before the reader sees it.
 
+- **A title states the slide's takeaway, in plain words.** It says what the audience should conclude, the one thing they would repeat to a colleague, never a compressed summary of the evidence on the slide. Test it: read the title alone; if it needs the chart to make sense, or packs several findings into one clause, rewrite it as the conclusion. The evidence and its caveats go on the slide, in the notes and in the sources field.
 - **Words.** A first-time reader takes the point with nothing to guess. A question or label makes sense without the speaker. List items share one form; questions in a sequence share one polarity. A non-plain term is introduced early, visually, with a metaphor or example, then may be reused, ideally with context clues. A loaded word ("kill") has its object in view.
 - **Economy and authority.** Every word and element serves the message: no meta-commentary, reading instructions or "this, not that". The slide states the position plainly; no hedge on its face. A text-heavy slide moves its story to the speaker notes.
 - **Sources field.** Sources, limits and "not tested" caveats go in `#slide-sources`, never on the slide and never in the spoken note (`reference/authoring.md`, *Sources field*).
