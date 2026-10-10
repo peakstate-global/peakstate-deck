@@ -1300,14 +1300,29 @@
       // Click builds: elements marked data-build appear one per forward step
       // (and leave one per back step) before the deck moves to another slide.
       const cur = this._slides[this._index];
+      // PowerPoint's rule: a click lands everything still playing on this slide
+      // at its end state before the click does anything else, so a presenter
+      // who runs ahead never waits for an earlier animation to catch up.
+      // Endless loops (data-ambient) are left running: they have no end state.
+      if (cur && cur.getAnimations) {
+        cur.getAnimations({ subtree: true }).forEach((a) => {
+          if (a.effect && a.effect.getComputedTiming().endTime !== Infinity) a.finish();
+        });
+      }
       const steps = cur ? [...cur.querySelectorAll('[data-build]')] : [];
       if (steps.length && !document.documentElement.hasAttribute('data-builds-all')) {
+        // data-build="<key>": every build sharing the key arrives on one click.
+        // Sequence them inside the click with transition-delay.
+        const group = (el) => {
+          const k = el.getAttribute('data-build');
+          return k ? steps.filter((s) => s.getAttribute('data-build') === k) : [el];
+        };
         if (dir > 0) {
           const nxt = steps.find((el) => !el.hasAttribute('data-built'));
-          if (nxt) { nxt.setAttribute('data-built', ''); return; }
+          if (nxt) { group(nxt).forEach((el) => el.setAttribute('data-built', '')); return; }
         } else {
           const shown = steps.filter((el) => el.hasAttribute('data-built'));
-          if (shown.length) { shown[shown.length - 1].removeAttribute('data-built'); return; }
+          if (shown.length) { group(shown[shown.length - 1]).forEach((el) => el.removeAttribute('data-built')); return; }
         }
       }
       let i = this._index + dir;

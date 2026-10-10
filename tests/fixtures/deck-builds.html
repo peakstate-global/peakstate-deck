@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Builds test deck · peakstate-deck fixtures</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="deck.css">
+<style>
+  @keyframes fade { from { opacity: 1; } to { opacity: .2; } }
+  section[data-deck-active] .slowfade { animation: fade 1s ease 5s both; }
+  [data-build]:not([data-built]) { opacity: 0; }
+  [data-build] { transition: opacity .5s; }
+</style>
+</head>
+<body>
+<!-- A slow entry animation, then one single build and one grouped pair. -->
+<deck-stage design-width="1920" design-height="1080">
+  <section data-slide-id="one" data-screen-label="One">
+    <div class="slowfade">late</div>
+    <div data-build id="a">a</div>
+    <div data-build="pair" id="b1">b1</div>
+    <div data-build="pair" id="b2" style="transition-delay:3s">b2</div>
+  </section>
+  <section data-slide-id="two" data-screen-label="Two">two</section>
+</deck-stage>
+<script src="deck-stage.js"></script>
+</body>
+</html>

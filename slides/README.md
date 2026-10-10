@@ -196,6 +196,15 @@ No extra slides and no state groups. `treatments.css` styles the arrival (fade
 and rise); override the transform per deck for a different entrance. `?audit`,
 `?export` and print show every build at once.
 
+Give builds the same value (`data-build="b2"`) and they arrive together on one
+click, and leave together on one back step. Sequence them inside that click with
+`transition-delay` on the later ones: an arrow, then the label it points to.
+
+**Every click fast-forwards first.** Before a click builds or moves on, every
+animation and transition still running on the slide jumps to its end state, as
+in PowerPoint. A presenter who clicks ahead never waits for an earlier
+animation to catch up. Loops that never end (`data-ambient`) keep running.
+
 ## Slide numbers
 
 **One number per slide while reviewing: its position in the deck, hidden slides
