@@ -323,6 +323,14 @@
      Any one of them is a defect. None shows up as an error. ── */
   if (location.search.indexOf('audit') > -1) {
     var out = [], bad = 0;
+    // The stage turns pointer events off on every inactive slide, and children
+    // inherit it, so "absolute with no pointer events" (the decoration exemption
+    // below) would match real content on every slide but the live one. Turn
+    // events back on for the measurement, so only decoration that sets
+    // pointer-events:none itself is exempt.
+    var pe = document.createElement('style');
+    pe.textContent = 'deck-stage > section { pointer-events: auto !important; }';
+    document.head.appendChild(pe);
     cards.forEach(function (c, k) {
       var box = c.getBoundingClientRect();
       var maxB = 0, maxR = 0, culprit = '';
