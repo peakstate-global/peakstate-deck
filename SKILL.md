@@ -125,6 +125,14 @@ For every slide, answer four questions in the generator, as a comment above the 
 - **Aim for a visual on nine presented slides in ten, and about 25 words or fewer on a slide that is not doing technical heavy lifting.** A technical slide states its rule in one line and puts the detail inside an artefact (a log, a scorecard, a label) that arrives on the next click.
 - **Illustrations hold a consistent style across a deck** (one illustrator, one set of recurring characters). Say in the attribution that they are AI-generated.
 
+**Icons in a row.**
+
+- **Icons in a row share one height**, measured on the drawn ink, not on the padded square.
+- **Each icon and its label are centred in their column.**
+- **Labels are top-aligned**, so every label in the row starts on one line whatever the icon above it.
+- **A sequence uses hand-drawn arrows in the icon style between its steps**, never plain stroked arrows.
+- **A way-to-deploy card, or any framework card, uses an illustration, never an icon.**
+
 ## Every word on a slide earns its place
 
 **Add text only when it adds value, never to fill a slot in the template.** A footer, an
