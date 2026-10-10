@@ -11,7 +11,13 @@ the browser and round-trip the comments, **export** it to native PowerPoint.
 A deck is one `index.html` with `deck-stage.js` and `deck-tools.js` beside it. No build step, no server, no
 framework. `index.html?audit` reports per-slide overflow; "all N slides clean" is the pass.
 `index.html?motion` reports when each slide's motion settles (`reference/motion-and-metaphor.md`).
-After a deck builds and audits clean, `/draft-eval` scores it before anyone reviews it.
+**Run `/draft-eval` at two moments only:** after the first full draft of a deck, and after a major
+change. A change is major when more than 20% of the slides are new, or more than 20% of the slides
+are significantly changed by the user (their claim, argument or evidence, not only their wording or
+layout). Judge whether a change is major and state the call in one line, so the user can override
+it. After any smaller change, run only the overflow audit (`index.html?audit`) and the em-dash check,
+then stop. If a small round still needs a check, score only the audit set: the changed slides plus a
+few unchanged ones as a baseline, which `score_round.py audit` selects.
 
 | Job | Start here |
 |---|---|
