@@ -15,8 +15,8 @@ framework. `index.html?audit` reports per-slide overflow; "all N slides clean" i
 change. A change is major when more than 20% of the slides are new, or more than 20% of the slides
 are significantly changed by the user (their claim, argument or evidence, not only their wording or
 layout). Judge whether a change is major and state the call in one line, so the user can override
-it. After any smaller change, run only the overflow audit (`index.html?audit`) and the em-dash check,
-then stop. If a small round still needs a check, score only the audit set: the changed slides plus a
+it. After any smaller change, run only the overflow audit (`index.html?audit`), the em-dash check
+and, if a claim changed, the SOURCED re-audit of that claim, then stop. If a small round still needs a check, score only the audit set: the changed slides plus a
 few unchanged ones as a baseline, which `score_round.py audit` selects.
 
 | Job | Start here |
@@ -34,6 +34,22 @@ few unchanged ones as a baseline, which `score_round.py audit` selects.
 - **The slides carry the claims; the speaker notes carry the narrative.** Every note says what its slide claims and gives the line that carries the room from the last slide into this one and on to the next.
 - **The first slide of each section names the belief it answers.**
 - **Teach the vocabulary before the audience applies it**, and end on where to start rather than on a method.
+
+## Every deck ships with a SOURCED sidecar
+
+**A deck is not finished until `index.html.sourced` sits beside `index.html`.** A deck makes claims
+for a room to rely on, so every deck is audited with `/sourced audit <deck>/index.html`, whatever
+its size and whether or not it is presented. The sidecar records each load-bearing claim on the
+slides and in the speaker notes, the source it rests on with the verbatim sentence and its
+locator, and the four-label provenance block.
+
+- **Audit when the first full draft is done**, before the deck is delivered or published.
+- **Re-audit the changed claims after any round that adds, removes or changes a claim**: a new
+  number, a new example, a new source or a softened line. A layout-only round needs no re-audit.
+- **Run `/sourced check` before every delivery**, so a source that moved or died is caught before
+  the room repeats it.
+- **A check done in conversation is not recorded.** When a claim is questioned and verified,
+  write the result into the sidecar as evidence in the same turn.
 
 ## Say who the deck is for on a hidden charter slide
 
