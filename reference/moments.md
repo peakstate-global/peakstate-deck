@@ -26,12 +26,15 @@ A generator does this in one place: a `move=(tag, line)` argument on its slide h
 
 ### The emulated live demonstration
 
-A live demonstration replayed on three slides, so nothing can fail on the night. Use it for a dramatisation or an S.T.A.R. moment that would otherwise need a laptop and a network.
+A full simulation of a live demonstration, so the room sees the work happen and nothing can fail on the night. It is not three static slides: a request, a result and a question in still frames read as a story about a demonstration, not as one. Use it for a dramatisation or an S.T.A.R. moment that would otherwise need a laptop and a network.
 
-- **Slide 1, the request.** The prompt or request exactly as typed, in a terminal or a form, with a clock at 0:00. The note reads the request aloud, slowly, and says what is missing (no specification, no ticket).
-- **Slide 2, the result, with a clock.** The finished result arrives on the click, beside the clock at its real elapsed time (for example 1:28) and a short report (files changed, tests passed). `[PAUSE]` on the clock before the click.
-- **Slide 3, the question.** A pattern-break slide with one question that turns the demonstration into the point, such as "Did anyone here want that?". `[ASK]`, then `[PAUSE]` for three seconds.
-- **Say it is an emulation.** The note and the sources field say the slides replay a demonstration, that invented details (names, amounts, counts) claim nothing, and where any real figure, such as the elapsed time, comes from.
+- **Slide 1, the console.** A full-slide agent console in the deck's palette, with the request pinned at the top. When the slide becomes active, a script streams the agent's output upward too fast to read, for about the length of the speaker's riff (around 30 seconds): thinking lines, tool calls, file reads, green and red diffs, a test that fails, the fix, and a passing run. Generate the lines in script from a short plan of the work, so the file stays small, and make them plausible for the result the next slide shows. A clock in the console's bar may run faster than real time to the elapsed time the result slide claims.
+- **The landing.** The stream settles on the agent's final message and the link it produced. A large pointer, visible from the back of the room, rises from the lower part of the slide to the link, the link lights, the pointer presses, and the deck advances on its own to the result.
+- **Slide 2, the result.** The finished result is already in place when the click lands, beside the real elapsed time and a short report (files changed, tests passed). `[PAUSE]` on it before the speaker says anything.
+- **Slide 3, the question.** A pattern-break slide with one question that turns the demonstration into the point. `[ASK]`, then `[PAUSE]` for three seconds.
+- **Behaviour.** A forward key or a click during the stream skips straight to the link state, so the speaker can cut the riff short. Leaving the slide stops the stream and the timers; arriving again restarts it from the top. It runs only on the active slide, never in the overview, a thumbnail or a presenter preview. Reduced motion, print and the PowerPoint export show the settled frame (the final message, the link lit and the pointer on it), with no auto-advance. Keep that frame in the slide's own markup and put it back whenever the stream stops, so every clone shows it.
+- **Motion audit.** The stream is script-driven, so `?motion` cannot see it and reports the slide as still. Say what runs, and for how long, in the slide's `data-motion` sentence. Never loosen the 7-second rule to fit it: the sequence is allowed because it covers the speaker's riff and a single press ends it.
+- **Say it is an emulation.** The note and the sources field say the console replays a demonstration, how much faster than real time it runs, that invented details (names, amounts, counts, the link) claim nothing, and where any real figure, such as the elapsed time, comes from. The console's note gives the speaker the riff, word for word, with `[PAUSE]` and the cue to stop talking when the link appears.
 
 ### The pattern-break slide
 

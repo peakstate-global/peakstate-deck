@@ -41,7 +41,7 @@ few unchanged ones as a baseline, which `score_round.py audit` selects.
 
 - **Every presented content slide's note opens with its move and its line:** `[MOVE: confirm] "I know you're thinking X, and you're right."` The five tags are `encourage`, `justify`, `allay`, `confirm` and `on your side`.
 - **Stage directions in square brackets:** `[MOVE: x]`, `[PAUSE]` (at least at the peak and after the S.T.A.R. moment), `[ASK]`, `[STORY]` and `[LIGHT]`.
-- **The patterns:** the emulated live demonstration (three slides: the request, the result with a clock, the question), the pattern-break slide (one slide unlike the rest), physical scale, guess-then-reveal (two per talk), live scoring in the room, the repeatable line per section, the confession slide, and the closing slide that mirrors the title.
+- **The patterns:** the emulated live demonstration (a full simulation: a console that streams agent output too fast to read for the length of the riff, a pointer that clicks the produced link, an automatic advance to the result, then the question; skip on a key, stop on leave, still under reduced motion), the pattern-break slide (one slide unlike the rest), physical scale, guess-then-reveal (two per talk), live scoring in the room, the repeatable line per section, the confession slide, and the closing slide that mirrors the title.
 - **The check is `/draft-eval`'s moments group:** `star_moment`, `peak_and_end`, `five_moves`, `people_and_stories`, `wrong_and_credible`, `light_moment` and `stage_directions`. Every check must pass.
 
 ## Every deck ships with a SOURCED sidecar
