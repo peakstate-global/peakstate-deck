@@ -60,6 +60,9 @@ a note the reader changed, and **Revert** restores the original.
 unasked. A speaker note is an instruction to the presenter, a line read aloud, or an acronym
 expanded for the moment they blank on it. Reasoning about the slide belongs in a run sheet.
 
+A note the generator writes from the arc opens with the slide's move and its line, and carries
+stage directions in square brackets (`reference/moments.md`).
+
 **Only edited notes travel back**, as `noteEdits[]`, each with `slide`,
 `slideLabel`, the new `note` and the `previousNote` it replaces — so the generator
 can be updated from the same round trip that carries the comments. Unedited notes
