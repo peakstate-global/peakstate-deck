@@ -289,6 +289,9 @@ handled comment, with the comment's `at` copied exactly, `status`, `build` and `
 rewrite it as an object keyed by `at`: an older runtime drops every reply, the reader sees no
 answers and cannot add to the thread. Process every round the same way, so each comment builds a
 thread: the reader's comment, your reply, their follow-up, your next reply with `seen` raised.
+Answer a follow-up with a NEW entry for the same `at`, `seen` set to the number of follow-ups it
+answers, and a note that answers only the follow-up. Never edit the earlier entry. The runtime
+shows each reply straight after the follow-up it answers, so the thread reads in order.
 
 The build embeds this file as a JSON block the runtime reads:
 

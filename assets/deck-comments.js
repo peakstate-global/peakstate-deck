@@ -171,7 +171,7 @@
      which the build embeds as a JSON block. Each entry is keyed by the comment's
      `at` timestamp — so EDITING A COMMENT CHANGES `at` AND THE TICK FALLS OFF,
      which is exactly what should happen when the user changes what they meant. */
-  var RES = {};
+  var RES = {}, RESALL = {};
   (function () {
     var tag = document.getElementById('deck-resolutions');
     if (!tag) return;
@@ -185,7 +185,11 @@
             var r = data[k] || {};
             return { at: k, status: r.status, note: r.note, build: r.build, seen: r.seen };
           });
-      list.forEach(function (r) { if (r && r.at) RES[r.at] = r; });
+      list.forEach(function (r) {
+        if (!r || !r.at) return;
+        RES[r.at] = r;                                   // the latest one sets the status
+        (RESALL[r.at] = RESALL[r.at] || []).push(r);     // every one is a turn in the thread
+      });
     } catch (e) {}
   })();
   function resolutionFor(c) { return RES[c.at] || null; }
@@ -2056,15 +2060,29 @@
      note as the Response, then each follow-up, then a box to carry it on.
      A follow-up the response has not seen yet can still be edited in place.
      Text goes in by textContent, never parsed. */
+  /* Replies in a thread: each resolution answers the follow-ups it has `seen`, so
+     the reply with seen = k sits straight after follow-up k. A file with one
+     reply per comment renders exactly as before. */
+  function repliesFor(c, k) {
+    return (RESALL[c.at] || []).filter(function (x) { return (x.seen || 0) === k; });
+  }
+  function replyHTML(c, k) {
+    var rs = repliesFor(c, k);
+    if (!rs.length) return k === 0 && !(RESALL[c.at] || []).some(function (x) { return x.note; })
+      ? '<div class="ctmsg ctreply"><span class="ctwho">Response</span><div class="cttext"><em class="ctnone">Marked as addressed, with no written response.</em></div></div>'
+      : '';
+    var x = rs[rs.length - 1];
+    return '<div class="ctmsg ctreply"><span class="ctwho">Response</span><div class="cttext">' +
+      (x.note ? '<span data-t="r' + k + '"></span>' : '<em class="ctnone">Addressed, with no written response.</em>') + '</div></div>';
+  }
   function threadHTML(c, r) {
     var h = '<div class="cthread"><div class="ctmsg"><span class="ctwho">You</span>' +
       '<div class="cttext" data-t="c"></div></div>' +
-      '<div class="ctmsg ctreply"><span class="ctwho">Response</span><div class="cttext">' +
-      (r.note ? '<span data-t="r"></span>'
-        : '<em class="ctnone">Marked as addressed, with no written response.</em>') + '</div></div>';
+      replyHTML(c, 0);
     followUps(c).forEach(function (_, i) {
       h += '<div class="ctmsg"><span class="ctwho">You</span><div class="cttext" data-t="f' + i + '"></div>' +
         (i >= (r.seen || 0) ? '<button type="button" class="ctedit" data-f="' + i + '">Edit</button>' : '') + '</div>';
+      h += replyHTML(c, i + 1);
     });
     return h + '<label class="ctlabel">Continue the conversation</label>' +
       '<textarea placeholder="Reply to this response"></textarea>' +
@@ -2073,7 +2091,10 @@
   function wireThread(d, c, after) {
     var r = resolutionFor(c);
     d.querySelector('[data-t="c"]').textContent = c.comment;
-    if (r.note) d.querySelector('[data-t="r"]').textContent = r.note;
+    for (var k = 0; k <= followUps(c).length; k++) {
+      var rs = repliesFor(c, k), slot = d.querySelector('[data-t="r' + k + '"]');
+      if (rs.length && slot) slot.textContent = rs[rs.length - 1].note;
+    }
     followUps(c).forEach(function (t, i) { d.querySelector('[data-t="f' + i + '"]').textContent = t; });
     var ta = d.querySelector('.cthread textarea');
     if (!state.replyDrafts) state.replyDrafts = {};
