@@ -2,7 +2,7 @@
 
 *Split out of `SKILL.md`. Open this file when you build or review the moments a deck's arc sheet planned.*
 
-`/narrative-arc` decides the moments before any slide exists: the throughline, each slide's move and its line, the peak, the last 60 seconds, the open loop, the S.T.A.R. moment (Something They'll Always Remember), the stories, the credibility story, the "I was wrong" beat and the light moments. This file says how to build each one on slides and how to mark it in the notes. `/draft-eval`'s moments group checks the result.
+`/narrative-arc` decides the moments before any slide exists: the throughline, each slide's move and its line, the peak, the last 60 seconds, the open loop, the S.T.A.R. moment (Something They'll Always Remember), the stories, the credibility story, the light moments and, only when a true story serves the throughline, the optional "I was wrong" beat. This file says how to build each one on slides and how to mark it in the notes. `/draft-eval`'s moments group checks the result.
 
 ## Stage directions in the speaker notes
 
@@ -56,9 +56,9 @@ The room scores one of its own items against the deck's test: a show of hands on
 
 Each section gets one sentence written to be repeated in the corridor afterwards: short, rhythmic and concrete. Set it large on the section's key slide, and say it twice in the notes, once at the start of the section and once at its end.
 
-### The confession slide
+### The confession slide (optional)
 
-The "I was wrong" beat. The slide shows what the speaker once believed or taught, then, on the click, what changed their mind, in their own words. Place it straight after the slide that challenges the room most. The note opens `[LIGHT]` with a self-deprecating line when the slide before it is heavy, then `[STORY]` for the confession itself.
+The "I was wrong" beat. Build this slide only when the arc sheet names a true story that serves the throughline; otherwise skip it, the arc sheet already says why in one line. When one is used, the slide shows what the speaker once believed or taught, then, on the click, what changed their mind, in their own words. Place it straight after the slide that challenges the room most. The note opens `[LIGHT]` with a self-deprecating line when the slide before it is heavy, then `[STORY]` for the confession itself.
 
 ### The closing slide that mirrors the title
 

@@ -37,11 +37,11 @@ few unchanged ones as a baseline, which `score_round.py audit` selects.
 
 ## Build the moments the arc planned
 
-**Every moment on the arc sheet gets built on a slide and marked in the notes.** The arc names each slide's move and line, the peak, the last 60 seconds, the S.T.A.R. moment, the stories, the confession and the light moments; the deck makes them happen. How to build each pattern is in `reference/moments.md`.
+**Every moment on the arc sheet gets built on a slide and marked in the notes.** The arc names each slide's move and line, the peak, the last 60 seconds, the S.T.A.R. moment, the stories, the light moments and, if the arc sheet uses one, the confession; the deck makes them happen. How to build each pattern is in `reference/moments.md`.
 
 - **Every presented content slide's note opens with its move and its line:** `[MOVE: confirm] "I know you're thinking X, and you're right."` The five tags are `encourage`, `justify`, `allay`, `confirm` and `on your side`.
 - **Stage directions in square brackets:** `[MOVE: x]`, `[PAUSE]` (at least at the peak and after the S.T.A.R. moment), `[ASK]`, `[STORY]` and `[LIGHT]`.
-- **The patterns:** the emulated live demonstration (a full simulation: a console that streams agent output too fast to read for the length of the riff, a pointer that clicks the produced link, an automatic advance to the result, then the question; skip on a key, stop on leave, still under reduced motion), the pattern-break slide (one slide unlike the rest), physical scale, guess-then-reveal (two per talk), live scoring in the room, the repeatable line per section, the confession slide, and the closing slide that mirrors the title.
+- **The patterns:** the emulated live demonstration (a full simulation: a console that streams agent output too fast to read for the length of the riff, a pointer that clicks the produced link, an automatic advance to the result, then the question; skip on a key, stop on leave, still under reduced motion), the pattern-break slide (one slide unlike the rest), physical scale, guess-then-reveal (two per talk), live scoring in the room, the repeatable line per section, the confession slide (optional, only when the arc sheet uses one), and the closing slide that mirrors the title.
 - **The check is `/draft-eval`'s moments group:** `star_moment`, `peak_and_end`, `five_moves`, `people_and_stories`, `wrong_and_credible`, `light_moment` and `stage_directions`. Every check must pass.
 
 ## Every deck ships with a SOURCED sidecar
@@ -339,7 +339,7 @@ Open one when its line is true of the work in front of you; never preload them.
 | `reference/the-overview.md` | You are working on the overview, the bar, or the keyboard |
 | `reference/identity.md` | Slides moved or were renamed, or the deck has states |
 | `reference/authoring.md` | You are writing or generating the deck itself |
-| `reference/moments.md` | You are building or reviewing a deck's moments: the moves, stage directions, the S.T.A.R. moment, the confession or the close |
+| `reference/moments.md` | You are building or reviewing a deck's moments: the moves, stage directions, the S.T.A.R. moment, the optional confession or the close |
 | `reference/motion-and-metaphor.md` | You are planning, building or reviewing a deck's visuals, animation or transitions |
 | `reference/internals.md` | You edited `deck-comments.js` and need to know what must still hold |
 | `reference/powerpoint-export.md` | You are exporting to PowerPoint, changing the exporter, or a deck came back from it wrong |
