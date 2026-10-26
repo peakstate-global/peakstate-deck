@@ -176,9 +176,16 @@
     var tag = document.getElementById('deck-resolutions');
     if (!tag) return;
     try {
-      (JSON.parse(tag.textContent) || {}).resolutions.forEach(function (r) {
-        if (r && r.at) RES[r.at] = r;
-      });
+      var data = JSON.parse(tag.textContent) || {};
+      /* The list is the contract. An object keyed by `at` (a shape an agent once
+         wrote from the old instruction wording) is read too, so a misshaped file
+         never silently drops every reply and locks the reader's comments. */
+      var list = Array.isArray(data.resolutions) ? data.resolutions
+        : Object.keys(data).map(function (k) {
+            var r = data[k] || {};
+            return { at: k, status: r.status, note: r.note, build: r.build, seen: r.seen };
+          });
+      list.forEach(function (r) { if (r && r.at) RES[r.at] = r; });
     } catch (e) {}
   })();
   function resolutionFor(c) { return RES[c.at] || null; }
@@ -1786,8 +1793,10 @@
         + 'report on it. Find each slide by slideId, which never moves, and search for that id in '
         + 'the generator at deck.source. The deck HTML is GENERATED: edit the generator, never '
         + 'index.html, then rebuild with the command in BUILD.md and re-run ?audit. When the round '
-        + 'is done, write {at, status, note} for each handled comment into the file at '
-        + 'deck.resolutions, keyed by the comment\'s "at", and rebuild. If deck.buildHash is not '
+        + 'is done, add one entry per handled comment to the file at deck.resolutions, in exactly '
+        + 'this shape: {"resolutions": [{"at": "<the comment\'s at, copied exactly>", "status": '
+        + '"addressed", "build": "<build hash>", "note": "<your reply>"}]}. Append to the existing '
+        + 'list; never rewrite it as an object keyed by at. Then rebuild. If deck.buildHash is not '
         + 'the current build, say so before acting. Every array here is a CHANGE the reader made; '
         + 'anything they left alone is summarised in unchanged and needs no action. If deck.url is '
         + 'set, the deck is also published there: republish it after the rebuild so the local '

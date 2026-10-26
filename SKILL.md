@@ -284,6 +284,12 @@ answers:
 { "at": "…", "status": "addressed", "note": "The answer, now covering the follow-up.", "seen": 1 }
 ```
 
+**The file is always `{"resolutions": [ … ]}`, a list, appended to each round.** One entry per
+handled comment, with the comment's `at` copied exactly, `status`, `build` and `note`. Never
+rewrite it as an object keyed by `at`: an older runtime drops every reply, the reader sees no
+answers and cannot add to the thread. Process every round the same way, so each comment builds a
+thread: the reader's comment, your reply, their follow-up, your next reply with `seen` raised.
+
 The build embeds this file as a JSON block the runtime reads:
 
     <script type="application/json" id="deck-resolutions"> …the file… </script>
