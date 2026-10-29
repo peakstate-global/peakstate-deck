@@ -338,27 +338,51 @@
     '.dcx .cthread button.ctedit.on:hover{filter:brightness(1.1)}',
     '.dcx .cthread.editing > :is(.ctlabel, textarea, .ctsave){display:none}',
     '.dcx-panel .empty{color:#8B8079;font-size:13px;padding:16px 6px;text-align:center;line-height:1.5}',
-    '.dcx-tray{left:0;right:0;bottom:0;background:rgba(14,10,8,.97);',
-    '  border-top:1px solid rgba(245,240,232,.18);padding:14px 20px 16px;',
-    '  box-shadow:0 -8px 30px rgba(0,0,0,.45);max-height:42vh;overflow:auto}',
-    '.dcx-tray .hdr{display:flex;align-items:center;gap:12px;margin-bottom:9px}',
-    '.dcx-tray .hdr b{font:500 11px/1 "JetBrains Mono",monospace;letter-spacing:.18em;',
+    // The notes panel. Bottom (default): notes and sources side by side, 66/34,
+    // height dragged from the top edge. Side: a column 20% of the window wide,
+    // full height, sources behind their own toggle. deck-stage shrinks the
+    // slide to the space left (setReserve), so the panel never covers it.
+    '.dcx-tray{left:0;right:0;bottom:0;height:280px;display:flex;flex-direction:column;',
+    '  background:rgba(14,10,8,.97);border-top:1px solid rgba(245,240,232,.18);padding:14px 20px 16px;',
+    '  box-shadow:0 -8px 30px rgba(0,0,0,.45)}',
+    '.dcx-tray .grip{position:absolute;left:0;right:0;top:-5px;height:11px;cursor:ns-resize;touch-action:none}',
+    '.dcx-tray .grip::after{content:"";position:absolute;left:50%;top:4px;width:44px;height:3px;',
+    '  margin-left:-22px;border-radius:2px;background:rgba(245,240,232,.28)}',
+    '.dcx-tray .grip:hover::after,.dcx-tray .grip.drag::after{background:#D0B561}',
+    '.dcx-tray .hdr{flex:none;display:flex;align-items:center;gap:8px 12px;margin-bottom:9px}',
+    '.dcx-tray .hdr b{font:500 11px/1.3 "JetBrains Mono",monospace;letter-spacing:.18em;',
     '  text-transform:uppercase;color:#D0B561}',
     '.dcx-tray .hdr .edited{font:500 10px/1 "JetBrains Mono",monospace;letter-spacing:.14em;',
     '  color:#0E0A08;background:#D0B561;border-radius:4px;padding:4px 7px}',
-    '.dcx-tray .hdr .sp{margin-left:auto;display:flex;gap:8px}',
-    '.dcx-tray .hdr .sp span{font:500 11px/1 "Inter",sans-serif;color:#8B8079;cursor:pointer;',
-    '  border:1px solid rgba(245,240,232,.16);border-radius:5px;padding:6px 9px}',
-    '.dcx-tray .hdr .sp span:hover{color:#F5F0E8}',
-    '.dcx-tray textarea{width:100%;min-height:104px;resize:vertical;background:#1A1614;',
+    '.dcx-tray .hdr .sp{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px}',
+    '.dcx-tray .hdr .sp > *{appearance:none;background:none;font:500 11px/1 "Inter",sans-serif;',
+    '  color:#8B8079;cursor:pointer;border:1px solid rgba(245,240,232,.16);border-radius:5px;padding:6px 9px}',
+    '.dcx-tray .hdr .sp > *:hover{color:#F5F0E8}',
+    '.dcx-tray .hdr .sp > [aria-pressed="true"]{color:#F5F0E8;background:rgba(208,181,97,.18);border-color:#D0B561}',
+    '.dcx-tray .bd{flex:1;min-height:0;display:flex;gap:16px}',
+    '.dcx-tray .nt{flex:0 0 calc(66% - 8px);min-width:0;display:flex}',
+    '.dcx-tray textarea{flex:1;width:100%;min-height:0;resize:none;background:#1A1614;',
     '  color:#F5F0E8;border:1px solid rgba(245,240,232,.2);border-radius:6px;padding:10px;',
     '  font:400 14px/1.55 "Inter",system-ui,sans-serif}',
     '.dcx-tray textarea:focus{outline:2px solid #A93D1A}',
-    '.dcx-tray .src{margin-top:10px;font:400 13px/1.55 "Inter",system-ui,sans-serif;color:#C9BFB4;',
+    '.dcx-tray .src{flex:1 1 0;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;',
+    '  font:400 13px/1.55 "Inter",system-ui,sans-serif;color:#C9BFB4;',
     '  border-left:3px solid #8B8079;padding:4px 0 4px 12px;white-space:pre-wrap}',
     '.dcx-tray .src b{display:block;font:500 10px/1 "JetBrains Mono",monospace;letter-spacing:.16em;',
     '  text-transform:uppercase;color:#8B8079;margin-bottom:6px}',
-    '.dcx-tray .src[hidden]{display:none}',
+    '.dcx-tray .src.none span{color:#8B8079}',
+    '.dcx-tray.side{left:auto;top:0;width:20vw;height:auto!important;border-top:0;',
+    '  border-left:1px solid rgba(245,240,232,.18);box-shadow:-8px 0 30px rgba(0,0,0,.45);padding:16px 14px}',
+    '.dcx-tray.side .grip{display:none}',
+    '.dcx-tray.side .hdr{flex-wrap:wrap}',
+    '.dcx-tray.side .hdr .sp{margin-left:0}',
+    '.dcx-tray.side .bd{flex-direction:column;gap:12px}',
+    '.dcx-tray.side .nt{flex:1 1 0;min-height:120px}',
+    '.dcx-tray.side .src{flex:0 1 auto;max-height:45%}',
+    '.dcx-tray.side:not(.showsrc) .src{display:none}',
+    '.dcx-tray:not(.side) [data-a="srcs"]{display:none}',
+    // The bar and the comment list step left of the side column, never over it.
+    'body.dcx-notes-side .dcx-bar,body.dcx-notes-side .dcx-panel{right:calc(20vw + 16px)}',
     '.dcx-toast{bottom:24px;left:50%;transform:translateX(-50%);background:#D0B561;color:#0E0A08;',
     '  font:600 13px/1 "Inter",sans-serif;padding:11px 18px;border-radius:999px;opacity:0;',
     '  transition:opacity .18s;pointer-events:none}',
@@ -558,15 +582,69 @@
 
   var tray = el('div', 'dcx dcx-tray');
   tray.style.display = 'none';
-  tray.innerHTML = '<div class="hdr"><b></b><span class="edited" hidden>EDITED</span>' +
-    '<span class="sp"><span data-a="revert">Revert</span><span data-a="close">Close</span></span></div>' +
-    '<textarea placeholder="Speaker notes for this slide"></textarea>' +
-    '<div class="src" hidden><b>Sources \u00b7 not spoken</b><span></span></div>';
+  tray.innerHTML = '<div class="grip" aria-hidden="true" title="Drag to make the notes taller or shorter"></div>' +
+    '<div class="hdr"><b></b><span class="edited" hidden>EDITED</span>' +
+    '<span class="sp">' +
+    '<button type="button" data-a="side" aria-pressed="false" title="Show the notes as a column on the right">Side column</button>' +
+    '<button type="button" data-a="srcs" aria-pressed="false" title="Show the sources under the notes in the column">Show sources</button>' +
+    '<span data-a="revert">Revert</span><span data-a="close">Close</span></span></div>' +
+    '<div class="bd"><div class="nt"><textarea placeholder="Speaker notes for this slide"></textarea></div>' +
+    '<div class="src"><b>Sources \u00b7 not spoken</b><span></span></div></div>';
   document.body.appendChild(tray);
+
+  /* Notes layout: one record for every deck in this browser, so each deck
+     opens its notes the way the reader last left them. Which slide's note is
+     open, and whether the panel is open, stay per deck in `state`. */
+  var LAYOUT_KEY = 'deck-notes-layout';
+  var layout = { mode: 'bottom', h: 280, src: false };
+  try { Object.assign(layout, JSON.parse(localStorage.getItem(LAYOUT_KEY) || '{}')); } catch (e) {}
+  function saveLayout() {
+    try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) {}
+  }
+  // ponytail: fixed limits; 140px keeps the header and three lines, 75% keeps the slide readable.
+  function clampH(h) {
+    return Math.round(Math.max(140, Math.min(window.innerHeight * 0.75, +h || 280)));
+  }
+  // Size the panel and hand the space it covers back to deck-stage, which
+  // rescales the slide into what is left. Closed or presenting: no reserve.
+  function layoutTray() {
+    var open = state.trayOpen && !performing;
+    var side = layout.mode === 'side';
+    tray.classList.toggle('side', side);
+    tray.classList.toggle('showsrc', !!layout.src);
+    tray.style.height = side ? '' : clampH(layout.h) + 'px';
+    document.body.classList.toggle('dcx-notes-side', open && side);
+    tray.querySelector('[data-a="side"]').setAttribute('aria-pressed', side ? 'true' : 'false');
+    tray.querySelector('[data-a="srcs"]').setAttribute('aria-pressed', layout.src ? 'true' : 'false');
+    var st = document.querySelector('deck-stage');
+    if (st && typeof st.setReserve === 'function') {
+      st.setReserve(!open ? null : side ? { right: tray.offsetWidth } : { bottom: tray.offsetHeight });
+    }
+  }
+  window.addEventListener('resize', function () { if (state.trayOpen) layoutTray(); });
+  var grip = tray.querySelector('.grip');
+  grip.addEventListener('pointerdown', function (e) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    grip.setPointerCapture(e.pointerId);
+    grip.classList.add('drag');
+    var y0 = e.clientY, h0 = tray.offsetHeight;
+    function move(ev) { layout.h = clampH(h0 + (y0 - ev.clientY)); layoutTray(); }
+    function up() {
+      grip.classList.remove('drag');
+      grip.removeEventListener('pointermove', move);
+      grip.removeEventListener('pointerup', up);
+      grip.removeEventListener('pointercancel', up);
+      saveLayout();
+    }
+    grip.addEventListener('pointermove', move);
+    grip.addEventListener('pointerup', up);
+    grip.addEventListener('pointercancel', up);
+  });
   tray.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
     e.preventDefault(); e.stopPropagation();
-    state.trayOpen = false; save(); tray.style.display = 'none';
+    state.trayOpen = false; save(); paintTray();
   }, true);
   ['keydown', 'keyup', 'keypress'].forEach(function (t) {
     tray.addEventListener(t, function (e) { e.stopPropagation(); }, true);
@@ -581,8 +659,11 @@
     touch(); paintTray(true);
   });
   tray.addEventListener('click', function (e) {
-    var a = e.target.dataset && e.target.dataset.a;
-    if (a === 'close') { state.trayOpen = false; save(); tray.style.display = 'none'; }
+    var t = e.target.closest && e.target.closest('[data-a]');
+    var a = t && t.dataset.a;
+    if (a === 'close') { state.trayOpen = false; save(); paintTray(); }
+    if (a === 'side') { layout.mode = layout.mode === 'side' ? 'bottom' : 'side'; saveLayout(); layoutTray(); }
+    if (a === 'srcs') { layout.src = !layout.src; saveLayout(); layoutTray(); }
     if (a === 'revert') {
       delete state.noteEdits[currentSlide().index]; touch(); paintTray();
       say('Note reverted');
@@ -668,6 +749,7 @@
       document.exitFullscreen().catch(function () {});
     }
     applyHidden();
+    layoutTray();
   }
 
   document.addEventListener('keydown', function (e) {
@@ -699,16 +781,17 @@
   });
 
   function paintTray(keepValue) {
-    if (!state.trayOpen) { tray.style.display = 'none'; return; }
-    tray.style.display = 'block';
+    if (!state.trayOpen) { tray.style.display = 'none'; layoutTray(); return; }
+    tray.style.display = 'flex';
     var cur = currentSlide();
     tray.querySelector('.hdr b').textContent =
       'Slide ' + cur.index + ' \u00b7 ' + (labelOf(cur.node) || '—');
     tray.querySelector('.edited').hidden = state.noteEdits[cur.index] === undefined;
     if (!keepValue) tray.querySelector('textarea').value = noteFor(cur.index);
     var src = sourcesFor(cur.index);
-    tray.querySelector('.src span').textContent = src;
-    tray.querySelector('.src').hidden = !src;
+    tray.querySelector('.src span').textContent = src || 'None for this slide.';
+    tray.querySelector('.src').classList.toggle('none', !src);
+    layoutTray();
   }
 
   var badge = el('div', 'dcx dcx-hidden-badge');

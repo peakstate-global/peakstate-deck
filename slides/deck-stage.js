@@ -11,6 +11,8 @@
  *      scaled with `transform: scale()` to fit the viewport, letterboxed.
  *      Set the `noscale` attribute to render at authored size (1:1) — the
  *      PPTX exporter sets this so its DOM capture sees unscaled geometry.
+ *      `setReserve({right, bottom})` shrinks the fit region so a docked
+ *      panel (the speaker-notes panel) never covers the slide.
  *  (f) print — `@media print` lays every slide out as its own page at the
  *      design size, so the browser's Print → Save as PDF produces a clean
  *      one-page-per-slide PDF with no extra setup.
@@ -1156,16 +1158,41 @@
         return;
       }
       const rw = this._railWidth();
-      if (stage) stage.style.left = rw + 'px';
+      // Space a review panel holds on the right or along the bottom (the
+      // speaker-notes panel in deck-comments.js). The slide shrinks to fit
+      // what is left, keeping its aspect ratio. Print ignores it: .stage is
+      // static there and the canvas transform is forced to none.
+      const res = this._presenting ? { right: 0, bottom: 0 } : (this._reserve || { right: 0, bottom: 0 });
+      if (stage) {
+        stage.style.left = rw + 'px';
+        stage.style.right = res.right + 'px';
+        stage.style.bottom = res.bottom + 'px';
+      }
       // Overlay is centred on the viewport via left:50% + translate(-50%);
       // marginLeft shifts the centre by rw/2 so it lands in the middle of
       // the [rw, innerWidth] stage region. Tapzones just inset from rw.
-      if (this._overlay) this._overlay.style.marginLeft = (rw / 2) + 'px';
-      if (this._tapzones) this._tapzones.style.left = rw + 'px';
-      const vw = window.innerWidth - rw;
-      const vh = window.innerHeight;
+      if (this._overlay) {
+        this._overlay.style.marginLeft = ((rw - res.right) / 2) + 'px';
+        this._overlay.style.marginBottom = res.bottom + 'px';
+      }
+      if (this._tapzones) {
+        this._tapzones.style.left = rw + 'px';
+        this._tapzones.style.right = res.right + 'px';
+        this._tapzones.style.bottom = res.bottom + 'px';
+      }
+      const vw = Math.max(1, window.innerWidth - rw - res.right);
+      const vh = Math.max(1, window.innerHeight - res.bottom);
       const s = Math.min(vw / this.designWidth, vh / this.designHeight);
       this._canvas.style.transform = `scale(${s})`;
+    }
+
+    /* Reserve screen space for a panel docked to the right or bottom edge,
+       in CSS pixels. Called by deck-comments.js when the notes panel opens,
+       moves or is dragged; setReserve() with no argument gives it all back. */
+    setReserve(r) {
+      r = r || {};
+      this._reserve = { right: Math.max(0, +r.right || 0), bottom: Math.max(0, +r.bottom || 0) };
+      this._fit();
     }
 
     _onResize() { this._fit(); }

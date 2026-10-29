@@ -103,6 +103,11 @@ that cannot write to it.
   Copy refusing when nothing has changed.
 - **Re-anchoring.** A comment surviving its slide being relabelled between two
   builds, landing back on slide 5, with no orphan row.
+- **The notes panel layout.** Bottom mode's 66/34 split, the drag handle
+  growing the panel and shrinking the slide live, the 75% clamp, the side
+  column at 20% with its own sources toggle, the one global layout record read
+  by a second deck, and the slide getting its full size back on close and when
+  presenting.
 - **The chrome-free modes.** `?export` and `?audit` rendering no `.dcx` element
   at all, and presentation mode hiding the bar with `S` doing nothing.
 
@@ -123,6 +128,8 @@ After a run, open them and look. What to look for:
 | `tile-controls` | The four icons distinct from each other. The star filled, the `STARRED` and `● SLIDE COMMENT` flags present. |
 | `popover-selection`, `comment-list`, `overview-note-editor` | Nothing clipped, nothing overlapping, the quote readable. |
 | `presenting` | No review chrome anywhere on the slide. |
+| `notes-bottom`, `notes-bottom-tall` | Notes and sources side by side, 66/34. The outlined slide sits wholly above the panel, smaller after the drag, aspect kept. |
+| `notes-side`, `notes-side-sources` | A 20% column, full height, the bar left of it, the slide wholly left of it. Sources absent until **Show sources** is pressed. |
 
 **One known observation, unfixed.** In `bar-plain` and `bar-lit` the eye glyph
 for the highlights toggle renders as a dark brown ellipse at 13px and is hard to

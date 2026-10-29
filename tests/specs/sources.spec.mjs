@@ -17,8 +17,10 @@ test('the notes tray shows a slide\'s sources apart from its note, and the paylo
   await expect(page.locator('.dcx-tray textarea')).toHaveValue('Give the base for each figure.');
   await shot(page, 'tray-sources');
 
+  // A slide with no sources keeps its column, so the 66/34 split never jumps.
   await goToSlide(page, 1);
-  await expect(src).toBeHidden();
+  await expect(src).toContainText('None for this slide.');
+  await expect(src).not.toContainText('did not test the recommendation');
 
   await goToSlide(page, 4);
   await page.locator('.dcx-tray textarea').fill('Give the base, then pause.');

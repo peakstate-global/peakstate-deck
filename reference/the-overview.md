@@ -11,7 +11,7 @@ A bar, top right of the deck:
 |---|---|
 | **Slide comment** | A note about the whole page, when the point is not about one phrase. One per slide: a second click edits the first. **It lights up when the slide on screen already carries one**: the label gains a leading **&#9679;**, the button fills, and the tooltip and `aria-label` read `Slide 4 has a slide comment. Click to read or edit it.` The dot and the words carry the state, so it never rests on colour alone. |
 | **&#128065;** | Icon only. Shows or hides the highlights on commented text. Not rendered at all where the CSS Custom Highlight API is missing. |
-| **&#128221; Notes** | Opens the speaker-notes tray for the slide on screen. Dimmed when that slide has no note. See *Speaker notes*. |
+| **&#128221; Notes** | Opens the speaker-notes panel for the slide on screen. Dimmed when that slide has no note. See *Speaker notes*. |
 | **&#9734; / &#9733;** | **Icon only, no word.** Stars the slide **you are on**, from that slide. The state is carried by the glyph's shape, hollow against filled, and spelled out in the tooltip and `aria-label`: `Star this slide (S)` or `Slide 4 is starred. Click, or press S, to remove the star.` Never colour alone. Key: `S`. |
 | **&#128683;** | Icon only. Hides or shows the slide on screen. Lights up when that slide is hidden. See *Hidden slides and performance mode*. |
 | **&#9638; Overview** | Every slide as a live thumbnail. Star, hide, reorder, jump, comment, edit a note. Edit mode only. |
@@ -30,6 +30,30 @@ Deleting always takes two clicks, in the popover and in the list.
 
 Comments are stored in `localStorage`, keyed by `deck-file`, so they survive a
 reload and a rebuild. Surviving a rebuild is the point of the build hash.
+
+## Speaker notes
+
+**The notes panel never covers the slide.** While it is open, `deck-stage` shrinks the slide
+to the space the panel leaves, keeping its aspect ratio, and gives the full size back when the
+panel closes or presenting starts (`deck-stage.setReserve({right, bottom})`).
+
+- **Bottom (the default).** The panel spans the foot of the window. The note takes 66% of the
+  width and the slide's sources (`#slide-sources`, never spoken) take the other 34%, side by
+  side. A slide with no sources keeps its column, which reads `None for this slide.`, so the
+  split does not jump as you page.
+- **Drag the top edge** to make the panel taller or shorter, from 140px to 75% of the window.
+  The slide rescales as you drag.
+- **Side column.** The **Side column** toggle moves the notes to a column on the right, 20% of
+  the window wide and full height. Its sources are hidden until **Show sources** is on; that
+  toggle exists only in the column. The review bar steps left of the column.
+- **One layout for every deck.** The mode, the bottom height and the sources toggle are one
+  `localStorage` record, `deck-notes-layout`, not keyed by deck, so every deck in the browser
+  opens its notes the same way. Whether the panel is open, and every note edit, stay per deck.
+- **Edits save as you type**; **Revert** restores the deck's own note; **Close** or `Esc` shuts
+  the panel. The panel is `.dcx` chrome, so presenting, `?export`, `?audit` and print never
+  show it.
+- Both toggles follow the bar's rule: the label says what turning it on does and never
+  changes, and the state lives in `aria-pressed`.
 
 ## The overview
 
@@ -148,7 +172,7 @@ saved or deleted, and on every slide change, with no reload.
 |---|---|---|
 | `Esc` | in a comment editor | Closes it and saves nothing |
 | `Cmd`+`Enter` / `Ctrl`+`Enter` | in a comment editor | Saves and closes |
-| `Esc` | in the speaker-notes tray | Closes it (notes save as you type) |
+| `Esc` | in the speaker-notes panel | Closes it (notes save as you type) |
 | `S` | on any slide, in edit mode | Stars or unstars the slide you are on |
 | `←` | on slide 1 | Opens the overview |
 | `Esc` | in the overview | Closes it and returns to the slide you came from |
@@ -163,7 +187,7 @@ saved or deleted, and on every slide change, with no reload.
 | `Home` `End` | in the overview | First or last tile |
 | `Tab` / `Shift`+`Tab` | in the overview | Cycles the header controls and the tiles. It cannot leave |
 
-An editor owns its own keys: a keystroke inside a comment box, the notes tray or
+An editor owns its own keys: a keystroke inside a comment box, the notes panel or
 the overview never reaches the deck, so `Esc` in a comment cannot drop the
 presenter out of full screen.
 

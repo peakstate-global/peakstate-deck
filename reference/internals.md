@@ -10,8 +10,14 @@
 - Highlights are painted with the CSS Custom Highlight API, so **no element is
   inserted into a slide** and nothing can reflow. Where the API is missing the
   eye button is not rendered and comments still work, unhighlighted.
-- Keystrokes inside the comment box, the notes tray and the overview are stopped
+- Keystrokes inside the comment box, the notes panel and the overview are stopped
   before they reach the deck, so typing a space or an arrow never advances a slide.
+- The notes panel reserves its space through `deck-stage`'s `setReserve()`, so the
+  slide rescales instead of being covered. It passes no reserve while closed or
+  presenting, and print ignores it (the stage is static there). A deck runtime
+  without `setReserve()` still works: the panel then floats over the slide.
+- The notes layout (mode, bottom height, sources toggle) is the one record kept
+  outside the deck's own key: `deck-notes-layout`, shared by every deck.
 - The overview is `.dcx` chrome like everything else, so it is hidden when
   presenting, under `?export` and `?audit`, and at print. Entering presentation
   mode closes it.

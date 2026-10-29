@@ -52,11 +52,13 @@ previous slide is a bullet that fails for most of the people who read it.
 
 
 A deck that ships its notes as a JSON block (`<script type="application/json"
-id="speaker-notes">`, an array of `{index, note}`) gets an editable tray. The
+id="speaker-notes">`, an array of `{index, note}`) gets an editable notes panel. The
 **Notes** button opens it, it follows the slide on screen, an `EDITED` badge marks
-a note the reader changed, and **Revert** restores the original.
+a note the reader changed, and **Revert** restores the original. The panel docks at
+the bottom or as a right-hand column and the slide shrinks to fit beside it
+(`reference/the-overview.md`, *Speaker notes*).
 
-**Do not author notes.** The tray edits and returns them; nothing in this skill should write one
+**Do not author notes.** The notes panel edits and returns them; nothing in this skill should write one
 unasked. A speaker note is an instruction to the presenter, a line read aloud, or an acronym
 expanded for the moment they blank on it. Reasoning about the slide belongs in a run sheet.
 
@@ -94,7 +96,7 @@ id="slide-sources">`, an array of `{index, sources}`, keyed exactly like `#speak
 Sources, sample sizes, limits and caveats such as "the study did not test this" live here,
 so the slide states the position plainly and the note stays an instruction to the presenter.
 
-- **The notes tray shows it** under the note, labelled *Sources, not spoken*, read only.
+- **The notes panel shows it** beside the note (or under it in the side column, behind **Show sources**), labelled *Sources, not spoken*, read only.
 - **The payload never carries it.** It is not a note, so it never rides back in `noteEdits[]`.
 - **`export-pptx.py` appends it** to PowerPoint's notes field after a rule, under
   `SOURCES (NOT SPOKEN):`, so the presenter can tell it from the note.
