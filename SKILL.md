@@ -36,6 +36,7 @@ few unchanged ones as a baseline, which `score_round.py audit` selects.
 
 - **The slides carry the claims; the speaker notes carry the narrative.** Every note says what its slide claims and gives the line that carries the room from the last slide into this one and on to the next.
 - **The first slide of each section names the belief it answers.**
+- **The background comes first.** Build the drivers, the impact and the root causes before any slide that offers a fix, in the order the approved spine gives, and mark the first solution slide in the notes with its clock time.
 - **Teach the vocabulary before the audience applies it**, and end on where to start rather than on a method.
 
 ## Build the moments the arc planned
