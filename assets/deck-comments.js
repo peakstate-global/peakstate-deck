@@ -76,15 +76,18 @@
        slide held that number in the build, so its previousNote was another
        slide's note once the reader reordered. */
     2: function (old) {
-      old.starred = byIdFromNumbers(old, old.starred);
-      old.noteEdits = byIdFromNumbers(old, old.noteEdits);
+      // Stars and note edits are made on the slide in view, and the saved label
+      // snapshot records which slide sat at each number, reorder or not. Build
+      // order can be a later rebuild's order, so it is the fallback only.
+      old.starred = byIdFromNumbers(old, old.starred, true);
+      old.noteEdits = byIdFromNumbers(old, old.noteEdits, true);
       return old;
     }
   };
   // Resolve a number-keyed bag to slide ids, as the 1 → 2 note above describes.
-  function byIdFromNumbers(old, h) {
+  function byIdFromNumbers(old, h, labelsFirst) {
     var out = {};
-    var byNo = old.labels && !old.orderIds ? old.labels : null;
+    var byNo = old.labels && (labelsFirst || !old.orderIds) ? old.labels : null;
     var build = slides().map(idOf);
     Object.keys(h || {}).forEach(function (n) {
       var id = byNo ? byNo[n] : build[n - 1];

@@ -105,3 +105,14 @@ test('a star stays on its slide after it moves and the deck reloads', async ({ p
   expect(Object.keys(p.starredSlides[0])[0]).toBe('slideId');
   expect(p.starredSlides).toEqual([expect.objectContaining({ slideId: 'slide-b', slide: 2 })]);
 });
+
+test('a number-keyed note edit made after a reorder migrates through the saved labels', async ({ page }) => {
+  // Build order A, B, C; the reader moved C first and then edited the note on
+  // screen at position 1, which is C. The label snapshot says so; build order would say A.
+  await seed(page, { v: 2, hidden: {}, starred: { 1: true }, noteEdits: { 1: 'C note' },
+                     orderIds: ['slide-c', 'slide-a', 'slide-b'],
+                     labels: { 1: 'slide-c', 2: 'slide-a', 3: 'slide-b' } });
+  const s = await stored(page);
+  expect(Object.keys(s.noteEdits)).toEqual(['slide-c']);
+  expect(s.starred).toEqual({ 'slide-c': true });
+});
