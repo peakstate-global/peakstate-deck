@@ -56,7 +56,7 @@
      fields — Object.assign preserves them and save() writes them back — so
      opening a deck on an older build and closing it again does not quietly
      strip the reader's work. */
-  var STATE_VERSION = 2;
+  var STATE_VERSION = 3;
   var MIGRATIONS = {
     /* 0 → 1: the state before it was versioned. No field changed meaning at the
        bump, so this only stamps it; the entry exists to make the shape of a
@@ -70,18 +70,28 @@
        build's own order, because a hide set before the reorder was set on the
        build's numbering and the old code never moved it. This runs before the
        stored order is applied, so slides() is still in build order. */
-    1: function (old) {
-      var h = old.hidden || {}, out = {};
-      var byNo = old.labels && !old.orderIds ? old.labels : null;
-      var build = slides().map(idOf);
-      Object.keys(h).forEach(function (n) {
-        var id = byNo ? byNo[n] : build[n - 1];
-        if (id) out[id] = h[n];
-      });
-      old.hidden = out;
+    1: function (old) { old.hidden = byIdFromNumbers(old, old.hidden); return old; },
+    /* 2 → 3: the same fault and the same fix for `starred` and `noteEdits`. A
+       note edit keyed by number was also compared with the note of whichever
+       slide held that number in the build, so its previousNote was another
+       slide's note once the reader reordered. */
+    2: function (old) {
+      old.starred = byIdFromNumbers(old, old.starred);
+      old.noteEdits = byIdFromNumbers(old, old.noteEdits);
       return old;
     }
   };
+  // Resolve a number-keyed bag to slide ids, as the 1 → 2 note above describes.
+  function byIdFromNumbers(old, h) {
+    var out = {};
+    var byNo = old.labels && !old.orderIds ? old.labels : null;
+    var build = slides().map(idOf);
+    Object.keys(h || {}).forEach(function (n) {
+      var id = byNo ? byNo[n] : build[n - 1];
+      if (id) out[id] = h[n];
+    });
+    return out;
+  }
   function migrate(stored) {
     var from = typeof stored.v === 'number' ? stored.v : 0;
     if (from > STATE_VERSION) {
@@ -158,34 +168,15 @@
       else if (!c.orphan) { c.orphan = true; orphaned++; }
     });
 
-    // hidden is keyed by slide id, so it moves with its slide on its own. An
-    // id this build no longer has is dropped: never guessed onto another slide.
-    var kept = {};
-    Object.keys(state.hidden || {}).forEach(function (id) {
-      if (now[id] !== undefined && !dupes[id]) kept[id] = state.hidden[id]; else orphaned++;
-    });
-    state.hidden = kept;
-
-    // starred and note edits are keyed by number, so they can only be
-    // moved when we know which label that number meant when it was written.
-    ['starred', 'noteEdits'].forEach(function (bag) {
-      var src = state[bag] || {}, out = {};
-      Object.keys(src).forEach(function (n) {
-        var label = was ? was[n] : null;
-        var to = label && !dupes[label] ? now[label] : null;
-        if (to) { out[to] = src[n]; if (+n !== to) moved++; return; }
-        if (!was) {
-          // Written before this build kept a label snapshot, so its number
-          // cannot be resolved to a slide. Typed prose is kept where it is,
-          // because losing it costs the reader real work; a stale hide or star
-          // is dropped, because an unexplained hidden slide is worse than
-          // re-doing one click.
-          if (bag === 'noteEdits') out[n] = src[n]; else orphaned++;
-          return;
-        }
-        orphaned++;                                     // its slide is gone: drop it
+    // hidden, starred and note edits are keyed by slide id, so each moves with
+    // its slide on its own. An id this build no longer has is dropped: never
+    // guessed onto another slide.
+    ['hidden', 'starred', 'noteEdits'].forEach(function (bag) {
+      var kept = {};
+      Object.keys(state[bag] || {}).forEach(function (id) {
+        if (now[id] !== undefined && !dupes[id]) kept[id] = state[bag][id]; else orphaned++;
       });
-      state[bag] = out;
+      state[bag] = kept;
     });
 
     // An order instruction describes a deck that no longer exists.
@@ -257,9 +248,15 @@
     for (var i = 0; i < SOURCES.length; i++) if (SOURCES[i].index === n) return SOURCES[i].sources || '';
     return '';
   }
+  /* Stars and note edits are keyed by the id of the slide at position n, and
+     the generator's note is the one written for that slide's place in the
+     build, so neither follows the position after a reorder. */
+  function keyAt(n) { return idOf(slideNode(n)); }
+  function origNoteAt(n) { var s = slideNode(n); return originalNote(s ? buildNo(s) : n); }
+  function editAt(n) { return (state.noteEdits || {})[keyAt(n)]; }
   function noteFor(n) {
-    var e = (state.noteEdits || {})[n];
-    return e === undefined ? originalNote(n) : e;
+    var e = editAt(n);
+    return e === undefined ? origNoteAt(n) : e;
   }
   /* A follow-up the reader adds after Claude's answer reopens the comment, so
      it travels in the next Copy whatever its status was. `seen` on the
@@ -689,8 +686,8 @@
     if (e.target.tagName !== 'TEXTAREA') return;
     var cur = currentSlide();
     var v = e.target.value;
-    if (v === originalNote(cur.index)) delete state.noteEdits[cur.index];
-    else state.noteEdits[cur.index] = v;
+    if (v === origNoteAt(cur.index)) delete state.noteEdits[keyAt(cur.index)];
+    else state.noteEdits[keyAt(cur.index)] = v;
     touch(); paintTray(true);
   });
   tray.addEventListener('click', function (e) {
@@ -700,7 +697,7 @@
     if (a === 'side') { layout.mode = layout.mode === 'side' ? 'bottom' : 'side'; saveLayout(); layoutTray(); }
     if (a === 'srcs') { layout.src = !layout.src; saveLayout(); layoutTray(); }
     if (a === 'revert') {
-      delete state.noteEdits[currentSlide().index]; touch(); paintTray();
+      delete state.noteEdits[keyAt(currentSlide().index)]; touch(); paintTray();
       say('Note reverted');
     }
   });
@@ -822,7 +819,7 @@
     var cur = currentSlide();
     tray.querySelector('.hdr b').textContent =
       'Slide ' + cur.index + ' \u00b7 ' + (labelOf(cur.node) || '—');
-    tray.querySelector('.edited').hidden = state.noteEdits[cur.index] === undefined;
+    tray.querySelector('.edited').hidden = editAt(cur.index) === undefined;
     if (!keepValue) tray.querySelector('textarea').value = noteFor(cur.index);
     var src = sourcesFor(cur.index);
     tray.querySelector('.src span').textContent = src || 'None for this slide.';
@@ -1177,9 +1174,7 @@
      permutation of the slide numbers in this build, and it rides back in the
      payload for the agent to apply to the generator. Nothing in the file moves. */
   function starredList() {
-    return Object.keys(state.starred || {}).map(Number)
-      .filter(function (n) { return !!slideNode(n); })
-      .sort(function (a, b) { return a - b; });
+    return identity().filter(function (n) { return !!(state.starred || {})[keyAt(n)]; });
   }
   /* ── order ────────────────────────────────────────────────────────────
      A reorder used to live only in the overview: the grid showed the new order
@@ -1253,9 +1248,10 @@
     return true;
   }
   function toggleStar(n) {
-    if (state.starred[n]) delete state.starred[n]; else state.starred[n] = true;
+    var k = keyAt(n);
+    if (state.starred[k]) delete state.starred[k]; else state.starred[k] = true;
     touch(); renderOv();
-    say(state.starred[n] ? 'Slide ' + n + ' starred' : 'Star removed from slide ' + n);
+    say(state.starred[k] ? 'Slide ' + n + ' starred' : 'Star removed from slide ' + n);
   }
   /* ── states ───────────────────────────────────────────────────────────
      A state is a section carrying data-state-group. States are reviewed as
@@ -1453,7 +1449,7 @@
   // what is on screen, not what is sent, so they never make the deck dirty.
   function ovFiltering() { return !!state.ovStarredOnly || !state.ovShowHidden; }
   function ovVisible(n, sec) {
-    if (state.ovStarredOnly && !state.starred[n]) return false;
+    if (state.ovStarredOnly && !state.starred[keyAt(n)]) return false;
     if (!state.ovShowHidden && effHidden(sec)) return false;
     return true;
   }
@@ -1507,7 +1503,7 @@
       var pass = ovVisible(n, sec);
       if (!pass && n !== keepSlide && n !== ovOrigin) return;
       shown++;
-      var st = !!state.starred[n];
+      var st = !!state.starred[keyAt(n)];
       var hd = effHidden(sec);
       var moved = idOf(sec) !== BUILD_IDS[n - 1];
       var cm = state.comments.filter(function (c) { return c.slide === n && isOpen(c); }).length;
@@ -1551,7 +1547,7 @@
           'reaches print (P)">' + svg(effPrimary(sec) ? 'pinOn' : 'pinOff') + '</button>' : '') +
         '<button type="button" data-a="note" aria-label="Edit the speaker note for slide ' + n +
           '" title="Edit this slide\'s speaker note (N)">' + svg('note') +
-          (state.noteEdits[n] !== undefined ? '<i>\u2713</i>' : '') + '</button>' +
+          (editAt(n) !== undefined ? '<i>\u2713</i>' : '') + '</button>' +
         '</span></div>' +
         '<div class="dcx-ovthumb" data-slide="' + n + '"></div>' +
         '<div class="dcx-ovlabel"></div>' +
@@ -1592,7 +1588,7 @@
     var nHidden = 0, nStar = 0;
     full.forEach(function (n) {
       if (effHidden(slideNode(n))) nHidden++;
-      if (state.starred[n]) nStar++;
+      if (state.starred[keyAt(n)]) nStar++;
     });
     ov.querySelector('.dcx-ovhdr .count').textContent =
       (shown === full.length ? full.length + ' slides'
@@ -1689,7 +1685,7 @@
     noteBox.dataset.slide = n;
     noteBox.innerHTML =
       '<div class="hd"><b></b><span class="edited"' +
-        (state.noteEdits[n] === undefined ? ' hidden' : '') + '>EDITED</span></div>' +
+        (editAt(n) === undefined ? ' hidden' : '') + '>EDITED</span></div>' +
       '<textarea spellcheck="true"></textarea>' +
       '<div class="ft"><span data-a="revert">Revert</span>' +
         '<span data-a="done">Done</span></div>';
@@ -1698,9 +1694,9 @@
     ta.value = noteFor(n);
     ta.placeholder = 'What the presenter says, does, or must not forget on this slide.';
     ta.addEventListener('input', function () {
-      if (ta.value === originalNote(n)) delete state.noteEdits[n];
-      else state.noteEdits[n] = ta.value;
-      noteBox.querySelector('.edited').hidden = state.noteEdits[n] === undefined;
+      if (ta.value === origNoteAt(n)) delete state.noteEdits[keyAt(n)];
+      else state.noteEdits[keyAt(n)] = ta.value;
+      noteBox.querySelector('.edited').hidden = editAt(n) === undefined;
       touch(); paintTray(); renderOv();
     });
     ta.addEventListener('keydown', function (e) {
@@ -1712,8 +1708,8 @@
       var a = e.target.dataset && e.target.dataset.a;
       if (a === 'done') return closeNoteEditor(true);
       if (a === 'revert') {
-        delete state.noteEdits[n];
-        ta.value = originalNote(n);
+        delete state.noteEdits[keyAt(n)];
+        ta.value = origNoteAt(n);
         noteBox.querySelector('.edited').hidden = true;
         touch(); paintTray(); renderOv();
       }
@@ -1890,19 +1886,18 @@
       });
     var stars = starredList().map(function (n) {
       var node = slideNode(n);
-      return { slide: n, slideId: mintedId(node), slideLabel: labelOf(node) };
+      return { slideId: mintedId(node), slide: buildNo(node), slideLabel: labelOf(node) };
     });
     var moved = orderChanged();
-    // A note edit that matches the note already in the deck is not an edit. These
-    // appear when slides are added: the bag is keyed by slide NUMBER, so an edit
-    // stored against 7 is compared with a different slide's note after a build
-    // shifts the numbering. Filtering here means the payload never asks for a
-    // change that is already made.
-    var edits = Object.keys(state.noteEdits || {}).map(Number).sort(function (a, b) { return a - b; })
+    // A note edit that matches the note already in the deck is not an edit: the
+    // generator has caught up since it was written. Filtering here means the
+    // payload never asks for a change that is already made. previousNote is the
+    // build's note for the slide with that id, wherever the reader moved it.
+    var edits = identity().filter(function (n) { return editAt(n) !== undefined; })
       .map(function (n) {
         var node = slideNode(n);
-        return { slide: n, slideId: mintedId(node), slideLabel: node ? labelOf(node) : '',
-                 note: state.noteEdits[n], previousNote: originalNote(n) };
+        return { slideId: mintedId(node), slide: buildNo(node), slideLabel: labelOf(node),
+                 note: editAt(n), previousNote: origNoteAt(n) };
       }).filter(function (e) { return e.note !== e.previousNote; });
     return JSON.stringify({
       kind: 'deck-comments',
@@ -2092,7 +2087,7 @@
     // out in aria-label and the tooltip. Never by colour alone.
     var sb = bar.querySelector('[data-a="star"]');
     if (sb) {
-      var cn = currentSlide().index, on = !!state.starred[cn];
+      var cn = currentSlide().index, on = !!state.starred[keyAt(cn)];
       setIcon(sb, on ? 'starOn' : 'starOff');
       sb.setAttribute('aria-label', on ? 'Starred. Remove the star from this slide'
                                        : 'Star this slide');

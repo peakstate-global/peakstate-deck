@@ -231,11 +231,11 @@ test('an unversioned review is adopted, not discarded, and stamped', async ({ pa
   // The reader's work survives the bump; that is the whole point of the seam.
   const payload = await copyPayload(page);
   expect(payload.commentCount, 'a pre-version review must not be dropped').toBe(1);
-  expect(payload.stateVersion).toBe(2);
+  expect(payload.stateVersion).toBe(3);
 
   const stored = await readStored(page);
-  expect(stored.v, 'the shape is stamped once it has been read').toBe(2);
-  expect(stored.starred['3'], 'unrelated fields survive the migration').toBe(true);
+  expect(stored.v, 'the shape is stamped once it has been read').toBe(3);
+  expect(stored.starred, 'a number-keyed star migrates to its slide id').toEqual({ 'the-pivot': true });
 });
 
 test('a review from a newer build keeps its unknown fields', async ({ page }) => {
