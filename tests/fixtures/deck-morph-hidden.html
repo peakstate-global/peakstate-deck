@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Morph past a hidden slide · peakstate-deck fixtures</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="deck.css">
+<style>
+  .k { position: absolute; display: block; background: #C95A33; }
+</style>
+</head>
+<body>
+<!-- Two linked pairs. "a" and "b" share a key with a hidden slide between them,
+     which the presenter passes over. "c" hands off to "d", whose background
+     drawing and lead outline sit below full opacity on purpose. -->
+<deck-stage design-width="1920" design-height="1080">
+  <section data-slide-id="a" data-morph-link>
+    <div class="k" data-morph="dot" style="left:100px; top:100px; width:100px; height:100px"></div>
+  </section>
+  <section data-slide-id="h" data-hidden data-deck-pass><h1>Hidden</h1></section>
+  <section data-slide-id="b">
+    <div class="k" data-morph="dot" style="left:900px; top:500px; width:200px; height:200px"></div>
+  </section>
+  <section data-slide-id="c">
+    <div class="k" data-morph="dot" style="left:100px; top:100px; width:100px; height:100px"></div>
+  </section>
+  <section data-slide-id="d" data-morph-link>
+    <div class="faint" style="position:absolute; inset:0; opacity:.2; background:#123"></div>
+    <div class="lead" data-morph-lead style="position:absolute; left:0; top:0; width:50px; height:50px; opacity:.3; background:#123"></div>
+    <div class="k" data-morph="dot" style="left:900px; top:500px; width:200px; height:200px"></div>
+  </section>
+</deck-stage>
+<script src="deck-stage.js"></script>
+</body>
+</html>

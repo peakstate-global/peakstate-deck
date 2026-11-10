@@ -1987,6 +1987,19 @@
     var g = r.getBoundingClientRect();
     return (g.width || g.height) ? g : el.getBoundingClientRect();
   }
+  // Adjacent as the presenter steps: nothing lies between the two slides but
+  // slides the stepping passes over (skipped, passed, or hidden), so a hidden
+  // slide between a linked pair does not break their morph.
+  function passedOver(sec) {
+    return sec.hasAttribute('data-deck-skip') || sec.hasAttribute('data-deck-pass') ||
+           sec.hasAttribute('data-hidden');
+  }
+  function adjacent(a, b) {
+    var all = slides(), i = all.indexOf(a), j = all.indexOf(b);
+    if (i < 0 || j < 0 || i === j) return false;
+    for (var k = Math.min(i, j) + 1; k < Math.max(i, j); k++) if (!passedOver(all[k])) return false;
+    return true;
+  }
   function morph(from, to) {
     if (!from || !to || !to.animate) return;
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -1997,10 +2010,8 @@
     var g = from.getAttribute('data-state-group');
     var linked = false;
     if (!g || g !== to.getAttribute('data-state-group')) {
-      var all = slides(), i = all.indexOf(from), j = all.indexOf(to);
-      var adjacent = Math.abs(i - j) === 1 && i > -1 && j > -1;
       linked = from.hasAttribute('data-morph-link') || to.hasAttribute('data-morph-link');
-      if (!adjacent || !linked) return;
+      if (!adjacent(from, to) || !linked) return;
     }
     var was = morphMap(from, linked), now = morphMap(to, linked);
     // `data-morph-ms` on the arriving section slows one hand-off down, for a
@@ -2032,13 +2043,16 @@
           // A click build not yet built is hidden by CSS; a fade would show it,
           // then drop it again when the fade ends.
           if (c.matches('[data-build]:not([data-built])')) return;
+          // Fade to the element's own opacity, never to 1: a drawing set at .16
+          // would flash to full and snap back down when the fade ends.
+          var o = getComputedStyle(c).opacity;
           if (c.matches('[data-morph-lead]')) {
-            c.animate([{ opacity: 0 }, { opacity: 1 }],
+            c.animate([{ opacity: 0 }, { opacity: o }],
                       { duration: lead, fill: 'backwards', easing: 'linear', id: 'deck-morph' });
             return;
           }
           if (travels(c)) { hold(c); return; }
-          c.animate([{ opacity: 0 }, { opacity: 1 }],
+          c.animate([{ opacity: 0 }, { opacity: o }],
                     { duration: 300, delay: lead + dur, fill: 'backwards', easing: 'linear', id: 'deck-morph' });
         });
       };
@@ -2172,8 +2186,7 @@
   function morphs(from, to) {
     var g = from.getAttribute('data-state-group');
     if (g && g === to.getAttribute('data-state-group')) return true;
-    var all = slides(), i = all.indexOf(from), j = all.indexOf(to);
-    if (!(Math.abs(i - j) === 1 && i > -1 && j > -1 &&
+    if (!(adjacent(from, to) &&
           (from.hasAttribute('data-morph-link') || to.hasAttribute('data-morph-link')))) return false;
     // A link on one slide joins it to BOTH neighbours, so a linked pair counts as
     // a morph only when something actually travels between them. Otherwise it

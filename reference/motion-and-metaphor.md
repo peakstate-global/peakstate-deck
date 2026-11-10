@@ -74,7 +74,8 @@ instead of cutting.** The audience should feel they move through one world, not 
 
 - **Morph the thing that continues.** Link the pair (`data-morph-link`) and key the element that
   carries over (`data-morph="key"`): the stamp word becomes the dictionary headword, the sentence
-  passes into the black box. Two or three keyed elements, never the whole slide.
+  passes into the black box. Two or three keyed elements, never the whole slide. A hidden or
+  skipped slide between the pair does not break the link, because the presenter steps past it.
 - **Pan across one scene.** Key a background layer (a horizon, a landscape, a texture) on both
   slides of a linked pair, placed a short distance apart, and set `data-morph-ms` long enough to
   feel like a camera move. The runtime pans the background first and the new foreground arrives
