@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Back and forth across morphs · peakstate-deck fixtures</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="deck.css">
+<style>
+  .stage { position: absolute; inset: 120px 80px; }
+  .k { position: absolute; display: block; background: #C95A33; color: #fff; padding: 8px; }
+</style>
+</head>
+<body>
+<!-- A presenter steps back and forth across a linked pair, a group of states
+     and a slide with an exit flash. Every slide carries text, so the test can
+     ask whether anything with words on the live slide is drawn invisible. -->
+<deck-stage design-width="1920" design-height="1080" transition="push">
+  <section data-slide-id="title"><h1>Title</h1></section>
+  <section data-slide-id="a" data-morph-link>
+    <h1>Linked A</h1>
+    <div class="stage">
+      <div class="k" data-morph="hype" style="left:0; top:0; width:200px; height:100px">Hype</div>
+      <div class="k" data-morph="dot" style="left:600px; top:300px; width:100px; height:100px">Dot</div>
+    </div>
+  </section>
+  <section data-slide-id="b">
+    <h1>Linked B</h1>
+    <div class="stage">
+      <div class="k" data-morph="hype" style="left:900px; top:400px; width:400px; height:200px">Hype</div>
+      <div class="k" data-morph="dot" style="left:100px; top:100px; width:300px; height:150px">Dot</div>
+      <p class="k" data-exit="flash-down" style="left:600px; top:0">Leaves</p>
+    </div>
+  </section>
+  <section data-slide-id="s1" data-state-group="g">
+    <h1>State one</h1>
+    <div class="stage">
+      <div class="k" data-morph="hype" style="left:0; top:0; width:200px; height:100px">Hype</div>
+      <p class="k" data-entry="flash-left" style="left:0; top:500px">Arrives</p>
+    </div>
+  </section>
+  <section data-slide-id="s2" data-state-group="g">
+    <h1>State two</h1>
+    <div class="stage">
+      <div class="k" data-morph="hype" style="left:500px; top:200px; width:300px; height:120px">Hype</div>
+      <p class="k" data-entry="flash-left" style="left:0; top:500px">Arrives</p>
+    </div>
+  </section>
+  <section data-slide-id="s3" data-state-group="g" data-morph-link>
+    <h1>State three</h1>
+    <div class="stage">
+      <div class="k" data-morph="hype" style="left:1000px; top:500px; width:500px; height:200px">Hype</div>
+    </div>
+  </section>
+  <section data-slide-id="c">
+    <h1>After</h1>
+    <div class="stage">
+      <div class="k" data-morph="hype" style="left:100px; top:600px; width:200px; height:100px">Hype</div>
+    </div>
+  </section>
+  <section data-slide-id="end"><h1>End</h1></section>
+</deck-stage>
+<script src="deck-stage.js"></script>
+</body>
+</html>

@@ -1855,6 +1855,16 @@
     'deck-stage > section.deck-exiting{opacity:1!important;visibility:hidden!important;',
     '  z-index:5!important;background:transparent!important;pointer-events:none!important}',
     'deck-stage > section.deck-exiting [data-exit]{visibility:visible!important}',
+    /* A slide that arrives restyles every element inside it. Chromium passes an
+       inherited visibility down by a fast path that skips an element whose last
+       style came through an animation (the fades a linked morph runs on the
+       arriving slide), so after some back-and-forth such an element kept the
+       `hidden` it inherited while its slide was off screen, and stayed invisible
+       on a live slide. Any rule keyed on the live attribute that reaches the
+       descendants makes the attribute change restyle them in full. A custom
+       property is used, not `visibility`, so no element that is meant to be
+       hidden (a build, an exit, a brand toggle) is shown by it. */
+    'deck-stage > section[data-deck-active] *{--deck-live:1}',
     /* Push holds the outgoing slide in view while it slides off. */
     'deck-stage > section.deck-pushing{opacity:1!important;visibility:visible!important;z-index:4!important;pointer-events:none!important}'
   ].join('\n');
