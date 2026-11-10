@@ -31,8 +31,8 @@ Alongside those, and all optional:
 | `slideOrder` | `[{position, wasSlide, slideId, slideLabel}]` | Present only when `orderChanged`. The full order the reader wants. `position` is the new place, `wasSlide` the number in the build they reviewed, `slideId` the address that does not move. |
 | `orderInstruction` | string | What to do with `slideOrder`. |
 | `starInstruction` | string | What a star means, so a star is never read as an edit. |
-| `hiddenSlides` | `[{slide, slideId, slideLabel, inSource}]` | Everything that should end up hidden. |
-| `visibilityChanges` | `[{slide, slideId, slideLabel, from, to}]` | Only what now differs from the generator. |
+| `hiddenSlides` | `[{slideId, slide, slideLabel, inSource}]` | Everything that should end up hidden. `slide` is the number in the build the reader reviewed. |
+| `visibilityChanges` | `[{slideId, slide, slideLabel, from, to}]` | Only what now differs from the generator. `slide` is the number in the build the reader reviewed. |
 | `noteEdits` | `[{slide, slideId, slideLabel, note, previousNote}]` | Speaker notes the reader rewrote. |
 | `orphanedComments` | `[{slideId, slideLabel, target, quote, comment, at}]` | Comments whose slide is gone. Ask, never reassign. |
 

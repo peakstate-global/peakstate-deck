@@ -25,6 +25,9 @@
   `localStorage` record as the comments, keyed by `deck-file`. An order stored
   against a different build is discarded on load rather than repaired, because a
   permutation of the wrong slide count is not fixable.
+- Hidden slides are keyed by slide id (`data-slide-id`, else the label), never by
+  position, so a reorder carries each flag with its slide. Stored state version 2
+  migrates a version 1 record, which was keyed by number, once on load.
 
 ## Testing it
 

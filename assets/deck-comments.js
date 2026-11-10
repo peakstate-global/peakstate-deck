@@ -56,12 +56,31 @@
      fields — Object.assign preserves them and save() writes them back — so
      opening a deck on an older build and closing it again does not quietly
      strip the reader's work. */
-  var STATE_VERSION = 1;
+  var STATE_VERSION = 2;
   var MIGRATIONS = {
     /* 0 → 1: the state before it was versioned. No field changed meaning at the
        bump, so this only stamps it; the entry exists to make the shape of a
        future migration obvious rather than to do work. */
-    0: function (old) { return old; }
+    0: function (old) { return old; },
+    /* 1 → 2: `hidden` was keyed by slide POSITION, so a reorder left each flag
+       on whichever slide moved into its place. It is now keyed by slide id.
+       Each number resolves to the id that held it: through the saved label
+       snapshot when the reader never reordered (that snapshot is the build
+       they hid against, and it survives a rebuild), otherwise through this
+       build's own order, because a hide set before the reorder was set on the
+       build's numbering and the old code never moved it. This runs before the
+       stored order is applied, so slides() is still in build order. */
+    1: function (old) {
+      var h = old.hidden || {}, out = {};
+      var byNo = old.labels && !old.orderIds ? old.labels : null;
+      var build = slides().map(idOf);
+      Object.keys(h).forEach(function (n) {
+        var id = byNo ? byNo[n] : build[n - 1];
+        if (id) out[id] = h[n];
+      });
+      old.hidden = out;
+      return old;
+    }
   };
   function migrate(stored) {
     var from = typeof stored.v === 'number' ? stored.v : 0;
@@ -86,7 +105,15 @@
                ovStarredOnly: false, ovShowHidden: true };
   try {
     var stored = JSON.parse(localStorage.getItem(KEY) || '{}');
+    var storedV = typeof stored.v === 'number' ? stored.v : 0, had = Object.keys(stored).length;
     state = Object.assign(state, migrate(stored));
+    // Write the migrated shape back at once, so it never migrates twice. Not
+    // through save(): that would replace the label snapshot reanchor() still
+    // needs to read.
+    if (had && storedV < STATE_VERSION) {
+      state.v = STATE_VERSION;
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }
   } catch (e) {}
   function save() {
     state.labels = labelSnapshot();
@@ -131,9 +158,17 @@
       else if (!c.orphan) { c.orphan = true; orphaned++; }
     });
 
-    // hidden, starred and note edits are keyed by number, so they can only be
+    // hidden is keyed by slide id, so it moves with its slide on its own. An
+    // id this build no longer has is dropped: never guessed onto another slide.
+    var kept = {};
+    Object.keys(state.hidden || {}).forEach(function (id) {
+      if (now[id] !== undefined && !dupes[id]) kept[id] = state.hidden[id]; else orphaned++;
+    });
+    state.hidden = kept;
+
+    // starred and note edits are keyed by number, so they can only be
     // moved when we know which label that number meant when it was written.
-    ['hidden', 'starred', 'noteEdits'].forEach(function (bag) {
+    ['starred', 'noteEdits'].forEach(function (bag) {
       var src = state[bag] || {}, out = {};
       Object.keys(src).forEach(function (n) {
         var label = was ? was[n] : null;
@@ -674,19 +709,20 @@
      A hidden slide is dimmed here and skipped when presenting. The state lives
      in localStorage and rides back in the payload, so the generator can be told
      to mark it hidden permanently rather than it living only in one browser. */
-  // The generator's marking is the default, not the verdict. state.hidden[n] is
+  // The generator's marking is the default, not the verdict. state.hidden[id] is
   // a tri-state override: true hides, false shows, absent means "whatever the
   // deck says". Without that a source-hidden slide could never be shown again,
   // which is what shipped and was wrong.
   function srcHidden(sec) { return !!sec && sec.hasAttribute('data-hidden-src'); }
-  function effHidden(n, sec) {
-    var o = state.hidden[n];
+  // Keyed by slide id, never position, so a reorder carries the flag with the slide.
+  function effHidden(sec) {
+    var o = sec ? state.hidden[idOf(sec)] : undefined;
     return o === undefined ? srcHidden(sec) : !!o;
   }
 
   function applyHidden() {
     slides().forEach(function (sec, i) {
-      if (effHidden(i + 1, sec)) sec.setAttribute('data-hidden', '');
+      if (effHidden(sec)) sec.setAttribute('data-hidden', '');
       else sec.removeAttribute('data-hidden');
       // While presenting, the deck runtime steps straight past a hidden slide.
       if (performing && sec.hasAttribute('data-hidden')) sec.setAttribute('data-deck-pass', '');
@@ -1166,6 +1202,9 @@
     return a;
   }
   function domIds() { return slides().map(idOf); }
+  // A slide's number in the build the reader reviewed, which is what the
+  // payload's `slide` fields mean once the reader has reordered.
+  function buildNo(sec) { return BUILD_IDS.indexOf(idOf(sec)) + 1; }
   function orderChanged() {
     var now = domIds();
     return now.length === BUILD_IDS.length &&
@@ -1279,9 +1318,9 @@
 
   function toggleHide(n) {
     var sec = slideNode(n);
-    var want = !effHidden(n, sec);
+    var want = !effHidden(sec), id = idOf(sec);
     // Only keep an override that actually differs from the deck's own marking.
-    if (want === srcHidden(sec)) delete state.hidden[n]; else state.hidden[n] = want;
+    if (want === srcHidden(sec)) delete state.hidden[id]; else state.hidden[id] = want;
     touch(); applyHidden(); renderOv();
     say(want ? 'Slide ' + n + ' hidden' : 'Slide ' + n + ' visible');
   }
@@ -1415,7 +1454,7 @@
   function ovFiltering() { return !!state.ovStarredOnly || !state.ovShowHidden; }
   function ovVisible(n, sec) {
     if (state.ovStarredOnly && !state.starred[n]) return false;
-    if (!state.ovShowHidden && effHidden(n, sec)) return false;
+    if (!state.ovShowHidden && effHidden(sec)) return false;
     return true;
   }
 
@@ -1469,7 +1508,7 @@
       if (!pass && n !== keepSlide && n !== ovOrigin) return;
       shown++;
       var st = !!state.starred[n];
-      var hd = effHidden(n, sec);
+      var hd = effHidden(sec);
       var moved = idOf(sec) !== BUILD_IDS[n - 1];
       var cm = state.comments.filter(function (c) { return c.slide === n && isOpen(c); }).length;
       var sc = hasSlideComment(n);
@@ -1552,7 +1591,7 @@
     // slides, how many will not be shown, how many were marked to come back to.
     var nHidden = 0, nStar = 0;
     full.forEach(function (n) {
-      if (effHidden(n, slideNode(n))) nHidden++;
+      if (effHidden(slideNode(n))) nHidden++;
       if (state.starred[n]) nStar++;
     });
     ov.querySelector('.dcx-ovhdr .count').textContent =
@@ -1838,9 +1877,9 @@
     // per-id check against the minted set if that ever bites.
     var mints = deckMintsIds();
     var hiddenNow = slides().map(function (sec, i) { return { sec: sec, n: i + 1 }; })
-      .filter(function (x) { return effHidden(x.n, x.sec); })
+      .filter(function (x) { return effHidden(x.sec); })
       .map(function (x) {
-        return { slide: x.n, slideId: mintedId(x.sec), slideLabel: labelOf(x.sec),
+        return { slideId: mintedId(x.sec), slide: buildNo(x.sec), slideLabel: labelOf(x.sec),
                  inSource: srcHidden(x.sec) };
       });
     var primaryNow = slides().map(function (sec, i) { return { sec: sec, n: i + 1 }; })
@@ -1984,10 +2023,10 @@
   // by the row at the top of the comment list.
   function visChanges() {
     return slides().map(function (sec, i) { return { sec: sec, n: i + 1 }; })
-      .filter(function (x) { return effHidden(x.n, x.sec) !== srcHidden(x.sec); })
+      .filter(function (x) { return effHidden(x.sec) !== srcHidden(x.sec); })
       .map(function (x) {
-        var to = effHidden(x.n, x.sec);
-        return { slide: x.n, slideId: mintedId(x.sec), slideLabel: labelOf(x.sec),
+        var to = effHidden(x.sec);
+        return { slideId: mintedId(x.sec), slide: buildNo(x.sec), slideLabel: labelOf(x.sec),
                  from: to ? 'visible' : 'hidden', to: to ? 'hidden' : 'visible' };
       });
   }
