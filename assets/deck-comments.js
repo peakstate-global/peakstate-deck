@@ -361,9 +361,14 @@
     '  font:400 13px/1.45 "Inter",sans-serif}',
     '.dcx .cthread button{align-self:flex-end;appearance:none;border:0;border-radius:8px;cursor:pointer;',
     '  background:#A93D1A;color:#fff;font:500 12px/1 "Inter",sans-serif;padding:7px 12px}',
-    '.dcx .cthread button.ctedit{background:none;color:#B5A899;padding:3px 0 0;cursor:pointer;',
+    '.dcx .cthread button:is(.ctedit,.ctdel){background:none;color:#B5A899;padding:3px 0 0;cursor:pointer;',
     '  font:500 11px/1.4 "Inter",sans-serif;text-decoration:underline}',
-    '.dcx .cthread button.ctedit:hover{color:#F5F0E8}',
+    '.dcx .cthread button:is(.ctedit,.ctdel):hover{color:#F5F0E8}',
+    '.dcx .cthread button.ctdel{margin-left:12px}',
+    // Armed for its second click, the same red as every other confirm in the review.
+    '.dcx .cthread button.ctdel.danger{color:#fff;background:#A93D1A;text-decoration:none;padding:3px 8px}',
+    // The list row already carries its own Delete for the whole comment.
+    '.dcx-panel .cthread button.ctdel[data-del="c"]{display:none}',
     // While a follow-up is being edited it owns the only Save: the reply box hides.
     '.dcx .cthread button.ctedit.on{background:#A93D1A;color:#fff;text-decoration:none;padding:7px 12px;',
     '  font:500 12px/1 "Inter",sans-serif;margin-top:6px;display:block;margin-left:auto}',
@@ -1096,6 +1101,7 @@
 
   function remove(cid) {
     state.comments = state.comments.filter(function (c) { return c.cid !== cid; });
+    if (state.replyDrafts) delete state.replyDrafts[cid];
     touch(); paint(); renderOv(); say('Comment deleted');
   }
 
@@ -2194,11 +2200,15 @@
   }
   function threadHTML(c, r) {
     var h = '<div class="cthread"><div class="ctmsg"><span class="ctwho">You</span>' +
-      '<div class="cttext" data-t="c"></div></div>' +
+      '<div class="cttext" data-t="c"></div>' +
+      '<button type="button" class="ctdel" data-del="c">Delete</button></div>' +
       replyHTML(c, 0);
     followUps(c).forEach(function (_, i) {
       h += '<div class="ctmsg"><span class="ctwho">You</span><div class="cttext" data-t="f' + i + '"></div>' +
-        (i >= (r.seen || 0) ? '<button type="button" class="ctedit" data-f="' + i + '">Edit</button>' : '') + '</div>';
+        // Only a follow-up the response has not seen yet: deleting one it answered
+        // would leave that answer replying to nothing.
+        (i >= (r.seen || 0) ? '<button type="button" class="ctedit" data-f="' + i + '">Edit</button>' +
+          '<button type="button" class="ctdel" data-del="' + i + '">Delete</button>' : '') + '</div>';
       h += replyHTML(c, i + 1);
     });
     return h + '<label class="ctlabel">Continue the conversation</label>' +
@@ -2246,6 +2256,18 @@
         if (v && v !== c.thread[i].text) { c.thread[i].text = v; touch(); say('Reply edited'); } else render();
         if (after) after();
       }
+    });
+    // Delete needs two clicks, the same as everywhere else in the review.
+    Array.prototype.forEach.call(d.querySelectorAll('.cthread .ctdel'), function (b) {
+      b.addEventListener('click', function () {
+        if (!b.classList.contains('danger')) {
+          b.classList.add('danger'); b.textContent = 'Confirm delete'; return;
+        }
+        if (b.dataset.del === 'c') { if (d === pop) closePop(); return remove(c.cid); }
+        c.thread.splice(+b.dataset.del, 1);
+        touch(); say('Reply deleted');
+        if (after) after();
+      });
     });
     function commit() {
       var v = ta.value.trim();

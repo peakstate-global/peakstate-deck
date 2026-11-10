@@ -318,6 +318,54 @@ test('an answered comment opens as a thread, and a follow-up reopens it with fol
   });
 });
 
+test('a follow-up and a whole thread can be deleted, after a confirm', async ({ page }) => {
+  await openDeck(page, MINTED);
+  await goToSlide(page, 5);
+  await page.locator('.dcx-bar [data-a="slide"]').click();
+  await writeComment(page, 'Say what the stamp proves.');
+  const stored = () => page.evaluate(() => {
+    const k = Object.keys(localStorage).find((x) => x.startsWith('deckComments:'));
+    return JSON.parse(localStorage.getItem(k)).comments;
+  });
+  const at = (await stored())[0].at;
+  const res = JSON.stringify({ resolutions: [{ at, status: 'addressed', note: 'It proves the date only.' }] });
+  await page.route('**/deck-minted.html', async (route) => {
+    const body = (await (await route.fetch()).text()).replace('</head>',
+      `<script type="application/json" id="deck-resolutions">${res}</script></head>`);
+    await route.fulfill({ body, contentType: 'text/html' });
+  });
+  await openDeck(page, MINTED);
+  await goToSlide(page, 5);
+  await page.locator('.dcx-bar [data-a="slide"]').click();
+  for (const t of ['And the author?', 'And the date format?']) {
+    await page.locator('.dcx-pop .cthread > textarea').fill(t);
+    await page.locator('.dcx-pop .cthread .ctsave').click();
+  }
+  await expect(page.locator('.dcx-pop .ctwho')).toHaveText(['You', 'Response', 'You', 'You']);
+
+  // One click arms it, the second deletes: the first follow-up goes, the second stays.
+  const del = page.locator('.dcx-pop .ctdel[data-del="0"]');
+  await del.click();
+  await expect(del).toHaveText('Confirm delete');
+  await expect(page.locator('.dcx-pop .ctwho')).toHaveCount(4);
+  await del.click();
+  await expect(page.locator('.dcx-pop .ctwho')).toHaveText(['You', 'Response', 'You']);
+  expect((await stored())[0].thread.map((m) => m.text)).toEqual(['And the date format?']);
+  let p = await copyPayload(page);
+  expect(p.comments[0].follow_up).toEqual(['And the date format?']);
+
+  // Deleting the comment itself takes the whole thread, from the page and the payload.
+  const delAll = page.locator('.dcx-pop .ctdel[data-del="c"]');
+  await delAll.click();
+  await delAll.click();
+  await expect(page.locator('.dcx-pop')).toHaveCount(0);
+  expect(await stored()).toEqual([]);
+  await openDeck(page, MINTED);
+  await page.locator('.dcx-bar [data-a="star"]').click();   // something to copy
+  p = await copyPayload(page);
+  expect(p.comments).toEqual([]);
+});
+
 test('presenting never lands on a hidden last slide', async ({ page }) => {
   await openDeck(page, MINTED);
   await goToSlide(page, 8);

@@ -88,7 +88,11 @@ resolution with `seen` equal to the follow-up count answers it. The field is
 absent when there are none, so this is an addition inside version 4, not a bump.
 The reader can edit any follow-up the latest resolution has not yet seen; the
 edit replaces that entry's text in place, so `follow_up[]` keeps its shape and
-carries no edit marker.
+carries no edit marker. The reader can also delete such a follow-up, after a
+confirm click; it leaves `follow_up[]` with no marker either. A follow-up the
+resolution has seen cannot be deleted, because its answer would then reply to
+nothing. Deleting the comment itself, from the list or from its thread, takes it
+and its follow-ups out of saved state and out of `comments[]`.
 
 **`comments[]` carries the OPEN ones only.** Anything already ticked off has been
 read, acted on and reported, so copying it back is noise in both directions;
