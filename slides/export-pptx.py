@@ -742,7 +742,8 @@ def _deck_svgs() -> tuple[str, list[tuple[int, set[str]]]]:
 def svg_ancestors(markup: str) -> set[str]:
     """Classes of the elements around this SVG in the deck, found by its first long
     attribute value (path data survives the browser's re-serialisation). Empty if not found."""
-    m = re.search(r'\b(?:d|points)="([^"]{24,})"', markup) or re.search(r'="([^"]{24,})"', markup)
+    # Only path data: any other long value (xmlns, a URL) repeats across diagrams.
+    m = re.search(r'\b(?:d|points)="([^"]{24,})"', markup)
     if not m:
         return set()
     doc, svgs = _deck_svgs()

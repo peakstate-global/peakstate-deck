@@ -55,4 +55,7 @@ with tempfile.TemporaryDirectory() as d:
                   "w": 40, "h": 40}, tmp, "qr2")
     assert Image.open(out).convert("RGBA").getpixel((70, 70))[3] > 0, "SVG drawn at natural size"
 
-print("raster svg img: 13 checks passed")
+# No path data: no ancestors, never the first xmlns in the deck.
+assert export_pptx.svg_ancestors('<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>') == set()
+
+print("raster svg img: 14 checks passed")
