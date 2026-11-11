@@ -27,6 +27,7 @@ so a long heading may wrap a word earlier. For a pixel-perfect handout, print th
 PDF instead (shift-keynote-deck.pdf) — this file exists so the text can be edited off this machine.
 """
 import base64
+import functools
 import json
 import os
 import re
@@ -34,7 +35,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.parse
 import zipfile
+from html.parser import HTMLParser
 from pathlib import Path
 
 from pptx import Presentation
@@ -697,18 +700,104 @@ def layout() -> list[dict]:
         return json.loads(js_out.read_text(encoding="utf-8"))
 
 
-def svg_styles() -> str:
-    """Lift the deck's own SVG rules so a standalone render looks identical."""
-    # Only the <style> block — the rest of the file carries a base64 image, and scanning it
-    # with this regex takes minutes.
+class _Ancestors(HTMLParser):
+    """For every <svg> start tag in the deck: its offset and the classes of the elements
+    that enclose it."""
+    VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta",
+            "source", "track", "wbr"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.stack: list[tuple[str, list[str]]] = []
+        self.svgs: list[tuple[tuple[int, int], set[str]]] = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "svg":
+            self.svgs.append((self.getpos(), {c for _, cs in self.stack for c in cs}))
+        if tag not in self.VOID:
+            self.stack.append((tag, (dict(attrs).get("class") or "").split()))
+
+    def handle_startendtag(self, tag, attrs):
+        if tag == "svg":
+            self.svgs.append((self.getpos(), {c for _, cs in self.stack for c in cs}))
+
+    def handle_endtag(self, tag):
+        for i in range(len(self.stack) - 1, -1, -1):
+            if self.stack[i][0] == tag:
+                del self.stack[i:]
+                break
+
+
+@functools.cache
+def _deck_svgs() -> tuple[str, list[tuple[int, set[str]]]]:
     doc = DECK.read_text(encoding="utf-8")
-    css = re.search(r"<style>(.*?)</style>", doc, re.S).group(1)
-    rules = re.findall(r"[^{}]*(?:\.chart|svg\.venn|svg\.swing)[^{}]*\{[^{}]*\}", css)
+    parser = _Ancestors()
+    parser.feed(doc)
+    starts = [0]
+    for line in doc.splitlines(keepends=True):
+        starts.append(starts[-1] + len(line))
+    return doc, [(starts[line - 1] + col, classes) for (line, col), classes in parser.svgs]
+
+
+def svg_ancestors(markup: str) -> set[str]:
+    """Classes of the elements around this SVG in the deck, found by its first long
+    attribute value (path data survives the browser's re-serialisation). Empty if not found."""
+    m = re.search(r'\b(?:d|points)="([^"]{24,})"', markup) or re.search(r'="([^"]{24,})"', markup)
+    if not m:
+        return set()
+    doc, svgs = _deck_svgs()
+    at = doc.find(m.group(1)[:200])
+    before = [classes for offset, classes in svgs if offset <= at]
+    return before[-1] if at >= 0 and before else set()
+
+
+def svg_styles(markup: str = "") -> str:
+    """Lift the deck's own SVG rules so a standalone render looks identical."""
+    doc = DECK.read_text(encoding="utf-8")
+    # Only the <style> blocks: the rest of the file carries base64 images, and scanning it
+    # with the rule regex takes minutes. A deck may split its CSS across several blocks.
+    css = re.sub(r"/\*.*?\*/", "", "\n".join(re.findall(r"<style[^>]*>(.*?)</style>", doc, re.S)), flags=re.S)
+    # Every class the SVG uses picks up the rules that name it. Without them a path with
+    # no fill attribute paints solid black, so a contour map arrives as a black blob.
+    used = {c for attr in re.findall(r'class="([^"]+)"', markup) for c in attr.split()}
+    named = re.compile(r"\.(?:chart|" + "|".join(map(re.escape, sorted(used))) + r")(?![\w-])"
+                       if used else r"\.chart(?![\w-])")
+    around = svg_ancestors(markup)
+
+    def own(selector: str) -> str | None:
+        # ".hc7 .cv" names a wrapper the standalone file does not have. Keep ".cv" when the
+        # SVG really sits inside .hc7 in the deck, and drop the selector when it does not:
+        # two diagrams can share a short class name like ".pl".
+        m = named.search(selector)
+        if not m:
+            return selector
+        cut = max(selector.rfind(c, 0, m.start()) for c in " >+~\n\t") + 1
+        wrappers = set(re.findall(r"\.([\w-]+)", re.sub(r":not\([^)]*\)", "", selector[:cut])))
+        return selector[cut:].strip() if wrappers <= around else None
+    rules = []
+    for r in re.findall(r"[^{}]*\{[^{}]*\}", css):
+        head, _, decls = r.partition("{")
+        if named.search(head):
+            kept = [k for k in (own(sel) for sel in head.split(",")) if k]
+            if kept:
+                rules.append(",".join(kept) + "{" + decls)
+        elif re.search(r"svg\.(?:venn|swing)", r):
+            rules.append(r)
     body = "\n".join(rules)
     for var, hexcode in (("--m1", "#5b8ac9"), ("--m2", "#c9a227"), ("--m3", "#4aa6a0"),
                          ("--gold", "#d1b561"), ("--fg", "#eceadf"), ("--muted", "#93a0b5"),
                          ("--line", "#223049"), ("--danger", "#e07b74")):
         body = body.replace(f"var({var})", hexcode)
+    # Any other custom property resolves to its first definition in the deck or its theme
+    # file. A standalone file has no :root, so an unresolved var() voids the declaration.
+    theme = DECK.parent / "colors_and_type.css"
+    defs: dict[str, str] = {}
+    for name, value in re.findall(r"(--[\w-]+)\s*:\s*([^;{}]+)",
+                                  (theme.read_text(encoding="utf-8") if theme.exists() else "") + css):
+        defs.setdefault(name, value.strip())
+    for _ in range(3):  # a var may point at another var
+        body = re.sub(r"var\((--[\w-]+)(?:\s*,\s*([^()]+))?\)",
+                      lambda m: defs.get(m.group(1), (m.group(2) or m.group(0)).strip()), body)
     # font-family: inherit in the deck's own rules resolves to a serif default in a standalone
     # file, so the override has to win on specificity.
     return ("<style>" + body +
@@ -741,28 +830,45 @@ def inline_symbols(markup: str) -> str:
     return markup
 
 
+def is_svg(src: str, data: bytes) -> bool:
+    """An <img> may point at an SVG file or carry one as a data URI."""
+    return (src.startswith("data:image/svg") or src.split("?")[0].lower().endswith(".svg")
+            or data.lstrip()[:5] in (b"<?xml", b"<svg ") or data.lstrip()[:4] == b"<svg")
+
+
 def raster(item: dict, tmp: Path, name: str, recolour: RGBColor | None = None) -> Path:
     """SVG diagrams and the illustration ride along as pictures — only the text is editable."""
+    markup = item.get("svg")
     if item["type"] == "img":
         src = item["src"]
         head, _, b64 = src.partition(",")
-        out = tmp / f"{name}.png"
         # A relative src is relative to the DECK, not to this script. They are the
         # same folder for the decks that live here and different for any other.
-        out.write_bytes(base64.b64decode(b64) if "base64" in head
-                        else (DECK.parent / src).read_bytes())
-        return out
+        data = (base64.b64decode(b64) if "base64" in head
+                else urllib.parse.unquote(b64).encode() if src.startswith("data:")
+                else (DECK.parent / src).read_bytes())
+        if not is_svg(src, data):
+            out = tmp / f"{name}.png"
+            out.write_bytes(data)
+            return out
+        # python-pptx cannot place an SVG, so an <img> of one is rasterised like inline SVG.
+        markup = data.decode("utf-8")
+        markup = markup[markup.index("<svg"):]  # drop any XML prolog or doctype
+        # The file's own width is its natural size; the deck drew it at the box size,
+        # and the viewBox scales it there. Left alone, a QR code fills one corner.
+        root, rest = markup.split(">", 1)
+        root = re.sub(r'\s(?:width|height)="[^"]*"', "", root)
+        markup = root.replace("<svg", f'<svg width="{item["w"]:.0f}" height="{item["h"]:.0f}"', 1) + ">" + rest
     svg = tmp / f"{name}.svg"
     # A standalone SVG has none of the deck's stylesheet, so its class-based rules (stroke
     # widths, fills, fonts) must travel with it — otherwise the curves render as filled blobs.
-    markup = item["svg"]
     if "xmlns" not in markup:  # inline SVG inherits the namespace from HTML; a file cannot
         markup = markup.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ', 1)
     markup = inline_symbols(markup)
     if " width=" not in markup.split(">", 1)[0]:
         # The deck sized this in CSS the file cannot see.
         markup = markup.replace("<svg", f'<svg width="{item["w"]:.0f}" height="{item["h"]:.0f}"', 1)
-    markup = markup.replace(">", ">" + svg_styles(), 1)
+    markup = markup.replace(">", ">" + svg_styles(markup), 1)
     if recolour is not None:
         # One ground needs one ink. The mark is drawn in the deck's light colour,
         # which vanishes on a light layout.
