@@ -1,0 +1,15 @@
+/* Tidewell Rowing Club: an invented brand, used only by the tests to prove a
+   kit outside the clone scaffolds, builds and exports. It sets brand hooks and
+   overrides one treatment selector. No fonts: the deck keeps the default faces. */
+:root {
+  --brand-bg: #F4F1EA;
+  --brand-bg-2: #E6EFE9;
+  --brand-bg-dark: #12372A;
+  --brand-fg: #12372A;
+  --brand-fg-2: #4F6B5E;
+  --brand-fg-dark: #F4F1EA;
+  --brand-accent: #E4572E;
+  --brand-hairline: #C9D6CE;
+}
+
+.slide-title { letter-spacing: -0.01em; }

@@ -4,21 +4,55 @@
   `deck-stage > section`; the live one carries `data-deck-active`.
 - `deck-tools.js` — `?audit` and `?export`. Nothing in it runs unless asked.
 - `export-pptx.py` — the PowerPoint exporter.
-- `../themes/peak-state/deck.html` — an example deck: title, section divider,
-  content, big quote, data point, comparison, end card.
-- `../themes/peak-state/treatments.css` — five recurring slide types with real
-  shape, below. It needs the theme's `colors_and_type.css` loaded first.
+- `deck.css`: the engine's stylesheet: the 1920x1080 canvas, the built-in
+  default look (Keynote Basic White), and every treatment below. `bin/deck init`
+  copies it into each deck. A kit changes it through the brand hooks below.
+- `example.html`: the default example deck: title, agenda, section, content,
+  quote, stat, comparison, end, references. Open it through a local server
+  (`python3 -m http.server` in this folder); from `file://` the overview
+  thumbnails lose the canvas.
 - `../assets/deck-comments.js` — the review layer. See `SKILL.md` in this
   repository for the four `<meta>` tags it needs and how to act on its payload.
 
-Surfaces: default is bone, `.paper` is sand, `.meta` is charcoal. Sections are
-`position: relative` with `padding: 76px 120px 104px`, so an absolutely
-positioned child measures from the slide edge.
+Surfaces: the default is white, `.sand` is the second surface, and `.dark` and
+`.meta` are the dark surface. Sections are `position: relative` with
+`padding: 96px 128px`, so an absolutely positioned child measures from the slide
+edge. There is no header strip. The footer carries the page number only:
+`<div class="slide-foot"><span data-slide-number></span></div>`, which the
+runtime fills.
+
+## Brand hooks
+
+A brand kit sets these variables; `deck.css` reads each one and falls back to
+the built-in default. A kit's stylesheets load after `deck.css`, so anything a
+hook cannot express, a kit overrides by selector at equal specificity.
+
+| Hook | Default | What it sets |
+|---|---|---|
+| `--brand-bg` | `#FFFFFF` | Slide surface |
+| `--brand-bg-2` | `#F5F5F7` | Second surface (`.sand`), quote mark tone |
+| `--brand-bg-3` | `#F5F5F7` | Cards and board tiles |
+| `--brand-bg-dark` | `#000000` | Dark surface (`.dark`, `.meta`, exercises) |
+| `--brand-fg` | `#1D1D1F` | Text |
+| `--brand-fg-2` | `#6E6E73` | Secondary text, footer |
+| `--brand-fg-dark` | `#F5F5F7` | Text on dark |
+| `--brand-fg-dark-2` | `#A1A1A6` | Secondary text on dark |
+| `--brand-accent` | `#0071E3` | The one accent: rules, highlights, citation numbers |
+| `--brand-hairline` | `#D2D2D7` | Dividers on light |
+| `--brand-hairline-dark` | `#333336` | Dividers on dark |
+| `--brand-font-display` | system sans | Titles and big numbers |
+| `--brand-font-body` | system sans | Body text |
+| `--brand-font-mono` | system mono | Code |
+| `--brand-weight-title` | `700` | Title weight |
+| `--brand-weight-body` | `400` | Body weight |
+
+The system sans is `-apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue",
+sans-serif`; the mono is `ui-monospace, "SF Mono", Menlo, monospace`.
 
 ## The five treatments
 
-**Pull quote.** The mark is a lifted tone of the background, never a gold
-graphic, and the quote sits in a measure to its right.
+**Pull quote.** The mark is a lifted tone of the background, never an
+accent-coloured graphic, and the quote sits in a measure to its right.
 
 ```html
 <div class="pull-slide">
@@ -29,10 +63,6 @@ graphic, and the quote sits in a measure to its right.
 </div>
 ```
 
-`colors_and_type.css` styles every `blockquote` italic, charcoal, with a sienna
-rule — invisible text on a charcoal slide. `treatments.css` resets all four.
-Same for the gold underline it puts on `.mark`.
-
 **Specimen quote.** For a definition, where the word is the point.
 
 ```html
@@ -41,7 +71,7 @@ Same for the gold underline it puts on `.mark`.
   <p class="pos">noun &middot; not a defect</p>
   <div class="hair"></div>
   <div class="row">
-    <p class="def">the production of <em>the damning clause</em>, struck in sienna.</p>
+    <p class="def">the production of <em>the damning clause</em>, struck in the accent.</p>
     <div class="src">SOURCE<br>lines<br>in mono</div>
   </div>
   <p class="no">THE FOOTNOTE THAT MAKES IT BITE</p>
@@ -49,7 +79,7 @@ Same for the gold underline it puts on `.mark`.
 ```
 
 **Stat wall.** One number owns the left, the rest hang in a right margin. The
-gold `.chip` is for movement in the headline figure — the reason it is on the
+accent `.chip` is for movement in the headline figure — the reason it is on the
 slide at all.
 
 ```html
@@ -77,7 +107,7 @@ other without stretching to the full slide and leaving dead space.
 </div>
 ```
 
-**Exercise.** Charcoal surface, no title band, and the timebox as the object.
+**Exercise.** Dark surface, no title band, and the timebox as the object.
 Absolutely positioned, so it does not sit in the section's flex column.
 
 ```html
@@ -137,16 +167,17 @@ entry carries its full URL as a clickable link** (`<a href>`, styled with no
 underline), so a reader can open the source from the slide or the PDF.
 
 **Keep the references and the provenance block on one slide.** Type is 21px by
-default; for more than eight entries add `class="apa dense"` (15px), which fits
-fourteen entries beside the provenance block. Split across two references pages
+default; for more than ten entries add `class="apa dense"` (15px), which fits
+seventeen two-line entries beside the provenance block. Split across two references pages
 only past that.
 
-**The page holds fourteen entries in `.dense` (15px), and about eight at the default size.**
-Measured, not guessed, and enforced by `tests/specs/layouts.spec.mjs`. Past fourteen it clips silently, because the
+**The page holds seventeen two-line entries in `.dense` (15px), and about eleven at the default size.**
+Measured, not guessed, and enforced by `tests/specs/layouts.spec.mjs` (it asserts fourteen fit, a floor
+for wider fonts, and nineteen clip). Past seventeen it clips silently, because the
 canvas is `overflow: hidden` — nothing on screen tells you the last source is
 gone. Split across two references pages rather than shrinking the type; 15px
 sans is already the floor for something read in a room. The agenda page holds
-ten parts on the same terms.
+twelve parts on the same terms.
 
 **The entry only. No quoted passages on a slide.** A written brief puts the
 verbatim passage under every entry, because a reader can check it there. A deck
@@ -192,7 +223,7 @@ travels.
 
 Mark any element `data-build` and it appears on its own click, in document order,
 before the deck moves to the next slide. Going back removes them one at a time.
-No extra slides and no state groups. `treatments.css` styles the arrival (fade
+No extra slides and no state groups. `slides/deck.css` styles the arrival (fade
 and rise); override the transform per deck for a different entrance. `?audit`,
 `?export` and print show every build at once.
 
@@ -327,7 +358,10 @@ distance and jumps the rest of the way as it releases.
 
 ## Exporting to PowerPoint
 
-    python3 slides/export-pptx.py --deck /abs/path/to/index.html --theme peak-state
+    python3 slides/export-pptx.py --deck /abs/path/to/index.html
+
+The exporter reads the `theme.json` the deck carries (a kit's), or uses the
+built-in default (Inter, layouts named Light and Dark) when the deck has none.
 
 The contract it obeys, and every trap that has cost a rebuild, are in
 `reference/powerpoint-export.md`. Read that file before changing the exporter or diagnosing a deck

@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """Export a deck built with this skill to PowerPoint, with EDITABLE native text.
 
-    ~/.local/pptx-venv/bin/python export-pptx.py --deck /abs/path/to/index.html
+    python3 slides/export-pptx.py --deck /abs/path/to/index.html
+
+If this Python lacks python-pptx, the script re-runs itself under the venv the README installs
+($XDG_DATA_HOME/peakstate-deck/venv, or ~/.local/share/peakstate-deck/venv), and finds playwright
+under that folder's node/ unless DECK_NODE_ROOT says otherwise.
 
 --deck takes any deck that wires up the same ?export layout dump; the output is the deck folder's
-name plus "-editable.pptx", written beside this script. Relative image sources resolve against the
+name plus "-editable.pptx", written beside the deck (this script may sit in a plugin cache that an
+update replaces). Relative image sources resolve against the
 DECK, so a deck anywhere on disk exports.
 
 This lives with the slide rig rather than with any one deck, because every deck built on
@@ -26,6 +31,8 @@ Fidelity is close but not pixel-perfect: PowerPoint's line breaking differs from
 so a long heading may wrap a word earlier. For a pixel-perfect handout, print the HTML deck to
 PDF instead (shift-keynote-deck.pdf) — this file exists so the text can be edited off this machine.
 """
+from __future__ import annotations
+
 import base64
 import functools
 import json
@@ -39,6 +46,39 @@ import urllib.parse
 import zipfile
 from html.parser import HTMLParser
 from pathlib import Path
+
+
+
+def data_dir() -> Path:
+    """Where the README installs the export prerequisites (the venv and node/)."""
+    base = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
+    return Path(base) / "peakstate-deck"
+
+
+def node_root() -> Path:
+    """Folder whose node_modules holds playwright: DECK_NODE_ROOT, else the installed
+    node/ folder, else /tmp (the old default)."""
+    if os.environ.get("DECK_NODE_ROOT"):
+        return Path(os.environ["DECK_NODE_ROOT"])
+    installed = data_dir() / "node"
+    return installed if (installed / "node_modules" / "playwright").exists() else Path("/tmp")
+
+
+try:
+    import pptx  # noqa: F401
+except ImportError:
+    _venv_py = data_dir() / "venv" / "bin" / "python"
+    # Compare unresolved paths: a venv python is a symlink to the system one.
+    if (__name__ == "__main__" and _venv_py.exists()
+            and not os.environ.get("PEAKSTATE_DECK_REEXEC")
+            and os.path.abspath(sys.executable) != str(_venv_py)):
+        os.environ["PEAKSTATE_DECK_REEXEC"] = "1"
+        os.execv(str(_venv_py), [str(_venv_py), os.path.abspath(sys.argv[0]), *sys.argv[1:]])
+    if __name__ == "__main__":
+        sys.exit(f"python-pptx is not installed for {sys.executable}, and there is no venv "
+                 f"at {_venv_py}. Install it as \"PowerPoint export prerequisites\" in the "
+                 f"README says.")
+    raise
 
 from pptx import Presentation
 from pptx.dml.color import RGBColor
@@ -87,14 +127,13 @@ if not DECK.exists():
 # for an agency, three extra pressures appended. Other decks ignore it.
 PUBLIC = "--public" in sys.argv
 NAME = DECK.parent.name if DECK.stem == "index" else DECK.stem
-OUT = HERE / (f"{NAME}-public-editable.pptx" if PUBLIC else f"{NAME}-editable.pptx")
+OUT = DECK.parent / (f"{NAME}-public-editable.pptx" if PUBLIC else f"{NAME}-editable.pptx")
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 # The deck's own coordinate space. Older decks (SHIFT, ways-of-working) are
 # 1600x900 and uniformly dark, and their dumps say nothing about either, so these
-# stay the fallback. A dump that carries "canvas" and per-slide "bg" — the
-# consolidated Peak State deck does, at 1920x1080 across three surfaces —
-# overrides them in main().
+# stay the fallback. A dump that carries "canvas" and per-slide "bg" (any deck
+# scaffolded by bin/deck does, at 1920x1080) overrides them in main().
 PX_W, PX_H = 1600, 900
 EMU_PER_PX = int(Inches(13.333) / PX_W)  # 16:9 at 13.333in wide
 PT_PER_PX = 72 * 13.333 / PX_W         # 1 deck px in points
@@ -178,32 +217,48 @@ def rotate_text(shape) -> None:
 
 
 # ── The theme: layout names and font families ─────────────────────────────────
-# A theme is optional. --theme <name|path|none>, or DECK_THEME in the
-# environment. A bare name is looked up under <repo>/themes/<name>/theme.json.
-# With no theme the exporter still runs: the layouts are called Dark and Light
-# and no fonts are embedded.
+# --theme <name|path|none>, or DECK_THEME in the environment. A value with a path
+# separator, or starting with ~ or ., is a path: a folder holding theme.json (or the file). A name is a brand kit in the config folder,
+# <config>/themes/<name>/.
+# With neither, the theme.json the deck carries beside --deck. With nothing
+# found, or --theme none, the built-in default: Inter named and embedded.
 GENERIC_FACES = {"serif", "sans-serif", "monospace", "cursive", "fantasy",
                  "system-ui", "ui-serif", "ui-sans-serif", "ui-monospace"}
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "peakstate-deck"
+DEFAULT_FONTS = {"faces": ["Inter"], "fallbackFace": "Inter", "embed": {"Inter": "Inter-{}.ttf"}}
 
 
-def load_theme() -> dict:
-    arg = flag("--theme", os.environ.get("DECK_THEME", "peak-state"))
-    if arg in ("", "none"):
-        return {}
-    given = Path(arg).expanduser()
-    for cand in (given, given / "theme.json", HERE.parent / "themes" / arg / "theme.json"):
+def load_theme() -> tuple[dict, str | None]:
+    """The theme, and the kit folder name its fonts/ is looked up under."""
+    arg = flag("--theme", os.environ.get("DECK_THEME"))
+    if arg == "none":
+        return {}, None
+    if arg:
+        # A bare name is never read as a path in the working directory.
+        given = Path(arg).expanduser()
+        as_path = os.sep in arg or "/" in arg or arg.startswith(("~", "."))
+        cands = ((given, given / "theme.json") if as_path else ()) + (
+            CONFIG / "themes" / arg / "theme.json",)
+    else:
+        cands = (DECK.parent / "theme.json",)
+    for cand in cands:
         if cand.is_file():
             try:
-                return json.loads(cand.read_text())
+                theme = json.loads(cand.read_text())
             except json.JSONDecodeError as e:
                 sys.exit(f"{cand} is not valid JSON: {e}")
-    if "--theme" in sys.argv:
-        sys.exit(f"no theme.json for --theme {arg}")
-    return {}
+            # A theme carried beside the deck has no kit folder, so its name stands in.
+            kit = theme.get("name") if cand == DECK.parent / "theme.json" else cand.parent.name
+            return theme, kit
+    if arg:
+        sys.exit(f"no theme.json for --theme {arg}. Tried: " + ", ".join(str(c) for c in cands))
+    return {}, None
 
 
-THEME = load_theme()
-_THEME_FONTS = THEME.get("fonts", {})
+THEME, KIT_NAME = load_theme()
+# No theme: the default faces, named and embedded. A theme with no fonts key
+# trusts the deck's own font stack and embeds nothing.
+_THEME_FONTS = THEME.get("fonts", {}) if THEME else DEFAULT_FONTS
 
 # The theme names its families; everything else in a CSS font stack is a
 # fallback the browser only reaches when the real one is missing. Take the first
@@ -213,7 +268,7 @@ FALLBACK_FACE = _THEME_FONTS.get("fallbackFace", "Helvetica Neue")
 
 
 def face(css_font_family: str | None) -> str:
-    """'Spectral, "Iowan Old Style", Georgia, serif' -> 'Spectral'."""
+    """'"Iowan Old Style", Georgia, serif' -> 'Iowan Old Style'."""
     if not css_font_family:
         return FALLBACK_FACE
     for part in css_font_family.split(","):
@@ -233,23 +288,25 @@ def face(css_font_family: str | None) -> str:
 
 # Naming the face is only half of it: a recipient without the font still sees a
 # substitute. PowerPoint gives an embedded family four slots — regular, bold,
-# italic, boldItalic — so the deck's finer weights (Spectral 200/300, Inter
+# italic, boldItalic — so the deck's finer weights (a 300 heading, Inter
 # 500/600) are synthesised by the renderer from the nearest slot. Keep the fonts
 # installed locally as well; embedding is for the people you send the file to.
-# The fonts are referenced, never shipped in this repository. Three places are
-# tried in order: DECK_FONT_DIR, a fonts/ folder at the repository root, and the
-# older design-system path.
-def font_dir() -> Path | None:
-    candidates = [os.environ.get("DECK_FONT_DIR"),
-                  HERE.parent / "fonts",
-                  Path.home() / ".claude/skills/peak-state-design/fonts"]
-    for c in candidates:
-        if c and Path(c).expanduser().is_dir():
-            return Path(c).expanduser()
-    return None
+# The fonts are referenced, never shipped in this repository. Each font file is
+# searched for on its own, in this order, so a kit folder holding only its brand
+# face still lets Inter be found further down the list.
+def font_dirs() -> list[Path]:
+    dirs = [os.environ.get("DECK_FONT_DIR"),
+            DECK.parent / "fonts",
+            CONFIG / "themes" / KIT_NAME / "fonts" if KIT_NAME else None,
+            CONFIG / "fonts",
+            HERE.parent / "fonts"]
+    return [Path(d).expanduser() for d in dirs if d]
 
 
-FONT_DIR = font_dir()
+def find_font(filename: str) -> Path | None:
+    return next((d / filename for d in font_dirs() if (d / filename).is_file()), None)
+
+
 EMBED_FAMILIES = _THEME_FONTS.get("embed", {})
 FONT_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/font"
 SLOTS = (("regular", "Regular"), ("bold", "Bold"),
@@ -271,17 +328,12 @@ def embed_fonts(pptx_path: Path) -> None:
     next_id = max(int(n) for n in re.findall(r'Id="rId(\d+)"', rels)) + 1
     new_rels, font_list, n, missing = [], [], 0, []
 
-    if EMBED_FAMILIES and FONT_DIR is None:
-        print("  no font directory found, so nothing is embedded. Tried DECK_FONT_DIR, "
-              "<repo>/fonts and the design-system fonts folder.")
-        return
-
     for family, pattern in EMBED_FAMILIES.items():
         entry = [f'<p:embeddedFont><p:font typeface="{family}" pitchFamily="18" charset="0"/>']
         for slot, suffix in SLOTS:
-            src = FONT_DIR / pattern.format(suffix)
-            if not src.exists():
-                missing.append(src.name)
+            src = find_font(pattern.format(suffix))
+            if src is None:
+                missing.append(pattern.format(suffix))
                 continue
             n += 1
             parts[f"ppt/fonts/font{n}.fntdata"] = src.read_bytes()
@@ -295,7 +347,8 @@ def embed_fonts(pptx_path: Path) -> None:
             font_list.append("".join(entry))
 
     if missing:
-        print(f"  fonts not found, slots skipped: {', '.join(missing)}")
+        print(f"  fonts not found, slots skipped: {', '.join(missing)}. Tried: "
+              + ", ".join(str(d) for d in font_dirs()))
     if not font_list:
         print("  no fonts embedded")
         return
@@ -430,7 +483,7 @@ def morph(slide) -> None:
 # and light. Copying a full-bleed rectangle and a brand mark onto all 38 slides
 # makes 38 things to keep in sync; putting them on a LAYOUT makes one. Change the
 # dark colour in the master and every dark slide follows.
-LAYOUT_NAMES = tuple(THEME.get("layoutNames", ("Dark", "Light")))
+LAYOUT_NAMES = tuple(THEME.get("layoutNames", ()))
 COLOUR_TOLERANCE = 8          # two surfaces this close are the same surface
 
 
@@ -498,8 +551,17 @@ def build_layouts(prs, colours):
     for i, colour in enumerate(colours[:3]):
         lay = prs.slide_layouts[stock[i]]
         clear_layout(lay)
-        # A theme need not name every surface a deck turns out to use.
-        lay.name = LAYOUT_NAMES[i] if i < len(LAYOUT_NAMES) else f"Surface {i + 1}"
+        # A theme need not name every surface a deck turns out to use. With no
+        # names from the theme, each layout is named for its own surface, never
+        # for how common it is: a mostly white deck's first layout is "Light".
+        if i < len(LAYOUT_NAMES):
+            lay.name = LAYOUT_NAMES[i]
+        elif LAYOUT_NAMES:
+            lay.name = f"Surface {i + 1}"
+        else:
+            tone = "Dark" if sum(colour) < 384 else "Light"
+            taken = [l.name for l in prs.slide_layouts]
+            lay.name = tone if tone not in taken else f"{tone} {i + 1}"
         bg = scratch.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0,
                                       prs.slide_width, prs.slide_height)
         bg.fill.solid()
@@ -684,11 +746,12 @@ def layout() -> list[dict]:
     """
     # node resolves a require against the SCRIPT's folder, not the working
     # directory, so the runner is written where playwright is installed.
-    node_root = Path(os.environ.get("DECK_NODE_ROOT", "/tmp"))
-    assert (node_root / "node_modules" / "playwright").exists(), (
-        f"playwright is not installed for node under {node_root}. Install it there, or set "
-        f"DECK_NODE_ROOT to a folder that has it.")
-    with tempfile.TemporaryDirectory(dir=node_root) as d:
+    root = node_root()
+    assert (root / "node_modules" / "playwright").exists(), (
+        f"playwright is not installed for node under {root}. Looked in DECK_NODE_ROOT, then "
+        f"{data_dir() / 'node'}, then /tmp. Install it as \"PowerPoint export prerequisites\" "
+        f"in the README says, or set DECK_NODE_ROOT to a folder that has it.")
+    with tempfile.TemporaryDirectory(dir=root) as d:
         js, js_out = Path(d) / "dump.js", Path(d) / "layout.json"
         js.write_text(script, encoding="utf-8")
         url = DECK.as_uri() + ("?export&public" if PUBLIC else "?export")
@@ -696,7 +759,7 @@ def layout() -> list[dict]:
                            capture_output=True, text=True, cwd="/tmp")
         assert js_out.exists(), (
             "the deck did not emit its layout. Is ?export still wired up, and is "
-            "playwright installed for node in /tmp?\n" + r.stderr[-600:])
+            f"playwright installed for node under {root}?\n" + r.stderr[-600:])
         return json.loads(js_out.read_text(encoding="utf-8"))
 
 
@@ -810,7 +873,7 @@ def inline_symbols(markup: str) -> str:
     """Resolve <use href="#id"> against the deck, into a file that stands alone.
 
     An inline SVG that points at a <symbol> defined elsewhere in the page renders
-    as nothing once it is written to its own file, which is why the brand diamond
+    as nothing once it is written to its own file, which is why the brand symbol
     kept arriving as an empty picture. Copying the symbol in as <defs> is not
     enough either: the symbol carries the viewBox, and without one the root SVG
     has no coordinate system and paints nothing. Both travel.
@@ -946,9 +1009,9 @@ def main() -> None:
                     # is NOT this: it sits top right and belongs to that slide.
                     if show_brand and not brand_done:
                         # Keep gathering until the mark is COMPLETE. The title
-                        # slide shows the diamond and hides the words, so a
+                        # slide shows the symbol and hides the words, so a
                         # collector that stops at the first slide carrying any
-                        # mark takes the diamond alone and the wordmark never
+                        # mark takes the symbol alone and the wordmark never
                         # reaches a layout.
                         if not any(b["type"] == item["type"] for b in brand_items):
                             brand_items.append(item)
@@ -1107,7 +1170,7 @@ def main() -> None:
                             if colour:
                                 run.font.color.rgb = colour
 
-            # Done once the mark has both halves: the diamond and the words.
+            # Done once the mark has both halves: the symbol and the words.
             if len({b["type"] for b in brand_items}) >= 2:
                 brand_done = True
             slide.notes_slide.notes_text_frame.text = presenter_notes(s.get("script"), s.get("note"), s.get("sources"))

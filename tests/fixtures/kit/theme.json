@@ -1,0 +1,9 @@
+{
+  "name": "tidewell",
+  "description": "Tidewell Rowing Club, an invented brand used only by the tests. Deep green surfaces, a coral accent.",
+  "copy": [
+    "colors_and_type.css",
+    "assets"
+  ],
+  "fontsRedistributable": false
+}

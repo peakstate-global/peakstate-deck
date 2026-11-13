@@ -1,0 +1,13 @@
+{
+  "name": "peakstate-deck",
+  "version": "0.1.0",
+  "description": "Build an HTML slide deck, review it in the browser, and export it to PowerPoint with editable text.",
+  "author": {
+    "name": "Peak State Global",
+    "url": "https://github.com/peakstate-global"
+  },
+  "homepage": "https://github.com/peakstate-global/peakstate-deck",
+  "repository": "https://github.com/peakstate-global/peakstate-deck",
+  "license": "Apache-2.0",
+  "keywords": ["slides", "deck", "presentation", "powerpoint", "html"]
+}

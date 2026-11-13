@@ -1,27 +1,25 @@
 # Design tokens, as built
 
-*Extracted from `themes/peak-state` and the runtime's own stylesheet. What is here is what ships.*
+*The review chrome's own tokens, extracted from `slides/deck-stage.js` and `assets/deck-comments.js`.
+What is here is what ships. A deck's look is separate: the built-in default in `slides/deck.css`,
+or the user's brand kit.*
 
 ## Colour
 
 | Role | Value | Use |
 |---|---|---|
-| Charcoal | `#14100E` / `#1A1614` | The slide surface, and the chrome that floats on it |
-| Ember | `#221D19` | A lifted panel on charcoal |
-| Bone | `#F5F0E8` | Text on charcoal, and the light slide surface |
-| Sand | `#EFE8D9` | The second light surface |
-| Sienna | `#A93D1A` | The one accent. Rules, marks, the active state |
-| Gold | `#D0B561` | The one signal. At most twice per surface |
-| Eucalypt | `#5C6B5A` | Secondary text on light |
-| Sandstone | `#C8B89A` | Hairlines on light |
+| Panel | `#0E0A08` / `#1A1614` | The bar, the overview and the panels that float over a slide |
+| Bone | `#F5F0E8` | Text on a panel |
+| Muted | `#B5A899` / `#8B8079` | Secondary text and hints on a panel |
+| Rust | `#A93D1A` | The one accent. The active state |
+| Gold | `#D0B561` | The one signal. Highlights and the toast, used sparingly |
 
-Never `#000` or `#fff`. Neutrals are warm, tinted toward the brand hue.
+Neutrals are warm. Hairlines and hover fills are bone at 6% to 20%.
 
 ## Type
 
-- **Spectral** — display and body. Weights 200 to 600. Slide headings are 200 at large sizes.
-- **Inter** — UI chrome, 400 to 600, 11 to 15px in the review layer.
-- **JetBrains Mono** — labels, eyebrows, codes, build hashes. Letter-spacing .1 to .3em, uppercase.
+- **Inter**: UI text, 400 to 600, 11 to 15px in the review layer.
+- **JetBrains Mono**: counts, slide numbers, quoted text, codes. Letter-spacing .1em where it labels.
 
 ## Existing chrome
 

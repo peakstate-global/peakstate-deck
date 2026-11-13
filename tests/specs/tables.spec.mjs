@@ -2,16 +2,17 @@
  *
  * A cell with no side padding puts its text hard against the neighbouring
  * cell's fill, so a highlighted cell's colour runs into the next cell's words.
- * The theme makes padding the standard (treatments.css, "table house style").
- * This drives the real theme through its example deck, adds a table with a
+ * The default makes padding the standard (slides/deck.css, "table house style").
+ * This drives the real stylesheet through the default example deck, adds a table with a
  * filled cell, and measures the gap between the fill and the next cell's text.
  */
 import { test, expect } from '@playwright/test';
 
+const DECK = '/default/example.html';
 const MIN = 16; // px: the least side padding that still reads as a gap
 
 test('every table cell is padded on both sides, matrix variants included', async ({ page }) => {
-  await page.goto('/theme/deck.html');
+  await page.goto(DECK);
   await page.waitForSelector('deck-stage > section');
   const out = await page.evaluate(() => {
     const sec = document.querySelector('deck-stage > section');
@@ -31,7 +32,7 @@ test('every table cell is padded on both sides, matrix variants included', async
 });
 
 test('text never sits flush against a filled neighbour', async ({ page }) => {
-  await page.goto('/theme/deck.html');
+  await page.goto(DECK);
   await page.waitForSelector('deck-stage > section');
   const gap = await page.evaluate(() => {
     const sec = document.querySelector('deck-stage > section');

@@ -1,11 +1,12 @@
-/* Layout limits for the theme's own treatments.
+/* Layout limits for the default's treatments.
  *
  * A slide canvas is 1920×1080 with `overflow: hidden`, so a page that holds one
  * row too many does not break — it silently clips the last one. Nothing on
  * screen says so, and the fault survives every review that looks at the deck
  * instead of measuring it. These specs measure it.
  *
- * They drive `/theme/deck.html`, the shipped example deck, rather than a fixture
+ * They drive `/default/example.html`, the shipped example deck that links the
+ * real slides/deck.css, rather than a fixture
  * carrying its own copy of the canvas rules — a copy goes on passing after the
  * real canvas changes, which is the one thing a layout test must not do.
  *
@@ -17,11 +18,11 @@ import { test, expect } from '@playwright/test';
 import { shot } from './helpers.mjs';
 import { readFileSync } from 'node:fs';
 
-const THEME = '/theme/deck.html';
+const DECK = '/default/example.html';
 
 /** Lay every slide out at once: the runtime is not needed to measure a box. */
 async function openStatic(page) {
-  await page.goto(THEME);
+  await page.goto(DECK);
   await page.waitForSelector('deck-stage > section');
   await page.evaluate(() => {
     for (const s of document.querySelectorAll('deck-stage > section')) {
@@ -30,7 +31,7 @@ async function openStatic(page) {
       s.style.transform = 'none';
     }
   });
-  // The theme embeds fonts; a metric measured mid-swap is a metric that lies.
+  // A kit may embed fonts; a metric measured mid-swap is a metric that lies.
   await page.evaluate(() => document.fonts.ready);
 }
 
@@ -77,36 +78,40 @@ test.describe('agenda page', () => {
     expect(shown[1], 'the second column must continue the first').toContain('ag 2');
   });
 
-  test('holds eight parts without clipping', async ({ page }) => {
+  // Measured in the default's system sans and in Verdana (a wide stand-in for
+  // the generic sans on CI): twelve parts fit, fourteen clip. Agenda rows are
+  // one line each, so the ceiling is set by line height, not by the font.
+  test('holds twelve parts without clipping', async ({ page }) => {
     await openStatic(page);
-    await grow(page, '.agenda ol', 4);          // four each side, eight in all
-    await grow(page, '.agenda ol + ol', 4);
+    await grow(page, '.agenda ol', 6);          // six each side, twelve in all
+    await grow(page, '.agenda ol + ol', 6);
     await page.evaluate(() => {
-      document.querySelector('.agenda ol + ol').style.setProperty('--ag-from', '4');
+      document.querySelector('.agenda ol + ol').style.setProperty('--ag-from', '6');
     });
-    expect(await clipped(page, '.agenda'), 'eight parts should fit').toBe(false);
-    await shot(page, 'agenda-8-parts');
+    expect(await clipped(page, '.agenda'), 'twelve parts should fit').toBe(false);
+    await shot(page, 'agenda-12-parts');
   });
 
-  test('twelve parts is past the ceiling, and says so by clipping', async ({ page }) => {
+  test('fourteen parts is past the ceiling, and says so by clipping', async ({ page }) => {
     await openStatic(page);
-    await grow(page, '.agenda ol', 6);
-    await grow(page, '.agenda ol + ol', 6);
+    await grow(page, '.agenda ol', 7);
+    await grow(page, '.agenda ol + ol', 7);
     // Recorded rather than asserted as a failure: this is the documented limit,
-    // and the point is that an author who needs twelve parts needs two slides,
-    // not smaller type. If a future change makes twelve fit, raise the number
+    // and the point is that an author who needs fourteen parts needs two slides,
+    // not smaller type. If a future change makes fourteen fit, raise the number
     // in slides/README.md rather than deleting this.
     const over = await clipped(page, '.agenda');
-    expect(over, 'twelve parts is expected to overrun one slide').toBe(true);
-    await shot(page, 'agenda-12-parts-clipped');
+    expect(over, 'fourteen parts is expected to overrun one slide').toBe(true);
+    await shot(page, 'agenda-14-parts-clipped');
   });
 });
 
 test.describe('references page', () => {
   test('holds fourteen entries beside the provenance block', async ({ page }) => {
     await openStatic(page);
-    // Fourteen is the measured ceiling in .dense (15px), the class slides/README.md
-    // asks for past eight entries. The default size is 21px and holds about eight.
+    // Measured with two-line entries (the example deck's last entry, which grow()
+    // clones): .dense (15px) holds seventeen, the default 21px holds eleven.
+    // Fourteen is the floor asserted here, with room for a wider font on CI.
     // Past fourteen, split the page rather than shrinking the type again.
     await page.evaluate(() => document.querySelector('.refpage ol.apa').classList.add('dense'));
     await grow(page, '.refpage ol.apa', 14);
@@ -114,12 +119,15 @@ test.describe('references page', () => {
     await shot(page, 'refs-14-entries');
   });
 
-  test('eighteen entries is past the ceiling, and says so by clipping', async ({ page }) => {
+  test('nineteen entries in .dense is past the ceiling, and says so by clipping', async ({ page }) => {
     await openStatic(page);
-    await grow(page, '.refpage ol.apa', 18);
+    // Two past the measured .dense ceiling of seventeen, so this tests the edge
+    // that matters: even the smaller type cannot take it.
+    await page.evaluate(() => document.querySelector('.refpage ol.apa').classList.add('dense'));
+    await grow(page, '.refpage ol.apa', 19);
     expect(await clipped(page, '.refpage'),
-      'eighteen entries is expected to overrun one slide').toBe(true);
-    await shot(page, 'refs-18-entries-clipped');
+      'nineteen entries is expected to overrun one slide, even in .dense').toBe(true);
+    await shot(page, 'refs-19-dense-entries-clipped');
   });
 
   test('the provenance block stays one column inside the references page', async ({ page }) => {
@@ -186,7 +194,7 @@ test.describe('counters survive the PowerPoint export', () => {
     await openStatic(page);
     await withCounterText(page);
     const blank = await page.evaluate(() =>
-      window.counterText(document.querySelector('.slide-header')));
+      window.counterText(document.querySelector('.slide-foot')));
     expect(blank).toBe('');
   });
 });

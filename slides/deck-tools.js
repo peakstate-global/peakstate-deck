@@ -177,9 +177,9 @@
         add('text', el, { text: t, runs: runsOf(el), rotate: 0,
                           morphName: '!!' + el.dataset.pptxSplit });
       });
-      /* The brand mark's words. Its span also holds the diamond, and the text
+      /* The brand mark's words. Its span also holds the symbol, and the text
          dumper skips anything containing an svg, so the wordmark never reached
-         the file. It is dumped here, and the diamond stays its own picture. */
+         the file. It is dumped here, and the symbol stays its own picture. */
       slide.querySelectorAll('[data-pptx-brand="mark"]').forEach(function (el) {
         var t = (el.innerText || '').trim();
         if (!t) return;
