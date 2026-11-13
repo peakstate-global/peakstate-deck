@@ -10,3 +10,6 @@ test-results/
 
 # Private domain and name list for the publishability guard, never published
 .leakrc
+
+# Local planning: specs and tickets for /driver runs, never published
+.scratch/
