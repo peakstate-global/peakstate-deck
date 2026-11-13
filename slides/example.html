@@ -1,0 +1,164 @@
+<!doctype html>
+<!--
+  The default example deck: nine slides in the built-in default look, with no
+  brand kit loaded. Copy a slide from here to start one of your own.
+
+  Open it through a local server, not from file://:
+
+      cd slides && python3 -m http.server 8000
+      then visit http://localhost:8000/example.html
+
+  From file://, Chrome hides a linked stylesheet's rules from scripts, so the
+  overview thumbnails lose the canvas. A built deck inlines its stylesheets and
+  has no such limit.
+
+  This deck links the real deck.css on purpose. The layout tests measure it, and
+  a copy of the canvas rules here would go on passing after the real ones change.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Example deck</title>
+  <link rel="stylesheet" href="deck.css">
+</head>
+<body>
+  <deck-stage>
+    <section data-screen-label="01 Title">
+      <div class="title-block">
+        <h1 class="display">A clear title in one line.</h1>
+        <p class="subtitle">One sentence that says who the deck is for and what they will decide.</p>
+      </div>
+      <div class="slide-foot"><span data-slide-number></span></div>
+    </section>
+
+    <!-- Agenda. Included by default; hide it rather than delete it when a
+         delivery does not want one. -->
+    <section data-screen-label="02 Agenda">
+      <div style="margin:auto 0;">
+        <h2 class="slide-title">Four parts, one hour.</h2>
+        <div class="agenda">
+          <ol>
+            <li class="here"><span class="ag-part">Where we are
+              <span class="ag-note">The current state, in three numbers</span></span></li>
+            <li><span class="ag-part">What changes
+              <span class="ag-note">Which parts of the work move, and which stay</span></span></li>
+          </ol>
+          <ol style="--ag-from:2;">
+            <li><span class="ag-part">What it costs
+              <span class="ag-note">Time, money, and the cost of waiting</span></span></li>
+            <li><span class="ag-part">References and provenance
+              <span class="ag-note">Sources, limits, and who is accountable</span></span></li>
+          </ol>
+        </div>
+      </div>
+      <div class="slide-foot"><span data-slide-number></span></div>
+    </section>
+
+    <section data-screen-label="03 Section" class="dark">
+      <div class="divider">
+        <p class="kicker">Part one</p>
+        <h1 class="h1" style="max-width:1500px;">Where we are today.</h1>
+        <p class="lead" style="margin-top:36px; max-width:1100px;">A section divider names the part and the one claim it makes.</p>
+      </div>
+      <div class="slide-foot"><span data-slide-number></span></div>
+    </section>
+
+    <section data-screen-label="04 Content">
+      <h2 class="slide-title">Three things this part covers.</h2>
+      <div class="cols3">
+        <div>
+          <h3>The current position</h3>
+          <p>State it plainly, with the one number that shows it.</p>
+        </div>
+        <div>
+          <h3>The shift</h3>
+          <p>Name the change and the evidence for it, so the room can test the claim.</p>
+        </div>
+        <div>
+          <h3>The decision</h3>
+          <p>Give the decision the deck asks for, and what happens if nobody makes it.</p>
+        </div>
+      </div>
+      <div class="slide-foot"><span data-slide-number></span></div>
+    </section>
+
+    <section data-screen-label="05 Quote">
+      <div class="pull-slide">
+        <div class="mark" aria-hidden="true">&ldquo;</div>
+        <blockquote>A short quotation that carries the argument of this part in one breath.</blockquote>
+        <div class="rule"></div>
+        <p class="attrib">Name of the speaker, their role, and the year</p>
+      </div>
+      <div class="slide-foot"><span data-slide-number></span></div>
+    </section>
+
+    <section data-screen-label="06 Stat">
+      <div class="statwall" style="margin:auto 0; height:auto;">
+        <div class="hero">
+          <div class="big">72%</div>
+          <div class="chip">Up from 53%</div>
+          <p class="cap">The headline number, with what it measures and over what period.</p>
+          <p class="src">Source name, year [1]</p>
+        </div>
+        <div class="side">
+          <div><div class="big">9 wks</div><p class="cap">A supporting number and what it shows.</p></div>
+          <div><div class="big">14</div><p class="cap">A second supporting number.</p></div>
+        </div>
+      </div>
+      <div class="slide-foot"><span data-slide-number></span></div>
+    </section>
+
+    <section data-screen-label="07 Comparison">
+      <h2 class="slide-title">The old way and the new way, side by side.</h2>
+      <div class="compare">
+        <div>
+          <h3>Before</h3>
+          <ul>
+            <li>Plan once a year and hold to it.</li>
+            <li>Review what shipped each quarter.</li>
+            <li>The bottleneck is capacity.</li>
+          </ul>
+        </div>
+        <div class="now">
+          <h3>After</h3>
+          <ul>
+            <li>Test three options in parallel and decide monthly.</li>
+            <li>Review the working hypothesis each week.</li>
+            <li>The bottleneck is the quality of the hypothesis.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="slide-foot"><span data-slide-number></span></div>
+    </section>
+
+    <section data-screen-label="08 End" class="dark">
+      <div class="title-block">
+        <h1 class="h1">Thank you.</h1>
+        <p class="subtitle">Your name, your role, and where to reach you.</p>
+      </div>
+      <div class="slide-foot"><span data-slide-number></span></div>
+    </section>
+
+    <!-- References and provenance, combined: entries left, the four-label block
+         right with its References line omitted. Entries only; quoted passages
+         live in the .sourced sidecar. -->
+    <section data-screen-label="09 References">
+      <h2 class="slide-title">Sources</h2>
+      <div class="refpage" style="margin-top:44px;">
+        <ol class="apa">
+          <li>Author, A. (2026, March 4). <i>Title of the first source</i>. Publisher. example.org</li>
+          <li>Author, B., &amp; Author, C. (2024). Title of an article. <i>Journal Name</i>, <i>12</i>(3), 45&ndash;67.</li>
+          <li>Organisation Name. (2025). <i>Title of a report that runs long enough to wrap onto a second line</i>. https://example.org/reports/2025/title-of-the-report</li>
+        </ol>
+        <div class="pblock">
+          <div><div class="k">Attribution</div><div class="v">Drafted with the peakstate-deck skill. Name the tools and reviews used.</div></div>
+          <div><div class="k">Accountable</div><div class="v">The person who answers for the claims in this deck.</div></div>
+          <div><div class="k">Limitations</div><div class="v">What could not be checked, and where the quoted passages are: <span class="mono">deck.html.sourced</span></div></div>
+        </div>
+      </div>
+      <div class="slide-foot"><span data-slide-number></span></div>
+    </section>
+  </deck-stage>
+  <script src="deck-stage.js"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # peakstate-deck
 
-*Written from this repository's own documentation (`SKILL.md`, `reference/*.md`, `themes/peak-state`),
+*Written from this repository's own documentation (`SKILL.md`, `reference/*.md`, `slides/deck.css`),
 not from a prompt. Run `impeccable teach` to replace it with your own answers.*
 
 ## Register
@@ -30,12 +30,13 @@ Three moments, and they are not alike:
    taught.
 3. **Presenting**, in front of people. Wants no chrome at all, and gets performance mode.
 
-## Brand
+## Chrome palette
 
-Peak State Global. Charcoal and bone, one accent (burnt sienna), one signal (peak gold, used at most
-twice per surface). Spectral for display and body, Inter for UI chrome, JetBrains Mono for labels,
-codes and anything the reader might type. Sentence case everywhere except eyebrows and chapter marks.
-No emoji in brand output, calm motion only.
+The chrome has its own palette, separate from any deck's look: warm near-black panels, bone text,
+one accent (a rust red) for the active state and one signal (a muted gold) for highlights, used
+sparingly. Inter for UI text, JetBrains Mono for counts, codes and anything the reader might type.
+Sentence case everywhere. No emoji, calm motion only. A deck's own look comes from the built-in
+default or the user's brand kit, never from the chrome.
 
 ## Strategic principles
 

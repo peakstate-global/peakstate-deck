@@ -30,9 +30,10 @@ reference standard for how visual a deck should be.
   single-panel cartoon, a ranked chart, an object (a riveted black box), a dictionary entry, a
   rubber stamp, mock artefacts and big numbers. No two neighbouring slides use the same kind.
 - **Plan the metaphors as a set.** A metaphor can come back later as a callback. In the reference
-  deck, robot monkeys sort gems from rubbish in a pit under the stage early on, and at the close the
-  same monkey sorts nuggets from rubbish on a conveyor. The problem board has sienna top rules and
-  the answer board has the same tiles with gold rules.
+  deck, a recurring illustrated character carries the metaphor: early on it sorts valuable items
+  from rubbish in a pit, and at the close the same character sorts them again on a conveyor. The
+  problem board has the kit's accent colour on its top rules and the answer board has the same
+  tiles with the accent colour on its rules, so the palette echoes the callback.
 
 ## Motion rules
 
@@ -164,7 +165,7 @@ Write `Motion: none` when the slide is still. A deck where every slide says `non
 has not asked the question.
 
 Emit the motion line onto the slide too, so a grader who sees only a screenshot knows what moves
-and why. `/draft-eval` reads it and scores whether the motion carries the point:
+and why. `/draft-eval`, when installed, reads it and scores whether the motion carries the point:
 
     <section data-motion="the numbers shake in proportion to their rate, then go still">
 

@@ -52,9 +52,14 @@ jobs:
       - name: deck init scaffolds a deck that builds
         run: |
           python3 bin/deck init /tmp/deck-ci
-          cd /tmp/deck-ci
-          python3 build.py
-          test -s index.html
+          (cd /tmp/deck-ci && python3 build.py && test -s index.html)
+          # A brand kit outside the clone, found by name in a temporary config folder.
+          export XDG_CONFIG_HOME=$(mktemp -d)
+          mkdir -p "$XDG_CONFIG_HOME/peakstate-deck/themes"
+          cp -R tests/fixtures/kit "$XDG_CONFIG_HOME/peakstate-deck/themes/tidewell"
+          python3 bin/deck init /tmp/deck-ci-kit --theme tidewell
+          cmp tests/fixtures/kit/theme.json /tmp/deck-ci-kit/theme.json
+          (cd /tmp/deck-ci-kit && python3 build.py && test -s index.html)
 
       - uses: actions/setup-node@v4
         with:

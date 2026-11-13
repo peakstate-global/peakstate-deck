@@ -3,7 +3,11 @@
 *Split out of `SKILL.md`. Open this when you are running the exporter, changing it, or a deck came
 back from PowerPoint wrong.*
 
-    python3 slides/export-pptx.py --deck /abs/path/to/index.html --theme peak-state
+    python3 slides/export-pptx.py --deck /abs/path/to/index.html
+
+If `python3` lacks `python-pptx`, the script re-runs itself under the venv the README's "PowerPoint
+export prerequisites" installs, and it finds playwright in that install's `node` folder unless
+`DECK_NODE_ROOT` names another.
 
 The deck measures its own laid-out geometry under `?export` and emits it as JSON; the script turns
 that into real PowerPoint shapes, so the text is editable rather than a picture of text.
@@ -105,7 +109,7 @@ in the master and every slide on that layout follows.
 - **Ink is chosen per ground, never inherited.** The mark is lifted from one slide, so whatever
   colour it wore there is wrong for at least one layout: the deck's lightest surface on a dark
   ground, its darkest on a light one.
-- **Collect the whole mark before you stop looking.** A title slide may show the diamond and hide
+- **Collect the whole mark before you stop looking.** A title slide may show the symbol and hide
   the words; a collector that stops at the first slide carrying any mark takes half of it.
 - **The page number is a field**, not typed text, so inserting a slide renumbers the rest.
 

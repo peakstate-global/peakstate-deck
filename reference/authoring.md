@@ -100,7 +100,7 @@ so the slide states the position plainly and the note stays an instruction to th
 - **The payload never carries it.** It is not a note, so it never rides back in `noteEdits[]`.
 - **`export-pptx.py` appends it** to PowerPoint's notes field after a rule, under
   `SOURCES (NOT SPOKEN):`, so the presenter can tell it from the note.
-- **`/draft-eval` reads it** as the unit's `sources`: a number sourced there counts as sourced.
+- **`/draft-eval`, when installed, reads it** as the unit's `sources`: a number sourced there counts as sourced.
 
 Optional. A deck with no `#slide-sources` block behaves exactly as before.
 

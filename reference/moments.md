@@ -2,7 +2,7 @@
 
 *Split out of `SKILL.md`. Open this file when you build or review the moments a deck's arc sheet planned.*
 
-`/narrative-arc` decides the moments before any slide exists: the throughline, each slide's move and its line, the peak, the last 60 seconds, the open loop, the S.T.A.R. moment (Something They'll Always Remember), the stories, the credibility story, the light moments and, only when a true story serves the throughline, the optional "I was wrong" beat. This file says how to build each one on slides and how to mark it in the notes. `/draft-eval`'s moments group checks the result.
+`/narrative-arc`, when installed, decides the moments before any slide exists: the throughline, each slide's move and its line, the peak, the last 60 seconds, the open loop, the S.T.A.R. moment (Something They'll Always Remember), the stories, the credibility story, the light moments and, only when a true story serves the throughline, the optional "I was wrong" beat. This file says how to build each one on slides and how to mark it in the notes. `/draft-eval`'s moments group checks the result when it is installed.
 
 ## Stage directions in the speaker notes
 
@@ -66,4 +66,4 @@ The last presented slide uses the title slide's layout, colours and image, and c
 
 ## Checking
 
-Run `/draft-eval` on the deck. Its moments group checks `star_moment`, `peak_and_end`, `five_moves`, `people_and_stories`, `wrong_and_credible`, `light_moment` and `stage_directions`, and the group passes only when every check passes. A `[MOVE: x]` tag is a claim the grader checks against what the slide says, not proof.
+If `/draft-eval` is installed, run it on the deck; if it is not, say it is missing and continue. Its moments group checks `star_moment`, `peak_and_end`, `five_moves`, `people_and_stories`, `wrong_and_credible`, `light_moment` and `stage_directions`, and the group passes only when every check passes. A `[MOVE: x]` tag is a claim the grader checks against what the slide says, not proof.

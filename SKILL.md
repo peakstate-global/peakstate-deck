@@ -1,6 +1,6 @@
 ---
 name: peakstate-deck
-description: Build an HTML slide deck, review it in the browser, and export it to PowerPoint with editable text. Use when authoring or editing a deck, when delivering a deck the reader is meant to comment on, when a deck comment payload comes back, or when a deck needs a .pptx or a print-ready PDF. Pairs with html-brief, which does the review half for documents.
+description: Build an HTML slide deck, review it in the browser, and export it to PowerPoint with editable text. Use when authoring or editing a deck, when delivering a deck the reader is meant to comment on, when a deck comment payload comes back, or when a deck needs a .pptx or a print-ready PDF. Pairs with peakstate-brief, which does the review half for documents.
 ---
 
 # peakstate-deck
@@ -9,30 +9,54 @@ One tool, three jobs: **author** a deck as a single standalone HTML file, **revi
 the browser and round-trip the comments, **export** it to native PowerPoint.
 
 **The HTML deck is the deliverable.** Export to PowerPoint only when the user asks for a `.pptx` in
-that request. Never add an export step to a build, and never send a `.pptx` unasked.
+that request. Never add an export step to a build, and never send a `.pptx` unasked. The first
+`.pptx` request installs the export prerequisites (`README.md`, "Installing with Claude Code").
 
 A deck is one `index.html` with `deck-stage.js` and `deck-tools.js` beside it. No build step, no server, no
 framework. `index.html?audit` reports per-slide overflow; "all N slides clean" is the pass.
 `index.html?motion` reports when each slide's motion settles (`reference/motion-and-metaphor.md`).
-**Run `/draft-eval` at two moments only:** after the first full draft of a deck, and after a major
-change. A change is major when more than 20% of the slides are new, or more than 20% of the slides
+**If `/draft-eval` is installed, run it at two moments only:** after the first full draft of a deck,
+and after a major change; if it is not installed, say it is missing and continue. A change is major when more than 20% of the slides are new, or more than 20% of the slides
 are significantly changed by the user (their claim, argument or evidence, not only their wording or
 layout). Judge whether a change is major and state the call in one line, so the user can override
 it. After any smaller change, run only the overflow audit (`index.html?audit`), the em-dash check
-and, if a claim changed, the SOURCED re-audit of that claim, then stop. If a small round still needs a check, score only the audit set: the changed slides plus a
-few unchanged ones as a baseline, which `score_round.py audit` selects.
+and, if a claim changed and `/sourced` is installed, the SOURCED re-audit of that claim, then stop. If a small round still needs a check and `/draft-eval` is installed, score only the audit set: the changed slides plus a
+few unchanged ones as a baseline, which its `score_round.py audit` selects.
 
 | Job | Start here |
 |---|---|
 | Author or edit a deck | `slides/README.md` — the runtime, the surfaces, the five treatments |
-| Scaffold a new deck | `python3 bin/deck init <folder> --theme peak-state` |
-| Export to PowerPoint, only when asked | `python3 slides/export-pptx.py --deck /abs/path/index.html --theme peak-state`, then `reference/powerpoint-export.md` |
+| Scaffold a new deck | `python3 bin/deck init <folder>` |
+| Export to PowerPoint, only when asked | `python3 slides/export-pptx.py --deck /abs/path/index.html`, then `reference/powerpoint-export.md` |
 | Add the review layer | The next section |
 | Work a returned payload | `reference/the-payload.md` |
 
+## Read the brand kit first
+
+**Before authoring or editing a deck, read its brand kit's `DESIGN.md` and `rules.md`.** The kit
+sets the look and the house rules; this file sets the craft rules that suit any brand.
+
+- **Which kit:** for an existing deck, the kit that `theme.json` beside `index.html` names. For a new
+  deck, the active kit in `config.json` in the config folder (`$XDG_CONFIG_HOME/peakstate-deck`,
+  else `~/.config/peakstate-deck`), which `bin/deck init` copies in.
+- **Where the files live:** `<config>/themes/<name>/`, where `<config>` is the config folder above.
+  For a new deck, `<name>` is the kit given by `--theme` at init, else the active kit in `config.json`.
+  For an existing deck, `<name>` is the `name` in the deck's `theme.json`.
+  If that folder is not on this machine (a shared deck), treat it as No kit for rules, but keep the deck's existing CSS.
+- **The kit wins on conflict.** Where the kit's `DESIGN.md` or `rules.md` and this file disagree,
+  follow the kit.
+- **No kit:** the built-in default look and this file alone apply.
+
+## First-run setup
+
+**When a deck request arrives and the config folder does not exist, read `reference/setup.md`
+before building anything.** It offers three choices in one line, and two of them build the deck
+first, so setup never blocks the deck. Read it too when the user says "change my brand", "set up
+my brand" or "add a brand kit".
+
 ## Design the arc before the slides
 
-**Run `/narrative-arc` before authoring or reflowing a deck, and build nothing until its spine is approved.** It names the audience, the job the deck does for them, the beliefs and pains they arrive with, the shift, and each section's premise with the move it makes.
+**If `/narrative-arc` is installed, run it before authoring or reflowing a deck, and build nothing until its spine is approved; if it is not installed, say it is missing and continue.** It names the audience, the job the deck does for them, the beliefs and pains they arrive with, the shift, and each section's premise with the move it makes.
 
 - **The slides carry the claims; the speaker notes carry the narrative.** Every note says what its slide claims and gives the line that carries the room from the last slide into this one and on to the next.
 - **The first slide of each section names the belief it answers.**
@@ -46,13 +70,14 @@ few unchanged ones as a baseline, which `score_round.py audit` selects.
 - **Every presented content slide's note opens with its move and its line:** `[MOVE: confirm] "I know you're thinking X, and you're right."` The five tags are `encourage`, `justify`, `allay`, `confirm` and `on your side`.
 - **Stage directions in square brackets:** `[MOVE: x]`, `[PAUSE]` (at least at the peak and after the S.T.A.R. moment), `[ASK]`, `[STORY]` and `[LIGHT]`.
 - **The patterns:** the emulated live demonstration (a full simulation: a console that streams agent output too fast to read for the length of the riff, a pointer that clicks the produced link, an automatic advance to the result, then the question; skip on a key, stop on leave, still under reduced motion), the pattern-break slide (one slide unlike the rest), physical scale, guess-then-reveal (two per talk), live scoring in the room, the repeatable line per section, the confession slide (optional, only when the arc sheet uses one), and the closing slide that mirrors the title.
-- **The check is `/draft-eval`'s moments group:** `star_moment`, `peak_and_end`, `five_moves`, `people_and_stories`, `wrong_and_credible`, `light_moment` and `stage_directions`. Every check must pass.
+- **The check is `/draft-eval`'s moments group, when `/draft-eval` is installed** (if it is not, say it is missing and continue): `star_moment`, `peak_and_end`, `five_moves`, `people_and_stories`, `wrong_and_credible`, `light_moment` and `stage_directions`. Every check must pass.
 
-## Every deck ships with a SOURCED sidecar
+## Audit the claims with SOURCED
 
-**A deck is not finished until `index.html.sourced` sits beside `index.html`.** A deck makes claims
-for a room to rely on, so every deck is audited with `/sourced audit <deck>/index.html`, whatever
-its size and whether or not it is presented. The sidecar records each load-bearing claim on the
+**When `/sourced` is installed, a deck is not finished until `index.html.sourced` sits beside
+`index.html`.** If it is not installed, say it is missing and continue. A deck makes claims for a
+room to rely on, so every deck is audited with `/sourced audit <deck>/index.html`, whatever its
+size and whether or not it is presented. The sidecar records each load-bearing claim on the
 slides and in the speaker notes, the source it rests on with the verbatim sentence and its
 locator, and the four-label provenance block.
 
@@ -111,19 +136,19 @@ The decisions live on a hidden terms slide early in the deck:
 
 ## Design rules
 
-**Judge every slide as a first-time audience member would, and make every word, mark and model earn its place.** `/draft-eval` grades these; hold a revision against them before the reader sees it.
+**Judge every slide as a first-time audience member would, and make every word, mark and model earn its place.** `/draft-eval` grades these when it is installed; hold a revision against them before the reader sees it.
 
 - **A title states the slide's takeaway, in plain words.** It says what the audience should conclude, the one thing they would repeat to a colleague, never a compressed summary of the evidence on the slide. Test it: read the title alone; if it needs the chart to make sense, or packs several findings into one clause, rewrite it as the conclusion. The evidence and its caveats go on the slide, in the notes and in the sources field.
 - **Words.** A first-time reader takes the point with nothing to guess. A question or label makes sense without the speaker. List items share one form; questions in a sequence share one polarity. A non-plain term is introduced early, visually, with a metaphor or example, then may be reused, ideally with context clues. A loaded word ("kill") has its object in view.
 - **Economy and authority.** Every word and element serves the message: no meta-commentary, reading instructions or "this, not that". The slide states the position plainly; no hedge on its face. A text-heavy slide moves its story to the speaker notes.
 - **Sources field.** Sources, limits and "not tested" caveats go in `#slide-sources`, never in the spoken note (`reference/authoring.md`, *Sources field*).
 - **Cite on the slide too.** Every slide that shows a number or a study carries a short source label on its face (author or organisation and year, for example "Brynjolfsson et al., 2025"), small and consistent in position across the deck. The full reference and its limits stay in the sources field and the references slide.
-- **Shape.** Name the shape of the idea, then draw it: a journey is a map, a spread a curve, a filter a funnel, a ladder shows every rung. Draw it true to the thing (contours never cross, paths wind) and recognisable at a glance, never a photo-real imitation. The mascot appears only when it plays a part.
+- **Shape.** Name the shape of the idea, then draw it: a journey is a map, a spread a curve, a filter a funnel, a ladder shows every rung. Draw it true to the thing (contours never cross, paths wind) and recognisable at a glance, never a photo-real imitation.
 - **Encodings.** Every colour, line, circle and position means something the slide or notes make clear. Use the fewest encodings the story needs. Nothing the idea needs is cut off. A chart says what it measures, for whom, and its takeaway; a recommendation says what to do and when, set apart from the findings.
 - **Frameworks.** One model per idea. Ids use a letter that stands for something and appear wherever the item does. Each framework has one look, used identically everywhere and unlike every other framework's.
 - **Devices.** One device per slide, varied across the deck; curiosity counts. Narrative beats strict flow, and a case may sit in the notes.
 - **Sequence.** The background changes between sections, not between every slide; inside a section, flip one only where the reader named two neighbours as too similar. A morph pair shares one background, because it is one idea moving, and on a morph the rest of the slide waits until the travellers land (the runtime does this). Mark with `data-morph-lead` anything the reader must see before the shapes move, such as the outline a shape leaves behind; key anything that should hold still through the morph, such as shared axes, with one `data-morph` on a wrapper. A removal the reader asked for once is not a licence to remove a related element later. A slide that carries several parts reveals them one click at a time, in teaching order.
-- **Tables** pad every cell on both sides, so no text sits flush against a neighbouring cell's fill. It is the theme's standard table style (`themes/peak-state/treatments.css`), not a per-deck fix.
+- **Tables** pad every cell on both sides, so no text sits flush against a neighbouring cell's fill. It is the standard table style (`slides/deck.css`), not a per-deck fix.
 - **Icons** come from one consistent, recognisable set across the deck, or are drawn in the deck's own illustration style, never drawn ad hoc.
 - **Evidence** is current: an evidence slide uses this year's data where it exists, with each figure's limit in the sources field. A deck that reuses another deck's material carries that deck's references and research with it.
 - **Journey.** Every slide's job in the journey is visible: a close-up says which item it belongs to, and an evidence slide says what it proves.
@@ -137,7 +162,7 @@ For every slide, answer four questions in the generator, as a comment above the 
 
 - **What is the one point?** One sentence.
 - **What is its visual metaphor?** A protest crowd for objections, a seesaw for a shift in weight, a dial for degrees of autonomy, a road for a journey, a stamp for a verdict.
-- **How does it move, and when does it settle?** One sentence on what the motion says, or `Motion: none`, and the settle time. Emit the sentence as `data-motion` on the section, so `/draft-eval` can score it.
+- **How does it move, and when does it settle?** One sentence on what the motion says, or `Motion: none`, and the settle time. Emit the sentence as `data-motion` on the section, so `/draft-eval`, when installed, can score it.
 - **How can we show it?** Choose the highest rung that is feasible:
   1. **The content sits inside the metaphor.** The objections are the words on the protest placards; the cheap work and the precious work sit on the two ends of the seesaw; the four levels of autonomy are the marks on the dial. This is the goal.
   2. **An illustration** that carries the metaphor, with the text beside it.
@@ -148,10 +173,10 @@ For every slide, answer four questions in the generator, as a comment above the 
 
 - **One visual per slide, for its main point only.** If a slide makes two points, illustrate the main one and leave the other as text. A second visual competes with the first and turns the slide into clutter.
 - **A visual must aid comprehension or add joy.** An icon placed because the space looked empty does neither. Section dividers and closing lines usually need no visual: a strong sentence stands alone.
-- **Icons come from the house icon set by default:** a fine hand-drawn ink line, a light gold shape-matched wash offset down and right on light backgrounds, and a cream line with no wash on dark backgrounds. Pick from the deck owner's icon library; render any missing subject as a sheet and slice it (the gen-image skill, "Icons: render a sheet, then slice"). Never hand-draw icons in SVG. A stock set such as Lucide is a fallback only when no house icon exists and no render is possible, and the slide says so in its sources field.
-- **Never use generic person pictograms** (a circle head floating over a shoulder arc, as in stock isotype charts). Show people with the house icon set's person icon or the illustration style, or show the count another way.
+- **Icons come from the kit's icon style; with none, one stock set such as Lucide, named in the sources field.**
+- **Never use generic person pictograms** (a circle head floating over a shoulder arc, as in stock isotype charts). Show people with the kit's person icon if the kit has one; otherwise use the deck's illustration style, never a stock person icon. Or show the count another way.
 - **Never use the left-border card** (a box with a coloured stripe down its left edge and rounded corners). It is the most over-used pattern in generated slides. A cell or callout that needs separating takes a background fill alone.
-- **Illustrations use the house style:** the robot-monkey line art in the `peak-state-design` skill (`assets/characters/robot-monkey/README.md`, drawn with Nano Banana 2 from its two reference images). The robot monkey is always the AI and the people are always people. One hero image per deck may break the style when the moment calls for it, such as a full-slide cartoon at the turning point.
+- **Illustrations follow the active kit's style (`rules.md`); with none, choose one style and hold it across the deck.**
 - **People in illustrations represent men and women in balance across each deck.** Check the cast before rendering a new drawing, and choose the person's gender to keep the deck balanced. A drawing that must show a specific role (a customer) makes that role readable from what the person holds or does, not from a label.
 - **Charts show what the data says, and only that.** Plot only the points the source gives. Label every value, and say on the slide when a line joins only two measured points.
 - **A chart explains itself.** It says what was measured, for whom, compared with what, and in what unit, in plain words on the chart: "increase in customer issues resolved per hour after agents got the assistant", never a bare "14%". Each bar or line names the group it shows. If a first-time reader could misread who got the treatment or what the percentage is of, the chart is not finished.
@@ -160,14 +185,14 @@ For every slide, answer four questions in the generator, as a comment above the 
 - **Content sits centred between the slide heading and the footer.** When a slide loses content (notes moved off it, a column cut), re-centre what is left rather than leaving a hole underneath. `?audit` enforces it: a BALANCE line means one side has more than 120px more empty space than the other. A layout that is top-aligned on purpose, such as a reference list whose pages must line up, carries `data-balance="off"` on its section.
 - **A click always lands what is still playing, then does its own work.** The runtime finishes every running animation and transition on the slide at its end state before a click builds or moves on, as PowerPoint does, so a presenter who clicks ahead never waits for an earlier animation to catch up. Never build motion that depends on finishing on its own clock (a timer, an `animationend` handler that starts the next step): it must survive being fast-forwarded. One click is one sequence: give builds that belong to one click the same `data-build="<key>"` and order them with `transition-delay`, rather than spending a click on each part.
 - **Aim for a visual on nine presented slides in ten, and about 25 words or fewer on a slide that is not doing technical heavy lifting.** A technical slide states its rule in one line and puts the detail inside an artefact (a log, a scorecard, a label) that arrives on the next click.
-- **Illustrations hold a consistent style across a deck** (one illustrator, one set of recurring characters). Name in the attribution the model that drew them and how (for example, "Nano Banana 2 drew the illustrations from the house reference drawings"); "AI-generated" alone is not enough.
+- **Illustrations hold a consistent style across a deck** (one illustrator, one set of recurring characters). One hero image per deck may break the style when the moment calls for it, for example a full-slide image at the turning point. Name in the attribution the model that drew them and how (for example, "Nano Banana 2 drew the illustrations from two reference drawings"); "AI-generated" alone is not enough.
 
 **Icons in a row.**
 
 - **Icons in a row share one height**, measured on the drawn ink, not on the padded square.
 - **Each icon and its label are centred in their column.**
 - **Labels are top-aligned**, so every label in the row starts on one line whatever the icon above it.
-- **A sequence uses hand-drawn arrows in the icon style between its steps**, never plain stroked arrows.
+- **A sequence uses arrows in the deck's icon style between its steps**, never plain stroked arrows.
 - **A way-to-deploy card, or any framework card, uses an illustration, never an icon.**
 
 ## Every word on a slide earns its place
@@ -183,7 +208,7 @@ slide is noise. It competes with the content and makes the slide harder to read.
 
 ## The review layer
 
-`html-brief` gives a document selection comments and a Copy-responses payload.
+`peakstate-brief` gives a document selection comments and a Copy-responses payload.
 This does the same for a **slide deck**: select text on a slide, write a note,
 hit Copy, paste the JSON into chat. The payload says which build was reviewed
 and where every note belongs, so no other context is needed.
@@ -313,7 +338,7 @@ on it — the user has read that round already.
 
 ## Branding on and off
 
-The reader can hide the branding on every slide: the diamond control in the bar, or **Show
+The reader can hide the branding on every slide: the branding control in the bar, or **Show
 branding** in the overview. It is a view setting, saved with the deck's other review state.
 
 The toggle only puts `deck-nobrand` on `<html>`. **What counts as branding is the deck's own
@@ -356,3 +381,4 @@ Open one when its line is true of the work in front of you; never preload them.
 | `reference/motion-and-metaphor.md` | You are planning, building or reviewing a deck's visuals, animation or transitions |
 | `reference/internals.md` | You edited `deck-comments.js` and need to know what must still hold |
 | `reference/powerpoint-export.md` | You are exporting to PowerPoint, changing the exporter, or a deck came back from it wrong |
+| `reference/setup.md` | The config folder does not exist on a deck request, or the user asks to change or add a brand kit |

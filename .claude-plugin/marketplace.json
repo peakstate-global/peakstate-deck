@@ -1,0 +1,15 @@
+{
+  "name": "peakstate-deck",
+  "description": "The peakstate-deck skill: HTML slide decks, browser review and PowerPoint export.",
+  "owner": {
+    "name": "Peak State Global",
+    "url": "https://github.com/peakstate-global"
+  },
+  "plugins": [
+    {
+      "name": "peakstate-deck",
+      "source": "./",
+      "description": "Build an HTML slide deck, review it in the browser, and export it to PowerPoint with editable text."
+    }
+  ]
+}

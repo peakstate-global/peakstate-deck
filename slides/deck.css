@@ -1,0 +1,350 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   deck.css: the engine's own stylesheet and the built-in default look.
+
+   `bin/deck init` copies this file into every deck as `deck.css`. With no kit
+   loaded a deck looks like Keynote's Basic White: a white surface, near-black
+   bold system sans, one blue accent, and a footer that carries the page number
+   only. A brand kit changes the look in two ways:
+
+     1. Brand hooks. A kit sets any of the --brand-* variables below and every
+        rule here picks the value up. The list is the contract a kit writes to;
+        slides/README.md documents it.
+     2. Selectors. A kit's stylesheets load after this one, so a kit can
+        override any treatment selector at equal specificity.
+
+   Base element rules sit inside :where() at zero specificity, so a kit's plain
+   element rules (h1, p, blockquote) win without a fight.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --deck-bg:          var(--brand-bg,          #FFFFFF);
+  --deck-bg-2:        var(--brand-bg-2,        #F5F5F7);
+  --deck-bg-3:        var(--brand-bg-3,        #F5F5F7);
+  --deck-bg-dark:     var(--brand-bg-dark,     #000000);
+  --deck-fg:          var(--brand-fg,          #1D1D1F);
+  --deck-fg-2:        var(--brand-fg-2,        #6E6E73);
+  --deck-fg-dark:     var(--brand-fg-dark,     #F5F5F7);
+  --deck-fg-dark-2:   var(--brand-fg-dark-2,   #A1A1A6);
+  --deck-accent:      var(--brand-accent,      #0071E3);
+  --deck-hairline:    var(--brand-hairline,    #D2D2D7);
+  --deck-hairline-dark: var(--brand-hairline-dark, #333336);
+  --deck-font-display: var(--brand-font-display,
+                         -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", sans-serif);
+  --deck-font-body:   var(--brand-font-body,
+                         -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", sans-serif);
+  --deck-font-mono:   var(--brand-font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+  --deck-weight-title: var(--brand-weight-title, 700);
+  --deck-weight-body:  var(--brand-weight-body, 400);
+}
+
+/* ── the 1920x1080 canvas. deck-stage.js scales it to the viewport. ──────────
+   Each surface sets three local tokens the treatments read, so one rule works
+   on a light slide and a dark one: --ink (text), --ink-2 (secondary text) and
+   --line (dividers). */
+deck-stage > section {
+  width: 1920px; height: 1080px;
+  box-sizing: border-box; position: relative; overflow: hidden;
+  padding: 96px 128px;
+  display: flex; flex-direction: column;
+  --ink: var(--deck-fg); --ink-2: var(--deck-fg-2); --line: var(--deck-hairline);
+  --mark-tone: var(--deck-bg-2);
+  background: var(--deck-bg); color: var(--ink);
+  font-family: var(--deck-font-body); font-weight: var(--deck-weight-body);
+  -webkit-font-smoothing: antialiased;
+}
+deck-stage > section.sand { background: var(--deck-bg-2); --mark-tone: var(--deck-bg); }
+/* .meta is the dark surface the reference and provenance treatments expect. */
+deck-stage > section:is(.dark, .meta, .exercise) {
+  --ink: var(--deck-fg-dark); --ink-2: var(--deck-fg-dark-2); --line: var(--deck-hairline-dark);
+  --mark-tone: var(--deck-hairline-dark);
+  background: var(--deck-bg-dark); color: var(--ink);
+}
+/* A kit's plain h1 or p rule may set a light-surface colour. On a dark slide
+   that is invisible text, so dark surfaces hand their colour down. */
+/* Only unclassed elements: a classed one (.lead, .cap) keeps its own colour. */
+:is(.dark, .meta, .exercise) :is(h1, h2, h3, h4, p, li, blockquote):not([class]) { color: inherit; }
+
+/* ── base elements, zero specificity ─────────────────────────────────────── */
+:where(deck-stage > section) :where(h1, h2, h3, h4) {
+  font-family: var(--deck-font-display); font-weight: var(--deck-weight-title);
+  color: inherit; margin: 0; letter-spacing: -0.015em; text-wrap: balance;
+}
+:where(deck-stage > section) :where(p, li) {
+  font-family: var(--deck-font-body); color: inherit; text-wrap: pretty;
+}
+:where(deck-stage > section) :where(p) { margin: 0; }
+:where(deck-stage > section) :where(blockquote) { margin: 0; padding: 0; border: 0; }
+:where(deck-stage > section) :where(code, kbd, samp, pre, .mono) {
+  font-family: var(--deck-font-mono); font-size: 0.92em;
+}
+:where(deck-stage > section) :where(a) { color: inherit; text-decoration-color: var(--deck-accent); }
+:where(deck-stage > section) :where(hr) { border: 0; border-top: 1px solid var(--line); margin: 48px 0; }
+
+/* ── type roles ─────────────────────────────────────────────────────────
+   Sizes only. Family and weight come from the element rules above (or a kit's
+   own h1, h2 and p rules), so a kit restyles every title by setting two hooks. */
+.display { font-size: 144px; line-height: 1.02; letter-spacing: -0.03em; margin: 0; }
+.title, .h1 { font-size: 104px; line-height: 1.05; letter-spacing: -0.025em; margin: 0; }
+.h2 { font-size: 72px; line-height: 1.1; letter-spacing: -0.02em; margin: 0; }
+.subtitle, .lead { font-size: 40px; line-height: 1.35; color: var(--ink-2); margin: 0; }
+.body { font-size: 28px; line-height: 1.5; }
+.muted { color: var(--ink-2); }
+.accent { color: var(--deck-accent); }
+.rule { width: 132px; height: 4px; background: var(--deck-accent); margin: 48px 0; }
+
+/* ── furniture: no header strip; the footer carries the page number ────────
+   Write the number as <span data-slide-number></span>. deck-stage.js fills it
+   with the slide's position, so hiding or moving a slide never leaves a stale
+   number. A lone child centres, as Keynote does; two children sit at the ends. */
+.slide-foot {
+  position: absolute; left: 128px; right: 128px; bottom: 56px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--deck-font-body); font-size: 20px; color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.slide-foot > :only-child { margin: 0 auto; }
+
+/* ── the title slide: centred, as Basic White opens ────────────────────────── */
+.title-block { margin: auto 0; text-align: center; display: flex; flex-direction: column;
+  align-items: center; gap: 40px; }
+.title-block .title, .title-block .display { max-width: 1500px; }
+.title-block .subtitle { max-width: 1200px; }
+
+/* ── section divider ──────────────────────────────────────────────────── */
+.divider { margin: auto 0; }
+.divider .kicker { font-size: 32px; color: var(--deck-accent); margin: 0 0 28px; }
+
+/* ── slide heading for content slides ─────────────────────────────────── */
+.slide-title { font-size: 72px; line-height: 1.1; letter-spacing: -0.02em; margin: 0; max-width: 1500px; }
+
+/* ═══ Treatments: recurring slide shapes ═══════════════════════════════════
+   Each is a different SHAPE rather than a different colour, so a room can name
+   the slide type from the back before reading a word. Markup is in
+   slides/README.md and slides/example.html. */
+
+/* ── full-bleed pull quote: the mark is a lifted background tone ─────────── */
+.pull-slide { flex: 1; display: flex; flex-direction: column; justify-content: center;
+  position: relative; }
+.pull-slide .mark {
+  position: absolute; left: 0; top: 50%; transform: translateY(-52%);
+  font-family: var(--deck-font-display); font-weight: var(--deck-weight-title);
+  font-size: 700px; line-height: 1; letter-spacing: -.06em; color: var(--mark-tone);
+  pointer-events: none;
+}
+.pull-slide blockquote {
+  margin: 0 0 0 420px; padding: 0; border: 0; font-style: normal; color: inherit;
+  font-family: var(--deck-font-display); font-weight: var(--deck-weight-title);
+  font-size: 64px; line-height: 1.16; letter-spacing: -.02em; max-width: 1120px;
+  position: relative;
+}
+.pull-slide .rule { width: 132px; height: 4px; background: var(--deck-accent);
+  margin: 48px 0 28px 420px; }
+.pull-slide .attrib {
+  margin: 0 0 0 420px; padding: 0; border: 0; max-width: 1120px;
+  font-family: var(--deck-font-body); font-size: 24px; line-height: 1.6; color: var(--ink-2);
+}
+
+/* ── the specimen quote: for a definition, where the word is the point ──── */
+.specimen-q { flex: 1; display: flex; flex-direction: column; justify-content: center;
+  position: relative; }
+.specimen-q .word { font-family: var(--deck-font-display); font-weight: var(--deck-weight-title);
+  font-size: 232px; line-height: .9; letter-spacing: -.045em; margin: 0; }
+.specimen-q .pos { font-style: italic; font-size: 40px; color: var(--ink-2); margin: 22px 0 0; }
+.specimen-q .hair { height: 1px; background: var(--line); margin: 44px 0 0; }
+.specimen-q .row { display: grid; grid-template-columns: 1fr 400px; gap: 80px; margin-top: 52px; }
+.specimen-q .def { font-size: 48px; line-height: 1.34; margin: 0; }
+.specimen-q .def em { font-style: normal; color: var(--deck-accent);
+  box-shadow: 0 2px 0 var(--deck-accent); }
+.specimen-q .src { font-size: 20px; line-height: 1.7; color: var(--ink-2);
+  border-left: 2px solid var(--deck-accent); padding-left: 28px; }
+.specimen-q .no { font-size: 20px; color: var(--ink-2); margin: 48px 0 0;
+  font-variant-numeric: tabular-nums; }
+
+/* ── the stat wall: one number owns the slide, the others hang in a margin ─ */
+.statwall { display: grid; grid-template-columns: 1.04fr 1fr; gap: 0;
+  align-content: start; height: 100%; }
+.statwall .hero { padding-right: 72px; }
+.statwall .hero .big { font-family: var(--deck-font-display); font-weight: var(--deck-weight-title);
+  font-size: 258px; line-height: .86; letter-spacing: -.045em; color: var(--deck-accent); }
+.statwall .hero .chip { display: inline-block; margin-top: 22px; padding: 9px 18px;
+  font-size: 20px; font-weight: 600; color: var(--deck-bg); background: var(--deck-accent);
+  border-radius: 6px; }
+.statwall .hero .cap { font-size: 30px; line-height: 1.35; margin-top: 28px; }
+.statwall .hero .src { font-size: 16px; color: var(--ink-2); margin-top: 18px; }
+.statwall .side { border-left: 1px solid var(--line); padding-left: 56px; }
+.statwall .side > div + div { margin-top: 48px; padding-top: 48px;
+  border-top: 1px solid var(--line); }
+.statwall .side .big { font-family: var(--deck-font-display); font-weight: var(--deck-weight-title);
+  font-size: 108px; line-height: .94; letter-spacing: -.035em; color: var(--ink); }
+.statwall .side .cap { font-size: 23px; line-height: 1.4; margin-top: 14px; }
+.statwall .side .src { font-size: 15px; color: var(--ink-2); margin-top: 12px; }
+.statwall .cap { color: var(--ink-2); }
+
+/* ── the board: seven equal columns, tops and bottoms aligned ──────────────
+   Same height every column, so it reads as one manufactured thing rather than
+   seven boxes of ragged content. */
+.board { display: grid; grid-template-columns: repeat(7, 1fr); gap: 16px;
+  align-content: center; grid-auto-rows: min-content; height: 100%; }
+.board .tile { align-self: stretch; display: flex; flex-direction: column;
+  background: var(--deck-bg-3); border: 0; border-top: 3px solid var(--deck-accent);
+  border-radius: 0 0 10px 10px; padding: 30px 22px 26px; }
+:is(.dark, .meta) .board .tile { background: transparent; border: 1px solid var(--line);
+  border-top: 3px solid var(--deck-accent); }
+.board .tile .l { font-family: var(--deck-font-display); font-weight: var(--deck-weight-title);
+  font-size: 60px; line-height: 1; color: var(--deck-accent); margin-bottom: 24px; }
+.board .tile .n { font-size: 28px; line-height: 1.08; margin-bottom: 14px; }
+.board .tile .bias { font-size: 15px; font-weight: 600; color: var(--ink-2); line-height: 1.5;
+  margin-bottom: 0; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.board .tile .p { font-size: 16px; line-height: 1.55; color: var(--ink-2); margin-top: 16px; }
+/* the reveal tile: name above the rule, what it addresses and the problem below */
+.board .tile.answer .rule { width: auto; height: 1px; background: var(--line); margin: 4px 0 16px; }
+.board .tile.answer .bias { border-bottom: 0; padding-bottom: 0; margin-bottom: 14px; }
+.board .tile.answer .p { margin-top: 0; color: var(--ink); }
+/* the problem board: no letters, so the statement carries the tile */
+.board.problems .tile .n { font-size: 30px; line-height: 1.14; margin-bottom: 20px; }
+.board.problems .tile .bias { border-bottom: 0; padding-bottom: 0; margin-top: auto; }
+.board .tile .bias + .p { padding-top: 0; border-top: 0; }
+
+/* ── table house style ────────────────────────────────────────────────────
+   Every table cell is padded on BOTH sides. A cell with no side padding puts
+   its text flush against the next cell's fill or rule, so two cells read as
+   one. :where() keeps it at zero specificity, so a deck may widen it but should
+   never zero it. */
+:where(deck-stage) :where(table) { border-collapse: collapse; }
+:where(deck-stage) :where(table) :where(th, td) { padding: 14px 22px; text-align: left;
+  border-bottom: 1px solid var(--line); vertical-align: top; }
+:where(deck-stage) :where(table) :where(th) { font-weight: 600; color: var(--ink-2); }
+.matrix td.move { border-left: 0; }
+.matrix td.scale { padding-left: 36px; }
+.matrix th, .matrix td { padding-right: 36px; }
+.matrix.refs td { padding: 9px 18px; font-size: 17px; }
+.matrix.refs td.own, .matrix.refs td.scale { font-size: 15px; }
+.matrix.refs td.move { font-size: 18px; }
+.matrix.refs td.scale { padding-left: 26px; white-space: nowrap; }
+.matrix.refs td.own:nth-child(4) { white-space: nowrap; }
+.matrix.refs th { padding-bottom: 8px; }
+
+/* ── the references page ───────────────────────────────────────────────────
+   APA 7 on the left, numbered, and the provenance block on the right with its
+   References line removed because this page IS that line. Every claim in the
+   deck carries a bracketed number that points here. */
+.refpage { display: grid; grid-template-columns: 1.55fr 1fr; gap: 52px;
+  align-items: start; height: 100%; align-content: start; }
+.apa { list-style: none; counter-reset: r; margin: 0; padding: 0; }
+/* APA 7 hanging indent: the first line of each entry sits flush, every later
+   line is indented. The number hangs in its own gutter to the left. Type is
+   large by default; add .dense when the page carries more than eight entries. */
+.apa li { counter-increment: r; position: relative; font-size: 21px; line-height: 1.4;
+  margin-bottom: 12px; color: var(--ink-2); padding-left: calc(46px + 1.6em); text-indent: -1.6em; }
+.apa li::before { content: counter(r) "."; position: absolute; left: 0; width: 38px;
+  text-indent: 0; text-align: right; font-variant-numeric: tabular-nums;
+  color: var(--deck-accent); }
+.apa.dense li { font-size: 15px; line-height: 1.32; margin-bottom: 6px; }
+.apa a { color: inherit; text-decoration: none; }
+.apa a:hover { color: var(--deck-accent); }
+sup.cite { font-size: .62em; color: var(--deck-accent); padding-left: 2px; vertical-align: super; }
+.refs + .pblock { margin-top: 24px; }
+
+/* ── the provenance block ──────────────────────────────────────────────────
+   Four labels: Attribution, Accountable, Limitations, References. On the
+   references page the References line is omitted, because that page is it.
+   Write wrapped pairs: <div><div class="k">..</div><div class="v">..</div></div>. */
+.pblock { display: grid; grid-template-columns: 1fr 1fr; gap: 34px 72px; }
+.pblock > div { min-width: 0; }
+.pblock .k { font-size: 20px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+.pblock .v { font-size: 22px; line-height: 1.5; color: var(--ink-2); }
+.pblock a { color: inherit; }
+.pblock code, .pblock .mono { font-family: var(--deck-font-mono); font-size: .92em; }
+.pblock.small.boxed { padding: 16px 22px; gap: 8px 22px; grid-template-columns: 134px 1fr; }
+.pblock.small.boxed .v { font-size: 14px; line-height: 1.35; }
+.pblock.small.boxed .k { font-size: 13px; }
+.pblock.small.boxed .k, .pblock.small.boxed .v { padding-top: 6px; }
+/* One column when it is the narrow half of a references page. Specificity has
+   to beat .pblock.small.boxed, which sets its own two-column grid. */
+.refpage .pblock.pblock { grid-template-columns: 1fr; gap: 18px; }
+.refpage .pblock .v { font-size: 16px; line-height: 1.4; }
+.refpage .pblock .k { font-size: 14px; margin-bottom: 4px; }
+
+/* ── exercise slides: the timebox becomes the object ───────────────────────
+   Dark surface and a dial you can read from the back of the room, so a
+   participant knows this one is theirs to do before reading a word. */
+.hd { position: relative; }
+.hd .badge { position: absolute; right: 0; top: -8px; }
+.xwrap { display: grid; grid-template-columns: 430px 1fr; gap: 90px; align-items: start;
+  height: 100%; align-content: center; }
+/* A clock, not a doughnut: the divisions are the minutes. --divs is set per exercise. */
+.xdial { position: relative; width: 430px; height: 430px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: var(--deck-accent); }
+.xdial::before { content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: repeating-conic-gradient(from -90deg, var(--deck-bg-dark) 0 1.6deg,
+    transparent 1.6deg calc(360deg / var(--divs, 10))); }
+.xdial::after { content: ""; position: absolute; inset: 34px; border-radius: 50%;
+  background: var(--deck-bg-dark); }
+.xdial b { position: relative; z-index: 1; font-family: var(--deck-font-display);
+  font-weight: var(--deck-weight-title); font-size: 168px; line-height: 1;
+  letter-spacing: -.04em; color: var(--deck-fg-dark); }
+.xunder { width: 430px; text-align: center; margin-top: 28px; font-size: 22px; line-height: 1.6;
+  color: var(--ink-2); }
+.exercise .s { color: var(--ink-2); }
+.xwrap ol { list-style: none; counter-reset: x; margin: 0; padding: 0; }
+.xwrap ol li { counter-increment: x; display: grid; grid-template-columns: 48px 1fr;
+  gap: 20px; padding: 17px 0; border-top: 1px solid var(--line); margin: 0; }
+.xwrap ol li:first-child { border-top: 0; padding-top: 0; }
+.xwrap ol li::before { content: counter(x); font-size: 22px; font-weight: 600;
+  color: var(--deck-accent); }
+.xwrap ol li b { display: block; font-weight: 600; font-size: 27px; line-height: 1.2; }
+.xwrap ol li small { display: block; grid-column: 2; font-size: 17px; line-height: 1.45;
+  color: var(--ink-2); margin-top: 7px; }
+
+/* ── the agenda page ───────────────────────────────────────────────────────
+   A contents slide, second in the deck, so a reader knows the shape before the
+   argument starts. Mark the current part with .here and it takes the accent. */
+.agenda { display: grid; grid-template-columns: 1fr 1fr; gap: 0 96px; margin-top: 56px; }
+.agenda ol { list-style: none; margin: 0; padding: 0; counter-reset: ag; }
+/* The second column continues the first, so it sets its own counter origin
+   rather than using <ol start>, which CSS counters ignore. */
+.agenda ol + ol { counter-reset: ag var(--ag-from, 2); }
+.agenda li { counter-increment: ag; display: grid; grid-template-columns: 64px 1fr;
+  gap: 0 20px; padding: 20px 0; border-top: 1px solid var(--line); }
+.agenda li::before { content: counter(ag, decimal-leading-zero); font-size: 28px;
+  font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.agenda .ag-part { font-weight: 600; font-size: 30px; line-height: 1.25; }
+.agenda .ag-note { display: block; font-weight: var(--deck-weight-body); font-size: 22px;
+  line-height: 1.4; color: var(--ink-2); margin-top: 6px; }
+.agenda li.here::before, .agenda li.here .ag-part { color: var(--deck-accent); }
+
+/* ── the definitions slide ──────────────────────────────────────────────────
+   One card per term: the term, what it means in this deck, then where the deck
+   introduces it. Large type; split across two slides rather than shrinking
+   past 22px. */
+.defs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 40px; }
+.defs-grid .term { border: 1px solid var(--line); border-radius: 12px; background: var(--deck-bg-2);
+  padding: 26px 30px; }
+:is(.dark, .meta) .defs-grid .term { background: transparent; }
+.defs-grid .term h4 { font-size: 36px; margin: 0 0 12px; }
+.defs-grid .term p { font-size: 24px; line-height: 1.4; margin: 0; }
+.defs-grid .term .foot { font-size: 17px; color: var(--ink-2); margin-top: 14px; }
+.defs-out { margin-top: 28px; font-size: 22px; color: var(--ink-2); }
+.defs-out s { color: var(--ink-2); } .defs-out b { color: var(--ink); font-weight: 600; }
+
+/* ── comparison: two columns, the second carries the accent ────────────── */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 96px; margin-top: 72px; }
+.compare > div { border-top: 2px solid var(--line); padding-top: 32px; }
+.compare > div.now { border-top-color: var(--deck-accent); }
+.compare h3 { font-size: 30px; color: var(--ink-2); }
+.compare .now h3 { color: var(--deck-accent); }
+.compare ul { list-style: none; padding: 0; margin: 32px 0 0; display: flex;
+  flex-direction: column; gap: 24px; }
+.compare li { font-size: 32px; line-height: 1.4; }
+
+/* ── three columns of content ─────────────────────────────────────────── */
+.cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 64px; margin-top: 72px; }
+.cols3 h3 { font-size: 38px; line-height: 1.2; margin: 0 0 18px; }
+.cols3 p { font-size: 26px; line-height: 1.5; color: var(--ink-2); }
+
+/* Click builds: hidden until their click, then they rise into place. */
+html:not([data-builds-all]) [data-build]:not([data-built]) { opacity: 0; transform: translateY(120px); }
+[data-build] { transition: opacity .45s ease, transform .55s cubic-bezier(.2,.9,.3,1.2); }
+html[data-builds-all] [data-build] { transition: none !important; }
+@media print { [data-build] { opacity: 1 !important; transform: none !important; } }
+@media (prefers-reduced-motion: reduce) { [data-build] { transition: opacity .2s; } }

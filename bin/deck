@@ -1,78 +1,77 @@
 #!/usr/bin/env python3
 """deck — scaffold a deck that builds and opens straight away.
 
-    bin/deck init <folder> [--theme peak-state]
+    bin/deck init <folder> [--theme <name|path|none>]
 
 A scaffolded deck is a folder of its own with no dependency back on this
-repository except the copied runtime. Without --theme it uses neutral colours
-and system fonts, so a clone with no theme still produces a readable deck.
+repository except the copied runtime and stylesheet. The theme is found in
+this order: a path to a folder holding theme.json (only when the value has a
+path separator or starts with ~ or .); a brand kit by that name in
+the config folder ($XDG_CONFIG_HOME/peakstate-deck, else
+~/.config/peakstate-deck) under themes/<name>/; with no --theme, the active
+kit named in config.json; else the built-in default look from slides/deck.css.
+--theme none forces the built-in default. A kit may ship title.html, its own
+title slide fragment, which deck init writes as slides/01-title.html as is.
 
 Python standard library only. No install step.
 """
+from __future__ import annotations
+
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-ENGINE = ("deck-stage.js", "deck-tools.js")   # copied into every scaffolded deck
-THEMES = REPO / "themes"
+ENGINE = ("deck-stage.js", "deck-tools.js", "deck.css")   # copied into every deck
 
-# The stylesheet reaches for a theme variable first and falls back to a neutral
-# value, so ONE file works with a theme and without one.
-DECK_CSS = """/* The deck's own variables. Each one asks the theme first and falls back to a
-   neutral value, so this stylesheet works with a theme loaded and without. */
-:root {
-  --deck-bg:        var(--ps-cream, #ffffff);
-  --deck-fg:        var(--ps-charcoal-ink, #16130f);
-  --deck-bg-dark:   var(--ps-charcoal, #16130f);
-  --deck-fg-dark:   var(--ps-cream-ink, #f6f2ea);
-  --deck-muted:     var(--fg-2, #6b6660);
-  --deck-accent:    var(--ps-sienna, #8a3d1a);
-  --deck-serif:     var(--font-serif, Georgia, "Times New Roman", serif);
-  --deck-sans:      var(--font-sans, system-ui, -apple-system, sans-serif);
-  --deck-mono:      var(--font-mono, ui-monospace, "SFMono-Regular", monospace);
-}
 
-/* The 1920x1080 canvas. deck-stage.js scales it to the viewport. */
-deck-stage > section {
-  width: 1920px; height: 1080px;
-  box-sizing: border-box; position: relative; overflow: hidden;
-  padding: 96px 128px;
-  display: flex; flex-direction: column;
-  background: var(--deck-bg); color: var(--deck-fg);
-  font-family: var(--deck-serif);
-}
-deck-stage > section.dark { background: var(--deck-bg-dark); color: var(--deck-fg-dark); }
+def config_dir() -> Path:
+    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "peakstate-deck"
 
-.slide-header {
-  display: flex; justify-content: space-between; align-items: center;
-  font-family: var(--deck-sans); font-size: 18px; letter-spacing: 0.16em;
-  text-transform: uppercase; color: var(--deck-muted);
-}
-.slide-foot {
-  position: absolute; left: 128px; right: 128px; bottom: 64px;
-  display: flex; justify-content: space-between;
-  font-family: var(--deck-mono); font-size: 18px; color: var(--deck-muted);
-}
-.h1   { font-weight: 300; font-size: 104px; line-height: 1.05; letter-spacing: -0.02em; margin: 0; }
-.lead { font-weight: 300; font-style: italic; font-size: 36px; line-height: 1.4;
-        color: var(--deck-muted); }
-.rule { width: 132px; height: 3px; background: var(--deck-accent); margin: 48px 0; }
-"""
 
-SLIDE = """<section data-screen-label="01 Title" class="dark">
-  <div class="slide-header"><span>Your organisation</span><span>Today</span></div>
-  <div style="margin-top:auto;">
-    <h1 class="h1" style="max-width:1500px;">The one sentence this deck is for.</h1>
-    <div class="rule"></div>
-    <p class="lead" style="max-width:1100px;">
-      Say who it is for and what they should decide by the end of it.
-    </p>
+def active_kit() -> str | None:
+    """The kit config.json names. Missing or {} means the built-in default;
+    a 0-byte or invalid file means the same, with a one-line warning."""
+    f = config_dir() / "config.json"
+    if not f.is_file():
+        return None
+    try:
+        data = json.loads(f.read_text())
+        if not isinstance(data, dict):
+            raise ValueError("not an object")
+    except ValueError as e:
+        print(f"warning: {f} is not valid JSON ({e}), so the deck uses the built-in default",
+              file=sys.stderr)
+        return None
+    active = data.get("active") or None
+    if active is not None and not isinstance(active, str):
+        print(f"warning: {f} names an active kit that is not a string, so the deck uses "
+              "the built-in default", file=sys.stderr)
+        return None
+    return active
+
+
+def find_theme(arg: str) -> tuple[Path | None, list[Path]]:
+    """The folder holding theme.json for a --theme value, and every place tried."""
+    # A bare name is never read as a folder in the working directory.
+    as_path = os.sep in arg or "/" in arg or arg.startswith(("~", "."))
+    tried = ([Path(arg).expanduser()] if as_path else []) + [config_dir() / "themes" / arg]
+    for d in tried:
+        if (d / "theme.json").is_file():
+            return d, tried
+    return None, tried
+
+SLIDE = """<section data-screen-label="01 Title">
+  <div class="title-block">
+    <h1 class="title">The one sentence this deck is for.</h1>
+    <p class="subtitle">Say who it is for and what they should decide by the end of it.</p>
   </div>
-  <div class="slide-foot"><span>A new deck</span><span>01</span></div>
+  <div class="slide-foot"><span data-slide-number></span></div>
 </section>
 """
+
 
 BUILD_PY = '''#!/usr/bin/env python3
 """Build index.html from every fragment in slides/, in filename order.
@@ -136,14 +135,24 @@ dumps the layout the PowerPoint exporter reads.
 Add a file to `slides/`. Filename order is slide order, so name them `01-`, `02-`
 and so on. Each file holds one `<section>`.
 
+## Theme
+
+{theme}
+
 ## Export to PowerPoint
 
-    python3 {export} --deck {deck}/index.html --theme {theme}
+From the `peakstate-deck` skill folder, run:
 
-Both paths are this machine's. On another machine, point the first at wherever
-`peakstate-deck` is cloned and the second at this folder.
+    python3 slides/export-pptx.py --deck {deck}/index.html
 
-The exporter needs `python-pptx`. Fonts are found through `DECK_FONT_DIR`.
+The deck carries its theme (`theme.json` beside `index.html`, or none for the
+built-in default), so the command needs nothing else. The `.pptx` is written in
+this folder. The skill folder on this machine was `{skill}` when the deck was
+made; an update can move it.
+
+The exporter needs `python-pptx`. Font files are searched in `DECK_FONT_DIR`,
+`fonts/` here, the kit's `fonts/` in the config folder, then the config
+folder's `fonts/`.
 """
 
 
@@ -158,45 +167,72 @@ def init(target: Path, theme_name: str | None) -> None:
             sys.exit(f"no runtime at {src}")
         shutil.copy2(src, target / name)
 
-    css = DECK_CSS
     head = ['<link rel="stylesheet" href="deck.css">']
     slide = SLIDE
 
-    if theme_name:
-        theme_dir = THEMES / theme_name
-        manifest = theme_dir / "theme.json"
-        if not manifest.is_file():
-            sys.exit(f"no theme named {theme_name} in {THEMES}")
-        theme = json.loads(manifest.read_text())
-        for name in theme.get("copy", []):
+    if theme_name is None:
+        theme_name = active_kit()
+        theme_dir, tried = find_theme(theme_name) if theme_name else (None, [])
+        if theme_name and theme_dir is None:
+            print(f"warning: the active kit {theme_name} is not in {config_dir() / 'themes'}, "
+                  "so the deck uses the built-in default", file=sys.stderr)
+            theme_name = None
+    elif theme_name == "none":
+        theme_dir, theme_name = None, None
+    else:
+        theme_dir, tried = find_theme(theme_name)
+        if theme_dir is None:
+            sys.exit(f"no theme.json for --theme {theme_name}. Tried: "
+                     + ", ".join(str(t) for t in tried))
+
+    theme = {}
+    if theme_dir:
+        theme = json.loads((theme_dir / "theme.json").read_text())
+        # A kit may ship its own title slide, title.html, used as written. Any
+        # other kit gets the built-in title slide and restyles it from its own CSS.
+        if (theme_dir / "title.html").is_file():
+            slide = (theme_dir / "title.html").read_text()
+        # The deck carries its theme, so the exporter finds it from the deck alone.
+        copies = theme.get("copy", []) + ["theme.json"]
+        # Kit web fonts: url("fonts/...") resolves against the deck once build.py
+        # inlines the stylesheet, so the files travel only when the licence allows.
+        if theme.get("fontsRedistributable") and (theme_dir / "fonts").is_dir():
+            copies.append("fonts")
+        for name in copies:
             src = theme_dir / name
             if src.is_dir():
                 shutil.copytree(src, target / name)
             elif src.is_file():
                 shutil.copy2(src, target / name)
-        # The theme's stylesheets go first, so deck.css can read their variables.
-        head = [f'<link rel="stylesheet" href="{n}">'
-                for n in theme.get("copy", []) if n.endswith(".css")] + head
-        # The theme also ships a fuller example deck. It is a reference, not a
-        # scaffold, so it stays in the theme folder.
+        # The theme's stylesheets go after deck.css, so a theme can override any
+        # treatment selector at equal specificity. Variables do not depend on
+        # order, so the brand hooks work either way.
+        head += [f'<link rel="stylesheet" href="{n}">'
+                 for n in theme.get("copy", []) if n.endswith(".css")]
 
-    (target / "deck.css").write_text(css)
     (target / "slides" / "01-title.html").write_text(slide)
     (target / "build.py").write_text(
         BUILD_PY.format(title=target.name, head="\n".join(head)))
     (target / "build.py").chmod(0o755)
     (target / "BUILD.md").write_text(BUILD_MD.format(
         title=target.name,
-        export=REPO / "slides" / "export-pptx.py",
+        skill=REPO,
         deck=target,
-        theme=theme_name or "none"))
+        theme=(f"Brand kit `{theme.get('name') or theme_dir.name}`." if theme_dir
+               else "The built-in default look (no brand kit).")))
     print(f"{target}\n  python3 build.py")
 
 
 def main(argv: list[str]) -> None:
     if len(argv) < 2 or argv[0] != "init":
         sys.exit(__doc__)
-    theme = argv[argv.index("--theme") + 1] if "--theme" in argv else None
+    theme = None
+    if "--theme" in argv:
+        i = argv.index("--theme")
+        if i + 1 >= len(argv):
+            print("usage error: --theme needs a value (name, path or none)", file=sys.stderr)
+            sys.exit(2)
+        theme = argv[i + 1]
     init(Path(argv[1]).expanduser().resolve(), theme)
 
 
