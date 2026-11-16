@@ -13,3 +13,7 @@ test-results/
 
 # Local planning: specs and tickets for /driver runs, never published
 .scratch/
+
+# claude multi-thread worktrees + local multi-root workspace file
+.claude/worktrees/
+peakstate-deck.code-workspace
