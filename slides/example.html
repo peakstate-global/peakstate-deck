@@ -1,7 +1,8 @@
 <!doctype html>
 <!--
   The default example deck: nine slides in the built-in default look, with no
-  brand kit loaded. Copy a slide from here to start one of your own.
+  brand kit loaded, then one hidden planning slide in the backstage layer.
+  Copy a slide from here to start one of your own.
 
   Open it through a local server, not from file://:
 
@@ -157,6 +158,21 @@
         </div>
       </div>
       <div class="slide-foot"><span data-slide-number></span></div>
+    </section>
+
+    <!-- Backstage layer: hidden slides after the content. They export to
+         PowerPoint as hidden slides and are skipped when presenting. All three
+         attributes are needed: data-hidden, data-hidden-src and the role. -->
+    <section data-screen-label="Planning" data-role="backstage-plan" data-hidden data-hidden-src>
+      <h2 class="slide-title">Planning</h2>
+      <table>
+        <tr><th>Section</th><th>Minutes</th><th>Slides</th><th>Move</th><th>Beats placed</th><th>Directions</th></tr>
+        <tr><td>1. Where we are</td><td>0 to 8, keep tight</td><td>1 to 4</td><td>confirm</td><td>opening move, shared problem, frame</td><td>pause after the title; ask for a show of hands on slide 4</td></tr>
+        <tr><td>2. What changes</td><td>8 to 14, keep lean</td><td>5 to 6</td><td>justify</td><td>trends, dated; the insight, cited</td><td>story starts on slide 5</td></tr>
+        <tr><td>3. What it costs</td><td>14 to 27</td><td>7</td><td>allay</td><td>the model, proof story, the fear answered</td><td>first solution at 14:00 of 30:00; pause at the peak</td></tr>
+        <tr><td>4. Where to start</td><td>27 to 30</td><td>8</td><td>on your side</td><td>three first moves, callback to the title</td><td>closing line in quotes</td></tr>
+      </table>
+      <p>Short cut: drop the open loop first, then the demo. Stories stay. Spine: provisional.</p>
     </section>
   </deck-stage>
   <script src="deck-stage.js"></script>

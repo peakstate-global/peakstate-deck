@@ -58,12 +58,10 @@ a note the reader changed, and **Revert** restores the original. The panel docks
 the bottom or as a right-hand column and the slide shrinks to fit beside it
 (`reference/the-overview.md`, *Speaker notes*).
 
-**Do not author notes.** The notes panel edits and returns them; nothing in this skill should write one
-unasked. A speaker note is an instruction to the presenter, a line read aloud, or an acronym
-expanded for the moment they blank on it. Reasoning about the slide belongs in a run sheet.
-
-A note the generator writes from the arc opens with the slide's move and its line, and carries
-stage directions in square brackets (`reference/moments.md`).
+**Notes are a briefing, written by the skill and never by the engine.** Every presented slide's
+note carries the five lines in `SKILL.md` ("Speaker notes are a briefing"). The first line gives
+the point in quotes and the reason the slide looks the way it does. Move tags, clock times and stage
+directions go on the hidden planning slide, never in a note (`reference/moments.md`).
 
 **Only edited notes travel back**, as `noteEdits[]`, each with `slide`,
 `slideLabel`, the new `note` and the `previousNote` it replaces — so the generator
