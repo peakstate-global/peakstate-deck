@@ -5,7 +5,8 @@ No pytest: python3 tests/test_backstage_export.py
 
 Needs the export prerequisites: python-pptx for this interpreter, and playwright
 for node (DECK_NODE_ROOT, else tests/node_modules). Without them it says so and
-exits 0, because CI runs the browser half (specs/backstage.spec.mjs) only.
+exits 0 with a loud notice, because CI runs the browser half (specs/backstage.spec.mjs) only.
+Set DECK_REQUIRE_EXPORT=1 to make a skip exit non-zero.
 """
 import importlib.util
 import os
@@ -21,9 +22,17 @@ HERE = Path(__file__).parent
 ROOT = HERE.parent
 
 node_root = os.environ.get("DECK_NODE_ROOT")
-if importlib.util.find_spec("pptx") is None or not (
-        node_root or (HERE / "node_modules" / "playwright").exists()):
-    print("backstage export: SKIPPED, export prerequisites missing (python-pptx, playwright)")
+_xdg = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
+_venv_py = Path(_xdg) / "peakstate-deck" / "venv" / "bin" / "python"
+# The exporter re-runs under the README venv, so pptx in either interpreter is enough.
+has_pptx = importlib.util.find_spec("pptx") is not None or (
+    _venv_py.exists() and subprocess.run([str(_venv_py), "-c", "import pptx"],
+                                         capture_output=True).returncode == 0)
+if not has_pptx or not (node_root or (HERE / "node_modules" / "playwright").exists()):
+    msg = "backstage export: SKIPPED, export prerequisites missing (python-pptx, playwright)"
+    if os.environ.get("DECK_REQUIRE_EXPORT") == "1":
+        sys.exit("FAIL (DECK_REQUIRE_EXPORT=1): " + msg)
+    print("!" * 72 + "\n" + msg + "\nThis is NOT a pass: the export was not tested.\n" + "!" * 72)
     sys.exit(0)
 
 with tempfile.TemporaryDirectory() as d:

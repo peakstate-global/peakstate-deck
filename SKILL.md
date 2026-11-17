@@ -152,7 +152,7 @@ The decisions live on a hidden terms slide early in the deck:
 
 | Kind | `data-role` | Holds |
 |---|---|---|
-| Planning | `backstage-plan` | Per section: the minutes and the act, the move, the beats placed, the stage directions, and the clock time of the first solution. Then the short cut, and whether the spine is provisional. |
+| Planning | `backstage-plan` | One row per presented slide: its act, section, move and clock time, with the beats placed and the stage directions. Then the minutes per section, the clock time of the first solution, the short cut, and whether the spine is provisional. |
 | Stories | `backstage-stories` | The stories per section, each named in a few words with its point. |
 | Debate positions | `backstage-debate` | The positions the room may hold, each with its strongest form and the answer. |
 | Numbers to know | `backstage-numbers` | Every number in the talk, with its spoken form and its source. |
@@ -161,14 +161,14 @@ The decisions live on a hidden terms slide early in the deck:
     <section data-role="backstage-plan" data-hidden data-hidden-src data-screen-label="Planning">
       <h2>Planning</h2>
       <table>
-        <tr><th>Section</th><th>Minutes</th><th>Move</th><th>Beats</th><th>Directions</th></tr>
-        <tr><td>1. You are here</td><td>6, keep tight</td><td>confirm</td><td>opening move, shared problem, frame</td><td>pause after the opening line</td></tr>
+        <tr><th>Slide</th><th>Act</th><th>Section</th><th>Move</th><th>Clock time</th><th>Beats</th><th>Directions</th></tr>
+        <tr><td>1</td><td>1</td><td>1. You are here</td><td>confirm</td><td>0:00</td><td>opening move, shared problem, frame</td><td>pause after the opening line</td></tr>
       </table>
-      <p>First solution at 12:00 of 30:00. Short cut: drop the open loop, then the second demo.</p>
+      <p>Section 1 runs 6 minutes, keep tight. First solution at 12:00 of 30:00. Short cut: drop the open loop, then the second demo.</p>
     </section>
 
 - **Every backstage slide carries all three attributes:** `data-hidden`, `data-hidden-src` and `data-role="backstage-<kind>"`. An evaluator treats `data-hidden` alone as not hidden, and reads the role to grade the planning slide.
-- **The charter and terms slides count as backstage, and keep their places** (the charter at position two, the terms after it).
+- **The charter and terms slides count as backstage, and keep their places** (the charter at position two, the terms after it). They keep their own `data-role` values and are the one exception to the `backstage-*` rule.
 - **Write only the kinds the deck needs.** Every talk has a planning slide; the other kinds are added when they carry something.
 
 ## Design rules

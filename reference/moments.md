@@ -8,9 +8,9 @@
 
 The planning slide is the first backstage slide (`data-role="backstage-plan"`, with `data-hidden` and `data-hidden-src`), placed after the last presented slide. It holds everything the speaker plans and the room never sees, so the speaker notes stay a five-line briefing (`SKILL.md`, "Speaker notes are a briefing").
 
-- **One row per section:** the act, the minutes with a "keep tight" or "keep lean" mark, the slides it covers, the move (`encourage`, `justify`, `allay`, `confirm` or `on your side`), the beats placed there, and the stage directions.
+- **One row per presented slide, with columns for Act, Section, Move and Clock time:** the act, the section, the move (`encourage`, `justify`, `allay`, `confirm` or `on your side`), the beats placed there, and the stage directions.
 - **Stage directions, in plain words, against the slide they belong to:** a pause of two to three seconds (at least at the peak and straight after the S.T.A.R. moment), a question to the room and the wait for its answer, where each story starts, and each light moment.
-- **Clock times:** the minute each section starts, and the minute the first solution starts, which is at or after 40% of the running time.
+- **Clock times:** the minute each slide starts (a section's minutes, with a "keep tight" or "keep lean" mark, go in the note under the table), and the minute the first solution starts, which is at or after 40% of the running time.
 - **The beats:** every required beat, on the slide that carries it, or a one-line reason it is left out.
 - **The short cut:** what goes when time is short. Drop the optional beats first, then the demos. Stories and emotional beats stay.
 - **The spine's state:** say "provisional" until the author's final outline locks it.
