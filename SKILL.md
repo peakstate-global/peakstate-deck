@@ -60,6 +60,29 @@ my brand" or "add a brand kit".
 - **The background comes first.** Build the trends and drivers before any slide that offers a fix, in the order the spine gives. The first solution starts at or after 40% of the running time, and the planning slide gives its clock time.
 - **Teach the vocabulary before the audience applies it**, and end on a few concrete first moves rather than on a method.
 
+## Name the round
+
+**Every build names its round type in the deck, so a reader and a check can tell what kind of build they hold.** There are three round types.
+
+| Round | When it applies |
+|---|---|
+| `first-cut` | The first build the author sees. A provisional spine still counts. |
+| `comment` | A round that works through a comment payload on a deck the author has seen. |
+| `re-outline` | A rebuild after the author sends a new outline from scratch. |
+
+- **Write the round type in the `deck-round` meta, beside `deck-build-hash`, on every build** (see "Install it into a deck"). A later build replaces both values. A round that is not a first cut and has no new outline is a `comment` round.
+- **If `/draft-eval` is installed, a `first-cut` or `re-outline` build runs the first-cut gate before it is delivered** (`/draft-eval`, "The first-cut gate"; see the top of this file). Do not deliver it until the gate record exists for the build hash in the meta. A `comment` round does not run the gate.
+- **A first cut on a provisional spine says so on its planning slide.** The gate still runs.
+
+### The re-outline round
+
+**When the author sends a new outline, the author approves a keep, replace and new table before any slide changes.** Rebuilding first and asking afterwards is the failure this round exists to stop.
+
+- **Map every existing slide to the new outline.** Give each slide its new section and one verdict: `keep` (it moves as it is), `replace` (the slide maps to a section of the new outline but is rebuilt) or `drop`. Add a row with the verdict `new` for each slide the new outline needs that the deck does not have.
+- **Deliver the table to the author**, one row per slide: slide, new section, verdict (keep, replace or new, or drop with no new section), and a one-line reason.
+- **Rebuild only after the author answers.** Apply the verdicts the author confirmed or changed, then write `deck-round` as `re-outline` and run the first-cut gate.
+- **Record the share kept** in the talk log beside the deck: the slides kept over the slides in the deck before the round, for example `kept 14 of 22 (64%)`.
+
 ## Speaker notes are a briefing
 
 **Every presented slide's speaker note carries five short lines, so the speaker can glance at it and know what to say.**
@@ -270,6 +293,7 @@ self-sufficient**, so do not skip it:
     <meta name="deck-source"      content="path/to/generator.py">
     <meta name="deck-build"       content="2026-01-01T00:00:00Z">
     <meta name="deck-build-hash"  content="<12 hex chars>">
+    <meta name="deck-round"       content="first-cut|comment|re-outline">
     <meta name="deck-resolutions" content="path/to/review-resolutions.json">
 
 - `deck-file` — the deck, repo-relative.
@@ -278,17 +302,22 @@ self-sufficient**, so do not skip it:
 - `deck-build` — UTC timestamp of the build.
 - `deck-build-hash` — a short content hash of the slides. It is what lets Claude
   notice that the deck moved after the comments were written.
+- `deck-round` - the round type of this build: `first-cut`, `comment` or
+  `re-outline` (see "Name the round"). Write it on the line after
+  `deck-build-hash` and update both on every build, because a check reads the
+  two together.
 - `deck-resolutions` — where the ticked-off comments live. See below.
 - `deck-url` — optional: where the deck is published. Written by the publishing
   step, not by hand, and carried into the payload as `deck.url`
   (`reference/the-payload.md`).
 
-A generator should emit all four. In Python:
+A generator should emit all of them except `deck-url`. In Python:
 
     import hashlib, datetime
     body = ''.join(slide_html) + ''.join(speaker_notes)
     build_hash = hashlib.sha256(body.encode()).hexdigest()[:12]
     build_at = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    round_type = 'first-cut'  # or 'comment' or 're-outline', set per build
 
 ## Slide numbers are one numbering
 
