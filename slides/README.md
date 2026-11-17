@@ -278,18 +278,19 @@ That emits `data-hidden-src` on the section. The runtime dims it in edit mode (d
 performance mode, and it survives a rebuild. A reader can also hide a slide from the toolbar, which
 is a browser-local decision that rides back in the review payload rather than changing the deck.
 
-## Speaker notes are the presenter's, not yours
+## Speaker notes: the skill writes a briefing, the engine writes nothing
 
-**Never write a speaker note unless the deck's owner asks for one.** Leave the note empty and let
-them fill it.
+**The engine never writes a speaker note itself.** A generator emits the notes it is given, and
+nothing in `deck-stage.js` or the exporter invents one.
 
-A note is for the presenter in the room: an instruction to them, a line to read out, or the
-expansion of an acronym on the slide in case they blank on it. It is not a second home for
-facilitation reasoning, which belongs in the run sheet, and it is not a place to explain the design
-decisions behind a slide.
+**The skill writes every presented slide's note in the five-line briefing format** (`SKILL.md`,
+"Speaker notes are a briefing"): the point in quotes with the reason the slide looks the way it
+does, a story cue, one number with its source, the bridge to the next slide, and the likely
+question with its answer. The first line is where a design reason belongs, kept short.
 
-Notes written by the generator get read as the owner's own words the first time they present from
-the deck, which is the worst possible moment to discover they are not.
+Move tags, clock times and stage directions do not go in a note. They go on the hidden planning
+slide in the backstage layer. When the deck's owner edits a note, their wording wins: the notes
+panel returns the edit, and the generator takes it as the new note.
 
 ## Check every build
 
