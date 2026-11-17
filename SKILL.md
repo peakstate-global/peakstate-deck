@@ -71,14 +71,14 @@ my brand" or "add a brand kit".
 | `re-outline` | A rebuild after the author sends a new outline from scratch. |
 
 - **Write the round type in the `deck-round` meta, beside `deck-build-hash`, on every build** (see "Install it into a deck"). A later build replaces both values. A round that is not a first cut and has no new outline is a `comment` round.
-- **A `first-cut` or `re-outline` build runs the first-cut gate before it is delivered** (`/draft-eval`, "The first-cut gate"; see the top of this file). Do not deliver it until the gate record exists for the build hash in the meta. A `comment` round does not run the gate.
+- **If `/draft-eval` is installed, a `first-cut` or `re-outline` build runs the first-cut gate before it is delivered** (`/draft-eval`, "The first-cut gate"; see the top of this file). Do not deliver it until the gate record exists for the build hash in the meta. A `comment` round does not run the gate.
 - **A first cut on a provisional spine says so on its planning slide.** The gate still runs.
 
 ### The re-outline round
 
 **When the author sends a new outline, the author approves a keep, replace and new table before any slide changes.** Rebuilding first and asking afterwards is the failure this round exists to stop.
 
-- **Map every existing slide to the new outline.** Give each slide its new section and one verdict: `keep` (it moves as it is), `replace` (its section stays but the slide is rebuilt) or `drop`. Add a row with the verdict `new` for each slide the new outline needs that the deck does not have.
+- **Map every existing slide to the new outline.** Give each slide its new section and one verdict: `keep` (it moves as it is), `replace` (the slide maps to a section of the new outline but is rebuilt) or `drop`. Add a row with the verdict `new` for each slide the new outline needs that the deck does not have.
 - **Deliver the table to the author**, one row per slide: slide, new section, verdict (keep, replace or new, or drop with no new section), and a one-line reason.
 - **Rebuild only after the author answers.** Apply the verdicts the author confirmed or changed, then write `deck-round` as `re-outline` and run the first-cut gate.
 - **Record the share kept** in the talk log beside the deck: the slides kept over the slides in the deck before the round, for example `kept 14 of 22 (64%)`.
