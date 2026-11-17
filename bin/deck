@@ -76,11 +76,15 @@ SLIDE = """<section data-screen-label="01 Title">
 BUILD_PY = '''#!/usr/bin/env python3
 """Build index.html from every fragment in slides/, in filename order.
 
-    python3 build.py
+    python3 build.py [first-cut|comment|re-outline]
 
 Each file in slides/ is one <section>. Rename them to reorder the deck.
+The round type (default first-cut) is written to the deck-round meta, beside
+the deck-build-hash meta, on every build.
 """
+import hashlib
 import re
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -100,11 +104,17 @@ if not sections:
     raise SystemExit("no slide fragments in slides/")
 
 body = "\\n".join(p.read_text().rstrip() for p in sections)
+BUILD_HASH = hashlib.sha256(body.encode()).hexdigest()[:12]
+ROUND = sys.argv[1] if len(sys.argv) > 1 else "first-cut"
+if ROUND not in ("first-cut", "comment", "re-outline"):
+    raise SystemExit("round must be first-cut, comment or re-outline")
 html = f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <title>{{TITLE}}</title>
+<meta name="deck-build-hash" content="{{BUILD_HASH}}">
+<meta name="deck-round" content="{{ROUND}}">
 {{HEAD}}
 </head>
 <body>

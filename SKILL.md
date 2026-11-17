@@ -15,11 +15,7 @@ that request. Never add an export step to a build, and never send a `.pptx` unas
 A deck is one `index.html` with `deck-stage.js` and `deck-tools.js` beside it. No build step, no server, no
 framework. `index.html?audit` reports per-slide overflow; "all N slides clean" is the pass.
 `index.html?motion` reports when each slide's motion settles (`reference/motion-and-metaphor.md`).
-**If `/draft-eval` is installed, run it at two moments only:** after the first full draft of a deck,
-and after a major change; if it is not installed, say it is missing and continue. A change is major when more than 20% of the slides are new, or more than 20% of the slides
-are significantly changed by the user (their claim, argument or evidence, not only their wording or
-layout). Judge whether a change is major and state the call in one line, so the user can override
-it. After any smaller change, run only the overflow audit (`index.html?audit`), the em-dash check
+**If `/draft-eval` is installed, run its first-cut gate once per first cut and once per re-outline round** (`/draft-eval`, "The first-cut gate"): grade every presented slide, make one repair pass on the slides that fail, grade those again, and let it write the gate record. Run the full scoring loop only when the user asks for it. If `/draft-eval` is not installed, say it is missing and continue. After any other change, run only the overflow audit (`index.html?audit`), the em-dash check
 and, if a claim changed and `/sourced` is installed, the SOURCED re-audit of that claim, then stop. If a small round still needs a check and `/draft-eval` is installed, score only the audit set: the changed slides plus a
 few unchanged ones as a baseline, which its `score_round.py audit` selects.
 
@@ -56,21 +52,60 @@ my brand" or "add a brand kit".
 
 ## Design the arc before the slides
 
-**If `/narrative-arc` is installed, run it before authoring or reflowing a deck, and build nothing until its spine is approved; if it is not installed, say it is missing and continue.** It names the audience, the job the deck does for them, the beliefs and pains they arrive with, the shift, and each section's premise with the move it makes.
+**If `/narrative-arc` is installed, run it before authoring or reflowing a deck; if it is not installed, say it is missing and continue.** It names the audience, the job the deck does for them, the beliefs and pains they arrive with, the shift, and each section's premise with the move it makes. For a talk, it shapes the deck in four acts.
 
-- **The slides carry the claims; the speaker notes carry the narrative.** Every note says what its slide claims and gives the line that carries the room from the last slide into this one and on to the next.
+- **The spine is provisional.** Build fast first slides on the frame the author chose, without waiting for a full sign-off, so the author has something to react to. Say on the planning slide that the spine is provisional. The spine locks at the author's final outline.
+- **The slides carry the claims; the speaker notes are a briefing.** The notes format is below.
 - **The first slide of each section names the belief it answers.**
-- **The background comes first.** Build the drivers, the impact and the root causes before any slide that offers a fix, in the order the approved spine gives, and mark the first solution slide in the notes with its clock time.
-- **Teach the vocabulary before the audience applies it**, and end on where to start rather than on a method.
+- **The background comes first.** Build the trends and drivers before any slide that offers a fix, in the order the spine gives. The first solution starts at or after 40% of the running time, and the planning slide gives its clock time.
+- **Teach the vocabulary before the audience applies it**, and end on a few concrete first moves rather than on a method.
+
+## Name the round
+
+**Every build names its round type in the deck, so a reader and a check can tell what kind of build they hold.** There are three round types.
+
+| Round | When it applies |
+|---|---|
+| `first-cut` | The first build the author sees. A provisional spine still counts. |
+| `comment` | A round that works through a comment payload on a deck the author has seen. |
+| `re-outline` | A rebuild after the author sends a new outline from scratch. |
+
+- **Write the round type in the `deck-round` meta, beside `deck-build-hash`, on every build** (see "Install it into a deck"). A later build replaces both values. A round that is not a first cut and has no new outline is a `comment` round.
+- **If `/draft-eval` is installed, a `first-cut` or `re-outline` build runs the first-cut gate before it is delivered** (`/draft-eval`, "The first-cut gate"; see the top of this file). Do not deliver it until the gate record exists for the build hash in the meta. A `comment` round does not run the gate.
+- **A first cut on a provisional spine says so on its planning slide.** The gate still runs.
+
+### The re-outline round
+
+**When the author sends a new outline, the author approves a keep, replace and new table before any slide changes.** Rebuilding first and asking afterwards is the failure this round exists to stop.
+
+- **Map every existing slide to the new outline.** Give each slide its new section and one verdict: `keep` (it moves as it is), `replace` (the slide maps to a section of the new outline but is rebuilt) or `drop`. Add a row with the verdict `new` for each slide the new outline needs that the deck does not have.
+- **Deliver the table to the author**, one row per slide: slide, new section, verdict (keep, replace or new, or drop with no new section), and a one-line reason.
+- **Rebuild only after the author answers.** Apply the verdicts the author confirmed or changed, then write `deck-round` as `re-outline` and run the first-cut gate.
+- **Record the share kept** in the talk log beside the deck: the slides kept over the slides in the deck before the round, for example `kept 14 of 22 (64%)`.
+
+## Speaker notes are a briefing
+
+**Every presented slide's speaker note carries five short lines, so the speaker can glance at it and know what to say.**
+
+    "The point of the slide, in quotes." (Why the slide looks this way.)
+    Story: one or two stories from the bank, named in a few words.
+    Number: its spoken form, any inference kept apart, and the source to name if asked.
+    Bridge: the question that leads into the next slide.
+    Likely question: the one this audience will ask, with a short answer.
+
+- **Leave a line out only when it has nothing to carry**, for example on a slide with no number.
+- **Move tags, clock times and stage directions never go in the notes.** They go on the hidden planning slide (below).
+- **Sources and limits stay in `#slide-sources`**, never in the note.
 
 ## Build the moments the arc planned
 
-**Every moment on the arc sheet gets built on a slide and marked in the notes.** The arc names each slide's move and line, the peak, the last 60 seconds, the S.T.A.R. moment, the stories, the light moments and, if the arc sheet uses one, the confession; the deck makes them happen. How to build each pattern is in `reference/moments.md`.
+**Every moment on the arc sheet gets built on a slide, or placed on the planning slide beside the slide it belongs to.** The arc names each section's move, the peak at the end of act 3, the closing line in quotes, the S.T.A.R. moment, the stories, the light moments and, if the arc sheet uses one, the confession; the deck makes them happen. How to build each pattern is in `reference/moments.md`.
 
-- **Every presented content slide's note opens with its move and its line:** `[MOVE: confirm] "I know you're thinking X, and you're right."` The five tags are `encourage`, `justify`, `allay`, `confirm` and `on your side`.
-- **Stage directions in square brackets:** `[MOVE: x]`, `[PAUSE]` (at least at the peak and after the S.T.A.R. moment), `[ASK]`, `[STORY]` and `[LIGHT]`.
-- **The patterns:** the emulated live demonstration (a full simulation: a console that streams agent output too fast to read for the length of the riff, a pointer that clicks the produced link, an automatic advance to the result, then the question; skip on a key, stop on leave, still under reduced motion), the pattern-break slide (one slide unlike the rest), physical scale, guess-then-reveal (two per talk), live scoring in the room, the repeatable line per section, the confession slide (optional, only when the arc sheet uses one), and the closing slide that mirrors the title.
-- **The check is `/draft-eval`'s moments group, when `/draft-eval` is installed** (if it is not, say it is missing and continue): `star_moment`, `peak_and_end`, `five_moves`, `people_and_stories`, `wrong_and_credible`, `light_moment` and `stage_directions`. Every check must pass.
+- **The patterns:** the demo summary slide, the emulated live demonstration (at most once, for the S.T.A.R. moment), the pattern-break slide, physical scale, guess-then-reveal (two per talk), live scoring in the room, the repeatable line per section, the confession slide (optional), the offer, and the closing slide that mirrors the title.
+- **A demo is one summary slide**, about 15 seconds of talk: what the tool did and what it changed, with the detail behind a QR code on the slide.
+- **The offer lives on a slide, a QR code and a hand-out**, never in the speaker's mouth.
+- **The short cut is planned on the planning slide.** It drops the optional beats first, then the demos. Stories and emotional beats stay.
+- **The check is `/draft-eval`'s moments group, when `/draft-eval` is installed** (if it is not, say it is missing and continue). The required checks are `four_acts`, `peak_and_end`, `five_moves`, `people_and_stories`, `wrong_and_credible`, `notes_briefing` and `pain_before_solution`, and each must pass. The recommended checks are `star_moment`, `quoted_close` and `light_moment`; they are reported and never block.
 
 ## Audit the claims with SOURCED
 
@@ -133,6 +168,31 @@ The decisions live on a hidden terms slide early in the deck:
 - **Each kept term is one `<dt>term</dt><dd>definition</dd>` pair.** Terms set aside go in a list with the plain words used instead, never in a `<dt>`, so every `<dt>` is a term in use.
 - **The visible slide that introduces a term carries `data-introduces="term"`**, comma-separated for several (`data-introduces="churn,cohort"`). Spell each term exactly as its `<dt>`.
 - **Write both hidden attributes.** The runtime reads `data-hidden-src`: it dims the slide in edit mode and skips it when presenting. `data-hidden` is the shared marker that evaluators read, and the review layer rewrites it from `data-hidden-src` on load, so it cannot stand alone. A generator's `hidden=True` emits `data-hidden-src`; add `data-hidden` beside it.
+
+## The backstage layer: hidden slides after the content
+
+**Everything the speaker needs and the room never sees lives on hidden backstage slides placed after the last presented slide.** They travel with the deck, export to PowerPoint as hidden slides, and are skipped when presenting.
+
+| Kind | `data-role` | Holds |
+|---|---|---|
+| Planning | `backstage-plan` | One row per presented slide: its act, section, move and clock time, with the beats placed and the stage directions. Then the minutes per section, the clock time of the first solution, the short cut, and whether the spine is provisional. |
+| Stories | `backstage-stories` | The stories per section, each named in a few words with its point. |
+| Debate positions | `backstage-debate` | The positions the room may hold, each with its strongest form and the answer. |
+| Numbers to know | `backstage-numbers` | Every number in the talk, with its spoken form and its source. |
+| Sources | `backstage-sources` | The full references behind the talk. |
+
+    <section data-role="backstage-plan" data-hidden data-hidden-src data-screen-label="Planning">
+      <h2>Planning</h2>
+      <table>
+        <tr><th>Slide</th><th>Act</th><th>Section</th><th>Move</th><th>Clock time</th><th>Beats</th><th>Directions</th></tr>
+        <tr><td>1</td><td>1</td><td>1. You are here</td><td>confirm</td><td>0:00</td><td>opening move, shared problem, frame</td><td>pause after the opening line</td></tr>
+      </table>
+      <p>Section 1 runs 6 minutes, keep tight. First solution at 12:00 of 30:00. Short cut: drop the open loop, then the second demo.</p>
+    </section>
+
+- **Every backstage slide carries all three attributes:** `data-hidden`, `data-hidden-src` and `data-role="backstage-<kind>"`. An evaluator treats `data-hidden` alone as not hidden, and reads the role to grade the planning slide.
+- **The charter and terms slides count as backstage, and keep their places** (the charter at position two, the terms after it). They keep their own `data-role` values and are the one exception to the `backstage-*` rule.
+- **Write only the kinds the deck needs.** Every talk has a planning slide; the other kinds are added when they carry something.
 
 ## Design rules
 
@@ -233,6 +293,7 @@ self-sufficient**, so do not skip it:
     <meta name="deck-source"      content="path/to/generator.py">
     <meta name="deck-build"       content="2026-01-01T00:00:00Z">
     <meta name="deck-build-hash"  content="<12 hex chars>">
+    <meta name="deck-round"       content="first-cut|comment|re-outline">
     <meta name="deck-resolutions" content="path/to/review-resolutions.json">
 
 - `deck-file` — the deck, repo-relative.
@@ -241,17 +302,22 @@ self-sufficient**, so do not skip it:
 - `deck-build` — UTC timestamp of the build.
 - `deck-build-hash` — a short content hash of the slides. It is what lets Claude
   notice that the deck moved after the comments were written.
+- `deck-round` - the round type of this build: `first-cut`, `comment` or
+  `re-outline` (see "Name the round"). Write it on the line after
+  `deck-build-hash` and update both on every build, because a check reads the
+  two together.
 - `deck-resolutions` — where the ticked-off comments live. See below.
 - `deck-url` — optional: where the deck is published. Written by the publishing
   step, not by hand, and carried into the payload as `deck.url`
   (`reference/the-payload.md`).
 
-A generator should emit all four. In Python:
+A generator should emit all of them except `deck-url`. In Python:
 
     import hashlib, datetime
     body = ''.join(slide_html) + ''.join(speaker_notes)
     build_hash = hashlib.sha256(body.encode()).hexdigest()[:12]
     build_at = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    round_type = 'first-cut'  # or 'comment' or 're-outline', set per build
 
 ## Slide numbers are one numbering
 
@@ -377,7 +443,7 @@ Open one when its line is true of the work in front of you; never preload them.
 | `reference/the-overview.md` | You are working on the overview, the bar, or the keyboard |
 | `reference/identity.md` | Slides moved or were renamed, or the deck has states |
 | `reference/authoring.md` | You are writing or generating the deck itself |
-| `reference/moments.md` | You are building or reviewing a deck's moments: the moves, stage directions, the S.T.A.R. moment, the optional confession or the close |
+| `reference/moments.md` | You are building or reviewing a deck's moments: the planning slide, demos, the S.T.A.R. moment, the optional confession, the offer or the close |
 | `reference/motion-and-metaphor.md` | You are planning, building or reviewing a deck's visuals, animation or transitions |
 | `reference/internals.md` | You edited `deck-comments.js` and need to know what must still hold |
 | `reference/powerpoint-export.md` | You are exporting to PowerPoint, changing the exporter, or a deck came back from it wrong |

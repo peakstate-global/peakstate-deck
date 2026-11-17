@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Backstage layer · peakstate-deck fixtures</title>
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<!-- Two presented slides, then two backstage slides after the content. The
+     backstage slides carry all three attributes the skill prescribes. -->
+<deck-stage design-width="1920" design-height="1080">
+  <section data-slide-id="open" data-screen-label="Open"><h1>The opening slide</h1></section>
+  <section data-slide-id="close" data-screen-label="Close"><h1>The closing slide</h1></section>
+  <section data-slide-id="plan" data-screen-label="Planning" data-role="backstage-plan" data-hidden data-hidden-src>
+    <h2>Planning</h2>
+    <table><tr><th>Section</th><th>Minutes</th><th>Move</th></tr><tr><td>1</td><td>0 to 5</td><td>confirm</td></tr></table>
+  </section>
+  <section data-slide-id="numbers" data-screen-label="Numbers" data-role="backstage-numbers" data-hidden data-hidden-src>
+    <h2>Numbers to know</h2>
+  </section>
+</deck-stage>
+<script src="deck-stage.js"></script>
+<script src="deck-tools.js"></script>
+<script src="deck-comments.js"></script>
+</body>
+</html>
